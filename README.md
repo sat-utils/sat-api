@@ -19,6 +19,12 @@ To further develop a deployed version of the API, make sure you have AWS credent
 
 ### New deployment:
 
+You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
+
+Update `.kes/config.yml` and enter the name of the bucket. Also, if you want to access the elasticsearch instance directly from fixed IP address, copy `.env.example` to `.env` and add your IP address there.
+
+There are more configurations that you can update on `.kes/config.yml` before deployment.
+
     $ kes cf create
 
 ### Updates
