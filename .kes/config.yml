@@ -1,8 +1,8 @@
-stackName: sat-api-updater
+stackName: sat-api
 stage: dev
 
 buckets:
-  internal: devseed-kes-deployment
+  internal: sat-api
 
 elasticsearch_main_index: sat-api
 
