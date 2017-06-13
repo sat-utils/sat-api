@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: node:6.11
+    working_directory: ~/sat-api
+    steps:
+      - checkout
+
+      - run:
+          name: Installing Dependencies
+          command: npm install
+
+      - run:
+          name: Running Test
+          command: npm run build
