@@ -32,6 +32,7 @@ lambdas:
       - api: satellites
         path: 'main'
         method: post
+        cors: true
       - api: satellites
         path: 'main/count'
         method: get
@@ -41,18 +42,21 @@ lambdas:
       - api: satellites
         path: 'main/landsat'
         method: post
+        cors: true
       - api: satellites
         path: 'main/sentinel'
         method: get
       - api: satellites
         path: 'main/sentinel'
         method: post
+        cors: true
       - api: satellites
         path: 'main/geojson'
         method: get
       - api: satellites
         path: 'main/geojson'
         method: post
+        cors: true
       - api: satellites
         path: 'main/health'
         method: get
