@@ -1,0 +1,61 @@
+stackName: sat-api-updater
+stage: dev
+
+buckets:
+  internal: devseed-kes-deployment
+
+elasticsearch_main_index: sat-api
+
+apis:
+  - name: satellites
+
+lambdas:
+  - name: landsat
+    handler: landsat.handler
+    timeout: 300
+  - name: sentinel
+    handler: sentinel.handler
+    timeout: 300
+  - name: split
+    handler: split.handler
+    timeout: 300
+  - name: manager
+    handler: manager.handler
+    timeout: 300
+  - name: api
+    handler: api.handler
+    timeout: 100
+    apiGateway:
+      - api: satellites
+        path: 'main'
+        method: get
+      - api: satellites
+        path: 'main'
+        method: post
+      - api: satellites
+        path: 'main/count'
+        method: get
+      - api: satellites
+        path: 'main/landsat'
+        method: get
+      - api: satellites
+        path: 'main/landsat'
+        method: post
+      - api: satellites
+        path: 'main/sentinel'
+        method: get
+      - api: satellites
+        path: 'main/sentinel'
+        method: post
+      - api: satellites
+        path: 'main/geojson'
+        method: get
+      - api: satellites
+        path: 'main/geojson'
+        method: post
+      - api: satellites
+        path: 'main/health'
+        method: get
+
+
+

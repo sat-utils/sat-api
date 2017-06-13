@@ -1,0 +1,83 @@
+{
+  "name": "sat-api",
+  "version": "2.0",
+  "description": "One API to search public Satellites metadata",
+  "main": "index.js",
+  "repository": "https://github.com/sat-utils/sat-api",
+  "author": "Alireza Jazayeri <alireza@developmentseed.org>",
+  "license": "MIT",
+  "scripts": {
+    "build": "webpack --progress",
+    "watch": "webpack -w --progress"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "extends": "standard",
+    "rules": {
+      "semi": [
+        2,
+        "always"
+      ],
+      "space-before-function-paren": "off",
+      "spaced-comment": "off",
+      "no-extra-semi": 2,
+      "brace-style": [
+        "error",
+        "stroustrup"
+      ],
+      "semi-spacing": [
+        2,
+        {
+          "before": false,
+          "after": true
+        }
+      ]
+    }
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      "transform-async-to-generator"
+    ]
+  },
+  "dependencies": {
+    "async.queue": "^0.5.2",
+    "aws-sdk": "^2.57.0",
+    "elasticsearch": "^13.0.1",
+    "electron": "^1.6.10",
+    "epsg": "^0.3.0",
+    "fast-csv": "^2.4.0",
+    "got": "^7.0.0",
+    "http-aws-es": "^1.1.3",
+    "kes": "^0.0.2-beta-4",
+    "lambda-proxy-utils": "^1.2.4",
+    "lodash.get": "^4.4.2",
+    "lodash.padstart": "^4.6.1",
+    "lodash.range": "^3.2.0",
+    "moment": "^2.18.1",
+    "proj4": "^2.4.3",
+    "sat-api-lib": "^0.5.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-plugin-transform-async-to-generator": "^6.24.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.3.0",
+    "eslint-plugin-node": "^4.2.2",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "json-loader": "^0.5.4",
+    "prepend-loader": "^0.0.2",
+    "tap": "^10.3.3",
+    "webpack": "^2.6.0"
+  }
+}
