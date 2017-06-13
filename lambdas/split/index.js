@@ -68,7 +68,9 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
         fileCounter += 1;
       }
 
-      if (fileCounter >= maxFiles) {
+      // sentinel csv is ordered from old to new
+      // so we always have to go all the way back
+      if (fileCounter >= maxFiles && satellite !== 'sentinel') {
         stopSplitting = true;
         console.log(`Stop splitting files at ${fileCounter}`);
       }
@@ -90,6 +92,16 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
 
   newStream.on('end', () => {
     currentFile.end();
+    let last = fileCounter - 1;
+    let first = 0;
+    let direction = 'asc';
+
+    if (satellite === 'sentinel') {
+      first = fileCounter - 1;
+      last = fileCounter - maxFiles;
+      if (last < 0) last = 0;
+      direction = 'desc';
+    }
 
     const params = {
       stateMachineArn: arn,
@@ -97,8 +109,9 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
         bucket,
         key: `csv/${satellite}`,
         satellite,
-        currentFileNum: 0,
-        lastFileNum: fileCounter,
+        currentFileNum: first,
+        lastFileNum: last,
+        direction,
         arn
       }),
       name: `csv_${satellite}_0_${Date.now()}`
