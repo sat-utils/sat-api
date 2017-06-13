@@ -1,6 +1,6 @@
 ## Satellite API
 
-[![Build Status](https://travis-ci.org/sat-utils/sat-api.svg?branch=develop)](https://travis-ci.org/sat-utils/sat-api)
+[![CircleCI](https://circleci.com/gh/sat-utils/sat-api.svg?style=svg)](https://circleci.com/gh/sat-utils/sat-api)
 
 *One API to search public Satellites metadata*
 
