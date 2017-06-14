@@ -27,6 +27,19 @@ There are more configurations that you can update on `.kes/config.yml` before de
 
     $ kes cf create
 
+Then go to your AWS Lambda Console and open the `sat-api-dev-manager` function.
+
+Run the function with the below payload to create the elasticsearch index with approporiate mapping:
+
+```
+{
+   "action": "putMapping",
+   "index": "sat-api"
+}
+```
+
+You can find the API's url in your ApiGateway service page. To populate elasticsearch, go to CloudWatch/rules and activate the landsat and sentinel scheduled events. This will run the updater every 12 hours.
+
 ### Updates
 
 If you make changes to the source code, use command below to update with CloudFormation:

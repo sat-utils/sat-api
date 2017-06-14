@@ -14,7 +14,7 @@ function search(action, req, cb) {
       const res = new util.Response({ cors: true, statusCode: 400 });
       return cb(null, res.send({ details: err.message }));
     }
-    const res = new util.Response({ cors: true, statusCode: 400 });
+    const res = new util.Response({ cors: true, statusCode: 200 });
     return cb(null, res.send(resp));
   });
 }
