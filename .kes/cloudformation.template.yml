@@ -131,7 +131,7 @@ Resources:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
       DomainName: {{stackName}}-{{stage}}-sat-api
-      ElasticsearchVersion: 5.1
+      ElasticsearchVersion: 5.3
       ElasticsearchClusterConfig:
         InstanceCount: "2"
         InstanceType: "m3.medium.elasticsearch"
@@ -217,6 +217,11 @@ Resources:
                 "Landsat": {
                   "Type": "Task",
                   "Resource": "${landsatLambdaFunction.Arn}",
+                  "Retry": [{
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3
+                  }],
                   "End": true
                 }
               }
@@ -235,6 +240,11 @@ Resources:
                 "Sentinel": {
                   "Type": "Task",
                   "Resource": "${sentinelLambdaFunction.Arn}",
+                  "Retry": [{
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 3
+                  }],
                   "End": true
                 }
               }
@@ -267,6 +277,25 @@ Resources:
                   "maxFiles": 10
                 }
               - stateMachineArn: !Ref LandsatMetadataProcessorStateMachine
+
+  ProcessSentinelScenes:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'rate(12 hours)'
+      State: 'DISABLED'
+      Targets:
+        - Id: ProcessSentinelScenesScheduler
+          Arn: !Ref SplitFilesStateMachine
+          RoleArn: !GetAtt [EventRole, Arn]
+          Input:
+            Fn::Sub:
+              - |
+                {
+                  "satellite": "sentinel",
+                  "arn": "${stateMachineArn}",
+                  "maxFiles": 300
+                }
+              - stateMachineArn: !Ref SentinelMetadataProcessorStateMachine
 
   #################################################
   # CloudWatch Events END

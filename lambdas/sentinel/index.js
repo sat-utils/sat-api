@@ -94,30 +94,28 @@ function transform(data, callback) {
   getSentinelInfo(tileMetaUrl).then((info) => {
     info = info.body;
     record.scene_id = getSceneId(date, mgrs);
-    record.original_scene_id = data.GRANULE_ID;
+    record.product_id = data.PRODUCT_ID;
     record.satellite_name = 'Sentinel-2A';
     record.cloud_coverage = parseFloat(data.CLOUD_COVER);
     record.date = date.format('YYYY-MM-DD');
     record.thumbnail = `${tileBaseUrl}/preview.jpg`;
+    record.data_geometry = reproject(info.tileDataGeometry);
+    record.download_links = {
+      'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
+    };
+    record.original_scene_id = data.GRANULE_ID;
     record.data_coverage_percentage = info.dataCoveragePercentage;
     record.cloudy_pixel_percentage = info.cloudyPixelPercentage;
     record.utm_zone = parsedMgrs.utm_zone;
     record.latitude_band = parsedMgrs.latitude_band;
     record.grid_square = parsedMgrs.grid_square;
-    record.product_name = data.PRODUCT_ID;
     record.product_path = info.productPath;
     record.timestamp = info.timestamp;
     record.spacecraft_name = record.satellite_name;
     record.product_meta_link = `${getProductUrl(date, record.product_name)}/metadata.xml`;
-
-    record.download_links = {
-      'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
-    };
-
     record.original_tile_meta = tileMetaUrl;
     record.aws_path = tilePath;
     record.tile_geometry = reproject(info.tileGeometry);
-    record.data_geometry = reproject(info.tileDataGeometry);
     record.tileOrigin = reproject(info.tileOrigin);
 
     callback(null, record);
