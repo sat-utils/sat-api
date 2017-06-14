@@ -38,6 +38,8 @@ Run the function with the below payload to create the elasticsearch index with a
 }
 ```
 
+You should also go the APIGateway console, select the sat-api, click on the Binary Support menu on the left and then add '*' as the Binary media type.
+
 You can find the API's url in your ApiGateway service page. To populate elasticsearch, go to CloudWatch/rules and activate the landsat and sentinel scheduled events. This will run the updater every 12 hours.
 
 ### Updates
