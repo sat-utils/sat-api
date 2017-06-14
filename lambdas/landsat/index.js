@@ -1,7 +1,6 @@
 'use strict';
 
 const path = require('path');
-const url = require('url');
 const moment = require('moment');
 const pad = require('lodash.padstart');
 const local = require('kes/src/local');
