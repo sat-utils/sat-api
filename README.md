@@ -6,7 +6,7 @@
 
 A live version of this API is deployed to https://api.developmentseed.org/satellites.
 
-Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/tree/gh-pages).
+Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/).
 
 This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data.
 
