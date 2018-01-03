@@ -4,24 +4,22 @@
 
 *One API to search public Satellites metadata*
 
-A live version of this API is deployed to https://api.developmentseed.org/satellites.
-
-## Documentation
+This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://api.developmentseed.org/satellites.
 
 Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/).
 
-This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data.
-
 ## Develop
 
-To further develop a deployed version of the API, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
+To further develop the API, install dependenceis with yarn, then build the files for deployment.
 
     $ yarn install
     $ yarn run watch
 
-## Deploy:
+Running 'yarn run watch' will continually watch the source files and update the distribution files as needed. The distribution files are made with webpack and are what end up getting deployed as Lambda function source code.
 
-### New deployment:
+## Deployment
+
+First, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
 
 You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
 
@@ -46,20 +44,12 @@ You should also go the APIGateway console, select the sat-api, click on the Bina
 
 You can find the API's url in your ApiGateway service page. To populate elasticsearch, go to CloudWatch/rules and activate the landsat and sentinel scheduled events. This will run the updater every 12 hours.
 
-### Updates
-
 If you make changes to the source code, use command below to update with CloudFormation:
 
     $ kes cf update
 
-`develop` branch is deployed to staging.
 
-`master` is deployed to production.
-
-
-## API usage
-
-### Examples
+## API Usage Examples
 
 * search globally for Sentinel 2 coverage for 1st of January 2017
   `https://api.developmentseed.org/satellites/?limit=100&satellite_name=sentinel-2&date_from=2017-01-01&date_to=2017-01-02`
@@ -71,5 +61,5 @@ If you make changes to the source code, use command below to update with CloudFo
   `https://api.developmentseed.org/satellites/?limit=100$satellite_name=landsat-8&date_from=2017-01-01&intersects={"type":"Polygon","coordinates":[[[12.10968017578125,55.443037320687935],[12.94189453125,55.443037320687935],[12.94189453125,55.85064987433714],[12.10968017578125,55.85064987433714],[12.10968017578125,55.443037320687935]]]}`
 
 ## About
-The Sat API was made by [Development Seed](http://developmentseed.org).
+[sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).
 
