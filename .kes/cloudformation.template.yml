@@ -253,7 +253,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'rate(12 hours)'
-      State: 'DISABLED'
+      State: 'ENABLED'
       Targets:
         - Id: ProcessLandsatScenesScheduler
           Arn: !Ref SplitFilesStateMachine
@@ -272,7 +272,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'rate(12 hours)'
-      State: 'DISABLED'
+      State: 'ENABLED'
       Targets:
         - Id: ProcessSentinelScenesScheduler
           Arn: !Ref SplitFilesStateMachine
