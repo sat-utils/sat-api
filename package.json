@@ -54,7 +54,7 @@
     "fast-csv": "^2.4.0",
     "got": "^7.0.0",
     "http-aws-es": "^1.1.3",
-    "kes": "^0.0.2-beta-4",
+    "kes": "^2.0.1",
     "lambda-proxy-utils": "^1.2.4",
     "lodash.get": "^4.4.2",
     "lodash.padstart": "^4.6.1",
