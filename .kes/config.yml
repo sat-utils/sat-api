@@ -1,93 +1,45 @@
 default:
-  stackName: sat-api-dev
-  stage: dev
-
-  buckets:
-    internal: sat-api-dev
-
-  elasticsearch_main_index: sat-api
-
-  apis:
-    - name: satellites
-
-  lambdas:
-    - name: landsat
-      handler: landsat.handler
-      timeout: 300
-    - name: sentinel
-      handler: sentinel.handler
-      timeout: 300
-    - name: split
-      handler: split.handler
-      timeout: 300
-    - name: manager
-      handler: manager.handler
-      timeout: 300
-    - name: api
-      handler: api.handler
-      timeout: 100
-      apiGateway:
-        - api: satellites
-          path: 'main'
-          method: get
-        - api: satellites
-          path: 'main'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/count'
-          method: get
-        - api: satellites
-          path: 'main/landsat'
-          method: get
-        - api: satellites
-          path: 'main/landsat'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/sentinel'
-          method: get
-        - api: satellites
-          path: 'main/sentinel'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/geojson'
-          method: get
-        - api: satellites
-          path: 'main/geojson'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/health'
-          method: get
-
-prod:
-  stackName: sat-api
-  stage: prod
+  stackName: sat-api-legacy
 
   buckets:
     internal: sat-api
 
-  elasticsearch_main_index: sat-api
+  capabilities:
+    - CAPABILITY_IAM
+
+  es:
+    name: es5
+    elasticSearchMapping: 4
+    version: 5.3
+    instanceCount: 2
+    instanceType: m3.medium.elasticsearch
+    volumeSize: 80
 
   apis:
     - name: satellites
 
   lambdas:
     - name: landsat
+      source: 'dist/landsat/'
       handler: landsat.handler
       timeout: 300
     - name: sentinel
+      source: 'dist/sentinel/'
       handler: sentinel.handler
       timeout: 300
     - name: split
+      source: 'dist/split/'
       handler: split.handler
       timeout: 300
+      envs:
+        bucket: '{{buckets.internal}}'
+        prefix: '{{stackName}}'
     - name: manager
+      source: 'dist/manager/'
       handler: manager.handler
       timeout: 300
     - name: api
+      source: 'dist/api/'
       handler: api.handler
       timeout: 100
       apiGateway:
@@ -124,10 +76,7 @@ prod:
           cors: true
         - api: satellites
           path: 'main/health'
-          method: get  
+          method: get
 
-
-
-
-
-
+production:
+  stackName: sat-api-test
