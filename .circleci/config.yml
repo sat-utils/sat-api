@@ -90,4 +90,5 @@ jobs:
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
               kes cf deploy -r us-east-1 -d production
-            fi   
+            fi
+          no_output_timeout: "30m"
