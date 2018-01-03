@@ -44,7 +44,6 @@ references:
       paths:
         ~/project/dist
 
-
 jobs:
   build:
     <<: *container
@@ -56,7 +55,9 @@ jobs:
       - *restore_dependencies
       - run:
           name: Installing Dependencies
-          command: npm install
+          command: |
+            npm install
+            npm install -g kes
       - *save_dependencies
 
       - *restore_build
