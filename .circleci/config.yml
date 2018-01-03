@@ -44,6 +44,14 @@ references:
       paths:
         ~/project/dist
 
+  save_env: &save_env
+    run:
+      name: Creating .env for environment variables
+      command: |
+        echo "AWS_REGION=$AWS_REGION" >> .env
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env
+
 jobs:
   build:
     <<: *container
@@ -65,6 +73,8 @@ jobs:
           name: Building
           command: npm run build
       - *save_build
+
+      - *save_env
 
       - run:
           name: Deploy to staging
