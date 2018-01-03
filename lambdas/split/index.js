@@ -21,7 +21,8 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
   let lineLength = 0;
   let currentFile;
   let stopSplitting = false;
-  const bucket = process.env.internal || 'devseed-kes-deployment';
+  const bucket = process.env.bucket || 'sat-api';
+  const prefix = process.env.prefix || 'sat-api-dev';
 
   switch (satellite) {
     case 'landsat':
@@ -36,7 +37,7 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
 
   const build = function buildFile(line) {
     if (!stopSplitting) {
-      const fileName = `csv/${satellite}/${satellite}_${fileCounter}.csv`;
+      const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
 
       // get the csv header
       if (fileCounter === 0 && lineCounter === 0) {
@@ -107,7 +108,7 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
       stateMachineArn: arn,
       input: JSON.stringify({
         bucket,
-        key: `csv/${satellite}`,
+        key: `${prefix}/csv/${satellite}`,
         satellite,
         currentFileNum: first,
         lastFileNum: last,
