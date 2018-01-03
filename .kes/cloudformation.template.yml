@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'stack: {{stackName}} | stage: {{stage}} | deployed by Kes'
-Parameters:
-  ConfigS3Bucket:
-    Type: String
-    Description: S3 bucket that holds deployment artifacts
-  ArtifactPath:
-    Type: String
-    Description: Path within the deployment bucket containing artifacts
+Description: 'stack: {{stackName}} | deployed by Kes'
+#Parameters:
+#  ConfigS3Bucket:
+#    Type: String
+#    Description: S3 bucket that holds deployment artifacts
+#  ArtifactPath:
+#    Type: String
+#    Description: Path within the deployment bucket containing artifacts
 
 Resources:
   # role for Lambdas that are NOT used with APIGateway
@@ -67,7 +67,7 @@ Resources:
                 - kinesis:PutRecords
                 - kinesis:ListStreams
                 Resource:
-                - 'arn:aws:kinesis:*:*:stream/{{stackName}}-{{stage}}-*'
+                - 'arn:aws:kinesis:*:*:stream/{{stackName}}-*'
 
               # Allow access to step functions
               - Effect: Allow
@@ -124,23 +124,24 @@ Resources:
                 Resource:
                   - !Ref SplitFilesStateMachine
 
+{{# if es.name}}
   #################################################
   # ElasticSearch config BEGIN
   #################################################
-  ElasticsearchDomain:
+  {{es.name}}Domain:
     Type: "AWS::Elasticsearch::Domain"
     Properties:
-      DomainName: {{stackName}}-{{stage}}-sat-api
-      ElasticsearchVersion: 5.3
+      DomainName: {{stackName}}-{{es.name}}
+      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}5.3{{/if}}
       ElasticsearchClusterConfig:
-        InstanceCount: "2"
-        InstanceType: "m3.medium.elasticsearch"
+        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
+        InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
       SnapshotOptions:
         AutomatedSnapshotStartHour: "0"
       EBSOptions:
         EBSEnabled: true
         VolumeType: gp2
-        VolumeSize: 80
+        VolumeSize: {{es.volumeSize}}
       AdvancedOptions:
         rest.action.multi.allow_explicit_index: "true"
       AccessPolicies:
@@ -148,31 +149,20 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              AWS:
-                - Fn::GetAtt:
-                  - LambdaRole
-                  - Arn
+              AWS: !GetAtt [LambdaRole, Arn]
             Action: "es:*"
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{stage}}-sat-api/*"
-
-        {{# if localEnvs.LOCAL_IP }}
-          # this will allow access to your elasticsearch instance from the specified IP
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
           - Effect: "Allow"
             Principal:
-              AWS: '*'
+              AWS: !GetAtt [EventRole, Arn]
             Action: "es:*"
             Resource:
-              - !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{stage}}-sat-api/*"
-            Condition:
-              IpAddress:
-                aws:SourceIp:
-                  - '{{localEnvs.LOCAL_IP}}'
-        {{/if}}
-
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
   #################################################
   # ElasticSearch config END
   #################################################
+{{/if}}
 
   #################################################
   # Step Functions BEGIN
@@ -316,7 +306,7 @@ Resources:
     Properties:
       RestApiId:
         Ref: {{name}}RestApi
-      StageName: {{../stage}}
+      StageName: stage
 {{/each}}
 
 {{#each apiMethods}}
@@ -397,7 +387,7 @@ Resources:
   {{name}}RestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: {{../stackName}}-{{../stage}}-{{name}}
+      Name: {{../stackName}}-{{name}}
 {{/each}}
 {{/if}}
 
@@ -413,39 +403,35 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: !Ref ConfigS3Bucket
-        S3Key: !Sub {{../stackName}}-{{../stage}}/${ArtifactPath}/lambda/{{zipFile}}.zip
-      FunctionName: {{../stackName}}-{{../stage}}-{{name}}
-      {{#if ../envsList}}
+        S3Bucket: {{../buckets.internal}}
+        S3Key: {{remote}}
+      FunctionName: {{../stackName}}-{{name}}
+    {{# if envs}}
       Environment:
         Variables:
-          ES_HOST:
-            Fn::GetAtt:
-              - ElasticsearchDomain
-              - DomainEndpoint
-          ES_INDEX: {{../elasticsearch_main_index}}
-        {{#each ../envsList}}
-          {{key}}: !Sub {{value}}
+          stackName: {{../stackName}}
+        {{#each envs}}
+          {{@key}}: {{this}}
         {{/each}}
       {{/if}}
       Handler: {{handler}}
       MemorySize: {{memory}}
-      Role:
-        Fn::GetAtt:
-          - LambdaRole
-          - Arn
-      Runtime: nodejs6.10
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs6.10{{/if}}
       Timeout: {{timeout}}
+      Tags:
+        - Key: Project
+          Value: {{../stackName}}
 
 {{# if apiGateway }}
-  {{name}}LambdaApiGatewayPermission:
+  {{name}}LambdaPermissionApiGateway:
     Type: AWS::Lambda::Permission
     Properties:
+      Action: lambda:InvokeFunction
       FunctionName:
         Fn::GetAtt:
-          - {{name}}LambdaFunction
-          - Arn
-      Action: lambda:InvokeFunction
+        - {{name}}LambdaFunction
+        - Arn
       Principal: apigateway.amazonaws.com
 {{/if}}
 
@@ -453,4 +439,3 @@ Resources:
   #################################################
   # Lambda config END
   #################################################
-
