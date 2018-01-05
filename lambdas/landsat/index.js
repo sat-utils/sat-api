@@ -159,13 +159,15 @@ function transform (data, callback = () => {}) {
 }
 
 function handler (event, context, cb) {
+  console.log('Landsat handler')
   metadata.update(event, transform, cb);
 }
 
 local.localRun(() => {
+  console.log('running locally')
   const a = {
-    bucket: 'devseed-kes-deployment',
-    key: 'csv/landsat',
+    bucket: 'sat-api',
+    key: 'test/csv/landsat',
     satellite: 'landsat',
     currentFileNum: 0,
     lastFileNum: 100,
