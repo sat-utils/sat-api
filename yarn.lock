@@ -1383,9 +1383,9 @@ elasticsearch@^11.0.1:
     lodash-compat "^3.0.0"
     promise "^7.1.1"
 
-elasticsearch@^13.0.1:
-  version "13.0.1"
-  resolved "https://registry.yarnpkg.com/elasticsearch/-/elasticsearch-13.0.1.tgz#fa58204233052c4cd221e8721e48f3906b385b32"
+elasticsearch@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/elasticsearch/-/elasticsearch-14.0.0.tgz#560317ca87121a73c0895818ae291f5553857bda"
   dependencies:
     agentkeepalive "^2.2.0"
     chalk "^1.0.0"

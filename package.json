@@ -48,7 +48,7 @@
   "dependencies": {
     "async.queue": "^0.5.2",
     "aws-sdk": "^2.57.0",
-    "elasticsearch": "^13.0.1",
+    "elasticsearch": "^14.0.0",
     "electron": "^1.6.10",
     "epsg": "^0.3.0",
     "fast-csv": "^2.4.0",
