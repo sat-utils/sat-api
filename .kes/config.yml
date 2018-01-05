@@ -21,26 +21,26 @@ default:
   lambdas:
     - name: landsat
       source: 'dist/landsat/'
-      handler: landsat.handler
+      handler: index.handler
       timeout: 300
     - name: sentinel
       source: 'dist/sentinel/'
-      handler: sentinel.handler
+      handler: index.handler
       timeout: 300
     - name: split
       source: 'dist/split/'
-      handler: split.handler
+      handler: index.handler
       timeout: 300
       envs:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
     - name: manager
       source: 'dist/manager/'
-      handler: manager.handler
+      handler: index.handler
       timeout: 300
     - name: api
       source: 'dist/api/'
-      handler: api.handler
+      handler: index.handler
       timeout: 100
       apiGateway:
         - api: satellites
