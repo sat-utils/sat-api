@@ -4,6 +4,10 @@
 
 *One API to search public Satellites metadata*
 
+# sat-api Legacy
+
+This is the legacy (<=2.0) version of sat-api. Going forward, sat-api will support the [STAC](https://medium.com/@cholmes/announcing-the-spatiotemporal-asset-catalog-stac-specification-1db58820b9cf). The legacy version of sat-api supports Landsat and Sentinel-2.
+
 This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://api.developmentseed.org/satellites.
 
 Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/).
@@ -15,21 +19,24 @@ To further develop the API, install dependenceis with yarn, then build the files
     $ yarn install
     $ yarn run watch
 
-Running 'yarn run watch' will continually watch the source files and update the distribution files as needed. The distribution files are made with webpack and are what end up getting deployed as Lambda function source code.
+Running 'yarn run watch' will continually watch the source files and update the distribution files as needed. The distribution files are made using webpack and are deployed as the the Lambda function source code.
 
 ## Deployment
 
 First, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
 
-You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
+- You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
+- Update `.kes/config.yml` and enter the name of the bucket. Also, if you want to access the elasticsearch instance directly from fixed IP address, copy `.env.example` to `.env` and add your IP address there. Replace us-east-1 with any AWS region.
 
-Update `.kes/config.yml` and enter the name of the bucket. Also, if you want to access the elasticsearch instance directly from fixed IP address, copy `.env.example` to `.env` and add your IP address there.
+    $ kes cf deploy -r us-east-1
 
-There are more configurations that you can update on `.kes/config.yml` before deployment.
+This will deploy the CloudFormation stack, which includes API Gateway, Lambda functions, Step Functions, CloudWatch Rules, Elasticsearch, and associated IAM Roles. Additional calls of 'kes cf deploy' will update the existing CloudFormation stack.
 
-    $ kes cf create
+The Landsat and Sentinel ingestors are run as Step Functions every 12 hours, as can be seen under the CloudWatch Rules console. They can be disabled from the console.
 
-Then go to your AWS Lambda Console and open the `sat-api-dev-manager` function.
+### post-deployment
+
+In the AWS Lambda console open the `stackName-manager` function, where stackName is the name of the CloudFormation stack deployed.
 
 Run the function with the below payload to create the elasticsearch index with approporiate mapping:
 
@@ -41,13 +48,6 @@ Run the function with the below payload to create the elasticsearch index with a
 ```
 
 You should also go the APIGateway console, select the sat-api, click on the Binary Support menu on the left and then add `'*'` as the Binary media type.
-
-You can find the API's url in your ApiGateway service page. To populate elasticsearch, go to CloudWatch/rules and activate the landsat and sentinel scheduled events. This will run the updater every 12 hours.
-
-If you make changes to the source code, use command below to update with CloudFormation:
-
-    $ kes cf update
-
 
 ## API Usage Examples
 
