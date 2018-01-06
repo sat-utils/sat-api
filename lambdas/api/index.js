@@ -9,7 +9,7 @@ let esClient;
 
 function search(action, req, cb) {
   const s = new Api(req, esClient);
-  const encoding = get(req, 'headers.Accept-Encoding', null);
+  //const encoding = get(req, 'headers.Accept-Encoding', null);
 
   s[action](function (err, resp) {
     if (err) {
@@ -18,7 +18,8 @@ function search(action, req, cb) {
       return cb(null, res.send({ details: err.message }));
     }
     const res = new util.Response({ cors: true, statusCode: 200 });
-
+    return cb(null, res.send(resp));
+    /*
     if (encoding && encoding.includes('gzip')) {
       zlib.gzip(JSON.stringify(resp), function(error, gzipped) {
         //if(error) context.fail(error);
@@ -37,6 +38,7 @@ function search(action, req, cb) {
     else {
       return cb(null, res.send(resp));
     }
+    */
   });
 }
 
@@ -233,6 +235,7 @@ function getAction(resource) {
  * }
  */
 module.exports.handler = function (event, context, cb) {
+  console.log('API handler');
   const method = event.httpMethod;
   const payload = { query: {}, headers: event.headers };
   const action = getAction(event.resource);
@@ -245,6 +248,7 @@ module.exports.handler = function (event, context, cb) {
   }
 
   if (!esClient) {
+    console.log('connecting to ES');
     es.connect().then((client) => {
       esClient = client;
       search(action, payload, cb);

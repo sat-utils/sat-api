@@ -64,6 +64,7 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
 
         s3.upload(params, (e, d) => console.log(e, d));
         currentFile.end();
+        console.log(`uploaded ${fileName}`)
 
         lineCounter = 0; // start counting the lines again
         fileCounter += 1;
