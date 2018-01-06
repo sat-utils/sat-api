@@ -17,9 +17,9 @@ Documentation is available at http://docs.sat-utils.org/ and can be contributed 
 To further develop the API, install dependenceis with yarn, then build the files for deployment.
 
     $ yarn install
-    $ yarn run watch
+    $ yarn build
 
-Running 'yarn run watch' will continually watch the source files and update the distribution files as needed. The distribution files are made using webpack and are deployed as the the Lambda function source code.
+This will build the files that are used for deployment, using webpack and are deployed as the the Lambda function source code. Running 'yarn run watch' instead of in addition to 'yarn build' will continually watch the source files and update the distribution files as needed. 
 
 ## Deployment
 
