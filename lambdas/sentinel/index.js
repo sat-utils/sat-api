@@ -53,7 +53,7 @@ function getTileUrl(tilePath) {
   return `${awsBaseUrl}/${tilePath}`;
 }
 
-async function getSentinelInfo(url) {
+async function getSentinelInfo(url, callback) {
   return got(url, { json: true });
 }
 
@@ -80,6 +80,7 @@ function reproject(geojson) {
   return geojson;
 }
 
+
 function transform(data, callback) {
   const record = {};
   const date = moment(data.SENSING_TIME);
@@ -90,6 +91,8 @@ function transform(data, callback) {
   const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`;
   const bands = range(1, 13).map(i => pad(i, 3, 'B0'));
   bands.push('B8A');
+
+  console.log(mgrs, tileMetaUrl);
 
   getSentinelInfo(tileMetaUrl).then((info) => {
     info = info.body;
@@ -117,10 +120,11 @@ function transform(data, callback) {
     record.aws_path = tilePath;
     record.tile_geometry = reproject(info.tileGeometry);
     record.tileOrigin = reproject(info.tileOrigin);
-
     callback(null, record);
   }).catch(e => callback(e));
+
 }
+
 
 function handler(event, context, cb) {
   metadata.update(event, transform, cb);
@@ -131,8 +135,8 @@ local.localRun(() => {
     bucket: 'devseed-kes-deployment',
     key: 'csv/sentinel',
     satellite: 'sentinel',
-    currentFileNum: 200,
-    lastFileNum: 200,
+    currentFileNum: 72,
+    lastFileNum: 72,
     direction: 'desc',
     arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
   };
