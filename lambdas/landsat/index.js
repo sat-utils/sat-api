@@ -214,7 +214,7 @@ function transform (data, callback = () => {}) {
       customFields.aws_thumbnail = val.thumbnail;
       customFields.aws_index = val.index;    
     }).catch(e => {
-      return callback(`${scene_id} not found on AWS`);
+      return callback(`${customFields.scene_id} not found on AWS`);
     });
     
 

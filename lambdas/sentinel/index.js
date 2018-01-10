@@ -92,8 +92,6 @@ function transform(data, callback) {
   const bands = range(1, 13).map(i => pad(i, 3, 'B0'));
   bands.push('B8A');
 
-  console.log(mgrs, tileMetaUrl);
-
   getSentinelInfo(tileMetaUrl).then((info) => {
     info = info.body;
     record.scene_id = getSceneId(date, mgrs);
