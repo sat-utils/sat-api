@@ -8,11 +8,12 @@ const pad = require('lodash.padstart');
 const moment = require('moment');
 const local = require('kes/src/local');
 const metadata = require('../../lib/metadata');
+var through2 = require('through2')
 
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
 
-function getSceneId(date, mgrs, version = 0) {
-  return `S2A_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
+function getSceneId(sat, date, mgrs, version = 0) {
+  return `${sat}_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
 }
 
 function parseMgrs(mgrs) {
@@ -80,8 +81,7 @@ function reproject(geojson) {
   return geojson;
 }
 
-
-function transform(data, callback) {
+function transform(data, encoding, next) {
   const record = {};
   const date = moment(data.SENSING_TIME);
   const mgrs = data.MGRS_TILE;
@@ -94,9 +94,10 @@ function transform(data, callback) {
 
   getSentinelInfo(tileMetaUrl).then((info) => {
     info = info.body;
-    record.scene_id = getSceneId(date, mgrs);
+    const sat = info.productName.slice(0, 3);
+    record.scene_id = getSceneId(sat, date, mgrs);
     record.product_id = data.PRODUCT_ID;
-    record.satellite_name = 'Sentinel-2A';
+    record.satellite_name = `Sentinel-2${sat.slice(-1)}`;
     record.cloud_coverage = parseFloat(data.CLOUD_COVER);
     record.date = date.format('YYYY-MM-DD');
     record.thumbnail = `${tileBaseUrl}/preview.jpg`;
@@ -118,23 +119,27 @@ function transform(data, callback) {
     record.aws_path = tilePath;
     record.tile_geometry = reproject(info.tileGeometry);
     record.tileOrigin = reproject(info.tileOrigin);
-    callback(null, record);
-  }).catch(e => callback(e));
-
+    this.push(record)
+    next()
+  }).catch(e => {
+    console.log(`error processing ${record.scene_id}: ${e}`)
+    next(e)
+  })
 }
 
-
 function handler(event, context, cb) {
-  metadata.update(event, transform, cb);
+  var _transform = through2.obj(transform)
+  console.log('Sentinel handler:', event)
+  metadata.update(event, _transform, cb);
 }
 
 local.localRun(() => {
   const a = {
-    bucket: 'devseed-kes-deployment',
-    key: 'csv/sentinel',
+    bucket: 'sat-api',
+    key: 'test',
     satellite: 'sentinel',
-    currentFileNum: 72,
-    lastFileNum: 72,
+    currentFileNum: 0,
+    lastFileNum: 0,
     direction: 'desc',
     arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
   };
