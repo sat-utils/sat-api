@@ -5,9 +5,10 @@ const path = require('path');
 const moment = require('moment');
 const pad = require('lodash.padstart');
 const _ = require('lodash');
+const AWS = require('aws-sdk')
 const local = require('kes/src/local');
 const metadata = require('../../lib/metadata');
-const Promise = require('bluebird');
+var through2 = require('through2')
 
 const bands = [
   'ANG.txt',
@@ -26,11 +27,7 @@ const bands = [
   'MTL.txt'
 ];
 
-function* ranges(...rangeDescriptors) {
-  for (const [min, max, step = 1] of rangeDescriptors)
-    for (let i = min; i < max; i += step)
-      yield i;
-}
+const s3 = new AWS.S3()
 
 function googleLinks(data) {
   const row = pad(data.row, 3, '0');
@@ -51,39 +48,35 @@ function googleLinks(data) {
   return { c1 };
 }
 
-function awsLinks_c1(data) {
-  const row = pad(data.row, 3, '0');
-  const _path = pad(data.path, 3, '0');
-  const sceneId = data.sceneID;;
-  const productId = data.LANDSAT_PRODUCT_ID;
-  const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`;
-  const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
-
-  const c1 = {
-    index: `${c1Base}/index.html`,
-    files: c1Files,
-    thumbnail: `${c1Base}/${productId}_thumb_large.jpg`
-  };
-
-  return { c1 };
-}
-
 //! Check to see if a URL exists
-function urlExists(url) {
+function fileExists(url) {
+  var params = {
+    Bucket: 'landsat-pds',
+    Key: url.slice(36)
+  }
   return new Promise(function(resolve, reject) {
+    s3.headObject(params, function (err, metadata) {  
+      if (err && err.code === 'NotFound') {
+        reject(url)
+      } else {
+        resolve(url)
+      }
+    })
+  })
+  /*return new Promise(function(resolve, reject) {
     got(url).then(response => {
       resolve(url);
     }).catch(e => {
       reject(url);
     });
-  });
+  });*/
 }
 
 //! iterate over an array synchronously, invoke function on each element 
 function arrayIterate(values, fn) {
   return new Promise(function(resolve, reject) {
     // Are there any values to check?
-    if(values.length === 0) {
+    if (values.length === 0) {
       // All were rejected
       reject();
     }
@@ -102,36 +95,49 @@ function arrayIterate(values, fn) {
   });
 }
 
-function awsLinks_pre(data) {
+function awsLinks(data) {
   const row = pad(data.row, 3, '0');
   const _path = pad(data.path, 3, '0');
-  const _sceneId = data.sceneID;
-  const sceneId = _sceneId.slice(0, -2);
-  const rev = _sceneId.slice(-2)
-  var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, sceneId)}`;
+  const sceneId = data.sceneID;
+  const productId = data.LANDSAT_PRODUCT_ID;
 
-  var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html');
+  const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`;
+  const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
 
-  return new Promise((resolve, reject) => {
-    arrayIterate(links, urlExists).then(val => {
-      
-      prefix = prefix + val.slice(-13, -11);
-      const pre = {
-        index: `${prefix}/index.html`,
-        files: bands.map((b) => `${prefix}_${b}`),
-        thumbnail: `${prefix}/${sceneId}_thumb_large.jpg`
-      };
-      resolve(pre);
-    }).catch(e => {
-      console.log(`${prefix} not found on AWS`);
-      console.log(e);
-      reject(`${prefix} not found on AWS`);
-    });    
-  })
+  const c1 = {
+    index: `${c1Base}/index.html`,
+    files: c1Files,
+    thumbnail: `${c1Base}/${productId}_thumb_large.jpg`
+  };
 
+  return new Promise(function(resolve, reject) {
+    // AWS doesn't include all C1 scenes, we return the old urls for
+    // any scenes that is before May 1 2017
+    info = {};
+    if (moment(data.acquisitionDate) > moment('2017-04-30')) {
+      resolve(c1)
+    } else {
+      const _sceneId = sceneId.slice(0, -2);
+      const rev = sceneId.slice(-2)
+      var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`;
+      var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html');
+
+      arrayIterate(links, fileExists).then(val => {
+        prefix = prefix + val.slice(-13, -11);
+        const pre = {
+          index: `${prefix}/index.html`,
+          files: bands.map((b) => `${prefix}_${b}`),
+          thumbnail: `${prefix}_thumb_large.jpg`
+        };
+        resolve(pre);
+      }).catch(e => {
+        reject(`${prefix} not available`);
+      });   
+    }
+  });
 }
 
-function transform (data, callback = () => {}) {
+function transform(data, encoding, next) {
   const numberFields = [
     'cloudCoverFull',
     'path',
@@ -151,12 +157,12 @@ function transform (data, callback = () => {}) {
     'sunAzimuth',
     'receivingStation',
     'imageQuality1',
-    'ROLL_ANGLE',
-    'GEOMETRIC_RMSE_MODEL',
-    'GEOMETRIC_RMSE_MODEL_X',
-    'GEOMETRIC_RMSE_MODEL_Y',
-    'COLLECTION_NUMBER',
-    'CLOUD_COVER_LAND'
+    //'ROLL_ANGLE',
+    //'GEOMETRIC_RMSE_MODEL',
+    //'GEOMETRIC_RMSE_MODEL_X',
+    //'GEOMETRIC_RMSE_MODEL_Y',
+    //'COLLECTION_NUMBER',
+    //'CLOUD_COVER_LAND'
   ];
 
   numberFields.forEach(f => {
@@ -197,55 +203,47 @@ function transform (data, callback = () => {}) {
     },
     aws_thumbnail: null,
     aws_index: null,
-    google_index: google.c1.index
+    google_index: google.c1.index,
   };
 
-  // AWS doesn't include all C1 scenes, we return the old urls for
-  // any scenes that is before May 1 2017
-  if (moment(customFields.date) > moment('2017-04-30')) {
-    const aws_c1 = awsLinks_c1(data);
-    customFields.download_links.aws_s3 = aws_c1.files;
-    customFields.aws_thumbnail = aws_c1.thumbnail;
-    customFields.aws_index = aws_c1.index;
-  }
-  else {
-    awsLinks_pre(data).then(val =>{
-      customFields.download_links.aws_s3 = val.files;
-      customFields.aws_thumbnail = val.thumbnail;
-      customFields.aws_index = val.index;    
-    }).catch(e => {
-      return callback(`${customFields.scene_id} not found on AWS`);
-    });
-    
+  delete data.cloudCoverFull
 
-  }
+  awsLinks(data).then((info) => {
+    //console.log('awslinks', info);
+    customFields.download_links.aws_s3 = info.files;
+    customFields.aws_thumbnail = info.thumbnail;
+    customFields.aws_index = info.index;
+    record = Object.assign({}, customFields, data)
+    this.push(record);
+    next()
+  }).catch(e => {
+    console.log(`error processing ${customFields.scene_id}: ${e}`)
+    next(e);
+  });
 
   //if (thumbnailUrl) {
-    //customFields.thumbnail = url.resolve(thumbnailUrl, `${data.LANDSAT_PRODUCT_ID}.jpg`);
+  //customFields.thumbnail = url.resolve(thumbnailUrl, `${data.LANDSAT_PRODUCT_ID}.jpg`);
   //}
-
-  return callback(null, Object.assign({}, customFields, data));
 }
 
 function handler (event, context, cb) {
-  console.log('Landsat handler')
-  metadata.update(event, transform, cb);
+  var _transform = through2({'objectMode': true, 'consume': true}, transform)
+  console.log('Landsat handler:', event)
+  metadata.update(event, _transform, cb);
 }
 
 local.localRun(() => {
-  console.log('running locally')
   const a = {
     bucket: 'sat-api',
-    key: 'sat-api-legacy/csv/landsat',
+    key: 'test',
     satellite: 'landsat',
-    currentFileNum: 100,
-    lastFileNum: 101,
+    currentFileNum: 11,
+    lastFileNum: 11,
     arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
   };
+  console.log('running locally')
 
-  handler(a, null, (e, r) => {
-    console.log(e, r);
-  });
+  handler(a, null, (e, r) => {});
 });
 
 module.exports.handler = handler;
