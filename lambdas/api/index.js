@@ -29,7 +29,8 @@ function search(action, req, cb) {
           isBase64Encoded: true,
           headers: {
             'Content-Type': 'application/json',
-            'Content-Encoding': 'gzip'
+            'Content-Encoding': 'gzip',
+            'Access-Control-Allow-Origin': '*'
           }
         };
         return cb(error, response);
