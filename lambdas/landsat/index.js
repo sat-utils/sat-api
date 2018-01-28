@@ -36,7 +36,7 @@ function googleLinks(data) {
   const productId = data.LANDSAT_PRODUCT_ID;
 
   const c1Console = `https://console.cloud.google.com/storage/browser/gcp-public-data-landsat/LC08/${path.join(_path, row, productId)}`;
-  const c1Base = `https://storage.cloud.google.com/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
+  const c1Base = `https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
 
   const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
 
