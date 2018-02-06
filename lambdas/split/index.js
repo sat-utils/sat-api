@@ -9,20 +9,49 @@ const local = require('kes/src/local');
 const stepfunctions = new AWS.StepFunctions();
 const s3 = new AWS.S3();
 
+
+function invokeLambda(satellite, firstFileNum, lastFileNum, arn, cb) {
+  const prefix = process.env.prefix || 'sat-api-dev'
+  const inputs = {
+    bucket: process.env.bucket || 'sat-api',
+    key: `${prefix}/csv/${satellite}`,
+    satellite,
+    currentFileNum: firstFileNum,
+    lastFileNum,
+    arn
+  }
+  const params = {
+    stateMachineArn: arn,
+    input: JSON.stringify(inputs),
+    name: `csv_${satellite}_${firstFileNum}_${Date.now()}`
+  }
+  stepfunctions.startExecution(params, function(err, data) {
+    console.log(`${params.name} step function launched: ${JSON.stringify(inputs)}`);
+    if (err) console.log(`step function launch error: ${err}`)
+  })
+}
+
+
 function split(satellite, arn, maxFiles, linesPerFile, cb) {
-  const lineBuffer = new Buffer(4096);
-  const gunzip = zlib.createGunzip();
-  let remoteCsv;
-  let newStream;
-  let fileCounter = 0;
-  let header;
-  linesPerFile = linesPerFile || 10000;
-  let lineCounter = 0;
-  let lineLength = 0;
-  let currentFile;
-  let stopSplitting = false;
-  const bucket = process.env.bucket || 'sat-api';
-  const prefix = process.env.prefix || 'sat-api-dev';
+
+  let fileCounter = 0
+  let lineCounter = 0
+  linesPerFile = linesPerFile || 500
+  arn = arn || ''
+
+  const maxLambdas = process.env.maxLambdas || 30
+  const bucket = process.env.bucket || 'sat-api'
+  const prefix = process.env.prefix || 'sat-api-dev'
+
+  const lineBuffer = new Buffer(4096)
+  const gunzip = zlib.createGunzip()
+  let remoteCsv
+  let newStream
+  let currentFile
+  let lineLength = 0
+  let stopSplitting = false
+  let header
+  let reverse = false
 
   switch (satellite) {
     case 'landsat':
@@ -32,52 +61,44 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
     case 'sentinel':
       remoteCsv = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz';
       newStream = got.stream(remoteCsv).pipe(gunzip);
+      reverse = true
       break;
   }
 
   const build = function buildFile(line) {
-    if (!stopSplitting) {
-      const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
+    const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
 
-      // get the csv header
-      if (fileCounter === 0 && lineCounter === 0) {
-        header = line.toString();
-      }
+    // get the csv header
+    if (fileCounter === 0 && lineCounter === 0) header = line.toString();
 
-      if (lineCounter === 0) {
-        currentFile = new stream.PassThrough();
-        currentFile.push(header);
-      }
-      else {
-        currentFile.push(line.toString());
-      }
+    // create a new file or add to existing
+    if (lineCounter === 0) {
+      currentFile = new stream.PassThrough();
+      currentFile.push(header);
+    } else {
+      currentFile.push(line.toString());
+    }
+    lineCounter += 1; // increment the filename
+    lineLength = 0; // reset the buffer
 
-      lineCounter += 1; // increment the filename
-      lineLength = 0; // reset the buffer
+    if (lineCounter > linesPerFile) {
+      const params = {
+        Body: currentFile,
+        Bucket: bucket,
+        Key: fileName
+      };
+      currentFile.end();
+      s3.upload(params, (e, d) => { if (e) console.log(e) })
+      lineCounter = 0 // start counting the lines again
+      if ((fileCounter) % 250 === 0) console.log(`uploaded ${fileCounter} files`)
+      fileCounter += 1
 
-      if (lineCounter > linesPerFile) {
-        const params = {
-          Body: currentFile,
-          Bucket: bucket,
-          Key: fileName
-        };
-
-        s3.upload(params, (e, d) => console.log(e, d));
-        currentFile.end();
-        console.log(`uploaded ${fileName}`)
-
-        lineCounter = 0; // start counting the lines again
-        fileCounter += 1;
-      }
-
-      // sentinel csv is ordered from old to new
-      // so we always have to go all the way back
-      if (fileCounter >= maxFiles && satellite !== 'sentinel') {
-        stopSplitting = true;
-        console.log(`Stop splitting files at ${fileCounter}`);
+      // sentinel csv is ordered from old to new so always have to go all the way back
+      if ((fileCounter >= maxFiles) && maxFiles != 0 && satellite != 'sentinel') {
+        stopSplitting = true
       }
     }
-  };
+  }
 
   newStream.on('data', (data) => {
     if (!stopSplitting) {
@@ -93,35 +114,30 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
   });
 
   newStream.on('end', () => {
-    currentFile.end();
-    let last = fileCounter - 1;
-    let first = 0;
-    let direction = 'asc';
-
-    if (satellite === 'sentinel') {
-      first = fileCounter - 1;
-      last = fileCounter - maxFiles;
-      if (last < 0) last = 0;
-      direction = 'desc';
+    // write the last records
+    if (lineCounter > 0) {
+        const params = {
+          Body: currentFile,
+          Bucket: bucket,
+          Key: `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`
+        };
+        s3.upload(params, (e, d) => { if (e) console.log(e) })
+        currentFile.end();
     }
-
-    const params = {
-      stateMachineArn: arn,
-      input: JSON.stringify({
-        bucket,
-        key: `${prefix}/csv/${satellite}`,
-        satellite,
-        currentFileNum: first,
-        lastFileNum: last,
-        direction,
-        arn
-      }),
-      name: `csv_${satellite}_0_${Date.now()}`
-    };
-    stepfunctions.startExecution(params, function(err, data) {
-      console.log('step function launched');
-      return cb(err, data);
-    });
+    console.log(`${fileCounter} total files`)
+    // determine batches and run lambdas
+    if (arn != '') {
+      maxFiles = (maxFiles === 0) ? fileCounter : maxFiles
+      var startFile = reverse ? fileCounter - maxFiles : 0
+      var endFile = reverse ? fileCounter - 1 : maxFiles - 1
+      var batchSize = Math.ceil(maxFiles / maxLambdas)
+      var numLambdas = Math.min(maxFiles, maxLambdas)
+      console.log(`Invoking ${numLambdas} batches of Lambdas up to ${batchSize} each (Files ${startFile}-${endFile})`)
+      for (var i = 0; i < numLambdas; i++) {
+        invokeLambda(satellite, startFile + i * batchSize, Math.min(startFile + (i+1) * batchSize-1, endFile), arn)
+      }
+    } 
+    cb()
   });
   newStream.on('error', e => cb(e));
 }
@@ -133,8 +149,8 @@ module.exports.handler = function (event, context, cb) {
 local.localRun(() => {
   const payload = {
     satellite: 'landsat',
-    arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:LandsatMetadataProcessorStateMachine-W8QZOZF1E6WN',
-    maxFiles: 1
+    arn: '',
+    maxFiles: 1,
   };
 
   module.exports.handler(payload, null, (e, r) => {
