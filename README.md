@@ -47,6 +47,13 @@ Run the function with the below payload to create the elasticsearch index with a
 }
 ```
 
+## Management Functions
+
+A Manager Lambda has been configured to enable certain management functions from within the AWS Lambda Console. Navigate to the Lambda functions console for the region the sat-api stack has been deployed to and locate the *stackName*-manager Lambda function. From here you can configure test events that consist of a JSON payload. The following functions are enabled:
+
+- 
+
+
 You should also go the APIGateway console, select the sat-api, click on the Binary Support menu on the left and then add `'*'` as the Binary media type.
 
 ## API Usage Examples
