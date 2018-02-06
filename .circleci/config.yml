@@ -79,7 +79,7 @@ jobs:
       - run:
           name: Deploy to staging
           command: |
-            if [ "${CIRCLE_BRANCH}" == "develop" ]; then
+            if [ "${CIRCLE_BRANCH}" == "_develop" ]; then
               VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
               kes cf deploy -r us-east-1
             fi          
