@@ -184,7 +184,7 @@ Resources:
                     {
                       "ErrorEquals": ["States.ALL"],
                       "IntervalSeconds": 5,
-                      "MaxAttempts": 2,
+                      "MaxAttempts": 1,
                       "BackoffRate": 2.0
                     }
                   ],
@@ -210,7 +210,7 @@ Resources:
                   "Retry": [{
                     "ErrorEquals": ["States.ALL"],
                     "IntervalSeconds": 2,
-                    "MaxAttempts": 3
+                    "MaxAttempts": 1
                   }],
                   "End": true
                 }
@@ -233,7 +233,7 @@ Resources:
                   "Retry": [{
                     "ErrorEquals": ["States.ALL"],
                     "IntervalSeconds": 2,
-                    "MaxAttempts": 3
+                    "MaxAttempts": 1
                   }],
                   "End": true
                 }
@@ -406,10 +406,10 @@ Resources:
         S3Bucket: {{../buckets.internal}}
         S3Key: {{remote}}
       FunctionName: {{../stackName}}-{{name}}
-    {{# if envs}}
       Environment:
         Variables:
           stackName: {{../stackName}}
+      {{# if envs}}
         {{#each envs}}
           {{@key}}: {{this}}
         {{/each}}

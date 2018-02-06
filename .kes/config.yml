@@ -8,9 +8,9 @@ default:
     - CAPABILITY_IAM
 
   es:
-    name: es5
+    name: es6
     elasticSearchMapping: 4
-    version: 5.3
+    version: '6.0'
     instanceCount: 2
     instanceType: m3.medium.elasticsearch
     volumeSize: 80
@@ -23,14 +23,22 @@ default:
       source: 'dist/landsat/'
       handler: index.handler
       timeout: 300
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: sentinel
       source: 'dist/sentinel/'
       handler: index.handler
       timeout: 300
+      memory: 192
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: split
       source: 'dist/split/'
       handler: index.handler
       timeout: 300
+      memory: 1024
       envs:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
@@ -38,6 +46,10 @@ default:
       source: 'dist/manager/'
       handler: index.handler
       timeout: 300
+      memory: 192
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: api
       source: 'dist/api/'
       handler: index.handler
