@@ -218,7 +218,7 @@ function transform(data, encoding, next) {
     next()
   }).catch(e => {
     console.log(`error processing ${customFields.scene_id}: ${e}`)
-    next(e);
+    next();
   });
 
   //if (thumbnailUrl) {

@@ -57,14 +57,15 @@ function getTileUrl(tilePath) {
 }
 
 function getSentinelInfo(url) {
-  return new Promise(function(resolve, reject) {
+  /*return new Promise(function(resolve, reject) {
     got(url, { json: true }).then(response => {
       resolve(response)
     }).catch(e => {
+      console.log(`error getting metadata: ${e}`)
       resolve()
     })
-  })
-  //return got(url, { json: true });
+  })*/
+  return got(url, { json: true });
 }
 
 function reproject(geojson) {
@@ -107,44 +108,39 @@ function transform(data, encoding, next) {
   const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`;
   const bands = range(1, 13).map(i => pad(i, 3, 'B0'));
   bands.push('B8A');
-
+  const util = require('util')
   getSentinelInfo(tileMetaUrl).then((info) => {
-    if (info == null) {
-      console.log(`error with ${tileMetaUrl}`)
-      next()
-    } else {
-      info = info.body;
-      const sat = info.productName.slice(0, 3);
-      record.scene_id = getSceneId(sat, date, mgrs);
-      record.product_id = data.PRODUCT_ID;
-      record.satellite_name = `Sentinel-2${sat.slice(-1)}`;
-      record.cloud_coverage = parseFloat(data.CLOUD_COVER);
-      record.date = date.format('YYYY-MM-DD');
-      record.thumbnail = `${tileBaseUrl}/preview.jpg`;     
-      record.download_links = {
-        'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
-      };
-      record.original_scene_id = data.GRANULE_ID;
-      record.data_geometry = reproject(info.tileDataGeometry)
-      record.data_coverage_percentage = info.dataCoveragePercentage.toString()
-      record.cloudy_pixel_percentage = info.cloudyPixelPercentage
-      record.utm_zone = parsedMgrs.utm_zone;
-      record.latitude_band = parsedMgrs.latitude_band;
-      record.grid_square = parsedMgrs.grid_square;
-      record.product_path = info.productPath;
-      record.timestamp = info.timestamp;
-      record.spacecraft_name = record.satellite_name;
-      record.product_meta_link = `${getProductUrl(date, record.product_name)}/metadata.xml`;
-      record.original_tile_meta = tileMetaUrl;
-      record.aws_path = tilePath;
-      record.tile_geometry = reproject(info.tileGeometry);
-      record.tileOrigin = reproject(info.tileOrigin);
-      this.push(record)
-      next()
-    }
+    info = info.body;
+    const sat = info.productName.slice(0, 3);
+    record.scene_id = getSceneId(sat, date, mgrs);
+    record.product_id = data.PRODUCT_ID;
+    record.satellite_name = `Sentinel-2${sat.slice(-1)}`;
+    record.cloud_coverage = parseFloat(data.CLOUD_COVER);
+    record.date = date.format('YYYY-MM-DD');
+    record.thumbnail = `${tileBaseUrl}/preview.jpg`;     
+    record.download_links = {
+      'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
+    };
+    record.original_scene_id = data.GRANULE_ID;
+    record.data_geometry = reproject(info.tileDataGeometry)
+    record.data_coverage_percentage = info.dataCoveragePercentage.toString()
+    record.cloudy_pixel_percentage = info.cloudyPixelPercentage
+    record.utm_zone = parsedMgrs.utm_zone;
+    record.latitude_band = parsedMgrs.latitude_band;
+    record.grid_square = parsedMgrs.grid_square;
+    record.product_path = info.productPath;
+    record.timestamp = info.timestamp;
+    record.spacecraft_name = record.satellite_name;
+    record.product_meta_link = `${getProductUrl(date, record.product_name)}/metadata.xml`;
+    record.original_tile_meta = tileMetaUrl;
+    record.aws_path = tilePath;
+    record.tile_geometry = reproject(info.tileGeometry);
+    record.tileOrigin = reproject(info.tileOrigin);
+    this.push(record)
+    next()
   }).catch(e => {
     // don't want to break stream, just log and continue
-    console.log(`error processing ${record.scene_id}: ${e.message}`)
+    console.log(`error processing ${data.PRODUCT_ID}: ${e}`)
     next()
   })
 }
@@ -160,8 +156,8 @@ local.localRun(() => {
     bucket: 'sat-api',
     key: 'test',
     satellite: 'sentinel',
-    currentFileNum: 0,
-    lastFileNum: 0,
+    currentFileNum: 100,
+    lastFileNum: 100,
     arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
   };
 
