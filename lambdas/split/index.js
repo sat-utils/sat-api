@@ -12,6 +12,7 @@ const s3 = new AWS.S3();
 
 function invokeLambda(satellite, firstFileNum, lastFileNum, arn, cb) {
   const prefix = process.env.prefix || 'sat-api-dev'
+  if (firstFileNum > lastFileNum) return
   const inputs = {
     bucket: process.env.bucket || 'sat-api',
     key: `${prefix}/csv/${satellite}`,
@@ -39,7 +40,7 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
   linesPerFile = linesPerFile || 500
   arn = arn || ''
 
-  const maxLambdas = process.env.maxLambdas || 30
+  const maxLambdas = process.env.maxLambdas || 20
   const bucket = process.env.bucket || 'sat-api'
   const prefix = process.env.prefix || 'sat-api-dev'
 
@@ -60,8 +61,8 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
       break;
     case 'sentinel':
       remoteCsv = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz';
-      newStream = got.stream(remoteCsv).pipe(gunzip);
       reverse = true
+      newStream = got.stream(remoteCsv).pipe(gunzip);
       break;
   }
 
@@ -90,7 +91,7 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
       currentFile.end();
       s3.upload(params, (e, d) => { if (e) console.log(e) })
       lineCounter = 0 // start counting the lines again
-      if ((fileCounter) % 250 === 0) console.log(`uploaded ${fileCounter} files`)
+      if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter} files`)
       fileCounter += 1
 
       // sentinel csv is ordered from old to new so always have to go all the way back
