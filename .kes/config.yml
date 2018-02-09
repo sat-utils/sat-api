@@ -54,6 +54,9 @@ default:
       source: 'dist/api/'
       handler: index.handler
       timeout: 100
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
       apiGateway:
         - api: satellites
           path: 'main'
