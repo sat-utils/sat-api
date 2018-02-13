@@ -1,5 +1,5 @@
 default:
-  stackName: sat-api-legacy
+  stackName: sat-api-v0
 
   buckets:
     internal: sat-api
@@ -9,7 +9,6 @@ default:
 
   es:
     name: es6
-    elasticSearchMapping: 4
     version: '6.0'
     instanceCount: 2
     instanceType: m3.medium.elasticsearch
@@ -23,6 +22,7 @@ default:
       source: 'dist/landsat/'
       handler: index.handler
       timeout: 300
+      memory: 512
       envs:
         ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
