@@ -1,13 +1,13 @@
-'use strict';
+'use strict'
 
-const got = require('got');
-const stream = require('stream');
-const AWS = require('aws-sdk');
-const zlib = require('zlib');
-const local = require('kes/src/local');
+const got = require('got')
+const stream = require('stream')
+const AWS = require('aws-sdk')
+const zlib = require('zlib')
+const local = require('kes/src/local')
 
-const stepfunctions = new AWS.StepFunctions();
-const s3 = new AWS.S3();
+const stepfunctions = new AWS.StepFunctions()
+const s3 = new AWS.S3()
 
 
 function invokeLambda(satellite, firstFileNum, lastFileNum, arn, cb) {
@@ -33,14 +33,15 @@ function invokeLambda(satellite, firstFileNum, lastFileNum, arn, cb) {
 }
 
 
-function split(satellite, arn, maxFiles, linesPerFile, cb) {
+function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
 
   let fileCounter = 0
   let lineCounter = 0
   linesPerFile = linesPerFile || 500
+  maxLambdas = maxLambdas || 20
   arn = arn || ''
 
-  const maxLambdas = process.env.maxLambdas || 20
+  
   const bucket = process.env.bucket || 'sat-api'
   const prefix = process.env.prefix || 'sat-api-dev'
 
@@ -56,31 +57,31 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
 
   switch (satellite) {
     case 'landsat':
-      remoteCsv = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv';
-      newStream = got.stream(remoteCsv);
-      break;
+      remoteCsv = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv'
+      newStream = got.stream(remoteCsv)
+      break
     case 'sentinel':
-      remoteCsv = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz';
+      remoteCsv = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
       reverse = true
-      newStream = got.stream(remoteCsv).pipe(gunzip);
-      break;
+      newStream = got.stream(remoteCsv).pipe(gunzip)
+      break
   }
 
   const build = function buildFile(line) {
     const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
 
     // get the csv header
-    if (fileCounter === 0 && lineCounter === 0) header = line.toString();
+    if (fileCounter === 0 && lineCounter === 0) header = line.toString()
 
     // create a new file or add to existing
     if (lineCounter === 0) {
-      currentFile = new stream.PassThrough();
-      currentFile.push(header);
+      currentFile = new stream.PassThrough()
+      currentFile.push(header)
     } else {
-      currentFile.push(line.toString());
+      currentFile.push(line.toString())
     }
-    lineCounter += 1; // increment the filename
-    lineLength = 0; // reset the buffer
+    lineCounter += 1 // increment the filename
+    lineLength = 0 // reset the buffer
 
     if (lineCounter > linesPerFile) {
       const params = {
@@ -105,14 +106,14 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
     if (!stopSplitting) {
       const dataLen = data.length;
       for (let i = 0; i < dataLen; i++) {
-        lineBuffer[lineLength] = data[i]; // Buffer new line data.
+        lineBuffer[lineLength] = data[i] // Buffer new line data.
         lineLength++;
         if (data[i] === 10) { // Newline char was found.
-          build(lineBuffer.slice(0, lineLength));
+          build(lineBuffer.slice(0, lineLength))
         }
       }
     }
-  });
+  })
 
   newStream.on('end', () => {
     // write the last records
@@ -129,32 +130,37 @@ function split(satellite, arn, maxFiles, linesPerFile, cb) {
     // determine batches and run lambdas
     if (arn != '') {
       maxFiles = (maxFiles === 0) ? fileCounter : maxFiles
-      var startFile = reverse ? fileCounter - maxFiles : 0
-      var endFile = reverse ? fileCounter - 1 : maxFiles - 1
-      var batchSize = Math.ceil(maxFiles / maxLambdas)
       var numLambdas = Math.min(maxFiles, maxLambdas)
-      console.log(`Invoking ${numLambdas} batches of Lambdas up to ${batchSize} each (Files ${startFile}-${endFile})`)
+      var batchSize = Math.floor(maxFiles / maxLambdas)
+      var extra = maxFiles % numLambdas
+      var maxEndFile = reverse ? fileCounter - 1 : maxFiles - 1
+      
+      var startFile = reverse ? fileCounter - maxFiles : 0
+      var endFile
+      console.log(`Invoking ${numLambdas} batches of Lambdas up to ${batchSize} each (Files ${startFile}-${maxEndFile})`)
       for (var i = 0; i < numLambdas; i++) {
-        invokeLambda(satellite, startFile + i * batchSize, Math.min(startFile + (i+1) * batchSize-1, endFile), arn)
+        endFile = (i < extra) ? startFile + batchSize: startFile + batchSize - 1
+        invokeLambda(satellite, startFile, Math.min(endFile, maxEndFile), arn)
+        startFile = endFile + 1
       }
-    } 
+    }
     cb()
-  });
-  newStream.on('error', e => cb(e));
+  })
+  newStream.on('error', e => cb(e))
 }
 
 module.exports.handler = function (event, context, cb) {
-  split(event.satellite, event.arn, event.maxFiles, event.linesPerFile, cb);
-};
+  split(event.satellite, event.arn, event.maxFiles, event.linesPerFile, event.maxLambdas, cb)
+}
 
 local.localRun(() => {
   const payload = {
     satellite: 'landsat',
     arn: '',
     maxFiles: 1,
-  };
+  }
 
   module.exports.handler(payload, null, (e, r) => {
-    console.log(e, r);
-  });
-});
+    console.log(e, r)
+  })
+})
