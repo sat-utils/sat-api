@@ -41,7 +41,6 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
   maxLambdas = maxLambdas || 20
   arn = arn || ''
 
-  
   const bucket = process.env.bucket || 'sat-api'
   const prefix = process.env.prefix || 'sat-api-dev'
 
@@ -92,7 +91,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
       currentFile.end();
       s3.upload(params, (e, d) => { if (e) console.log(e) })
       lineCounter = 0 // start counting the lines again
-      if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter} files`)
+      if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter + 1} files`)
       fileCounter += 1
 
       // sentinel csv is ordered from old to new so always have to go all the way back
