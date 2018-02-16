@@ -130,7 +130,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
     if (arn != '') {
       maxFiles = (maxFiles === 0) ? fileCounter : maxFiles
       var numLambdas = Math.min(maxFiles, maxLambdas)
-      var batchSize = Math.floor(maxFiles / maxLambdas)
+      var batchSize = Math.floor(maxFiles / numLambdas)
       var extra = maxFiles % numLambdas
       var maxEndFile = reverse ? fileCounter - 1 : maxFiles - 1
       
