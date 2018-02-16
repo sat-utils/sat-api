@@ -186,40 +186,49 @@ function transform(data, encoding, next) {
     ]]
   };
 
-  const google = googleLinks(data);
+  const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
+  const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
+  if (leftLong > rightLong) {
+    //console.log(`error processing ${data.sceneID}: Geometry crosses Prime Meridian (${JSON.stringify(data_geometry)})`)
+    console.log(`${data.sceneID} geometry crosses Prime Meridian (${JSON.stringify(data_geometry)})`)
+    //next()
+  }
+  //} else {
+    const google = googleLinks(data);
 
-  const customFields = {
-    scene_id: data.sceneID,
-    product_id: data.LANDSAT_PRODUCT_ID,
-    satellite_name: 'landsat-8',
-    cloud_coverage: data.cloudCoverFull,
-    date: data.acquisitionDate,
-    thumbnail: data.browseURL,
-    data_geometry,
-    download_links: {
-      usgs: `https://earthexplorer.usgs.gov/download/12864/${data.sceneID}/STANDARD/EE`,
-      aws_s3: [],
-      google: google.c1.files
-    },
-    aws_thumbnail: null,
-    aws_index: null,
-    google_index: google.c1.index,
-  };
+    const customFields = {
+      scene_id: data.sceneID,
+      product_id: data.LANDSAT_PRODUCT_ID,
+      satellite_name: 'landsat-8',
+      cloud_coverage: data.cloudCoverFull,
+      date: data.acquisitionDate,
+      thumbnail: data.browseURL,
+      data_geometry,
+      download_links: {
+        usgs: `https://earthexplorer.usgs.gov/download/12864/${data.sceneID}/STANDARD/EE`,
+        aws_s3: [],
+        google: google.c1.files
+      },
+      aws_thumbnail: null,
+      aws_index: null,
+      google_index: google.c1.index,
+    };
 
-  delete data.cloudCoverFull
+    delete data.cloudCoverFull
 
-  awsLinks(data).then((info) => {
-    //console.log('awslinks', info);
-    customFields.download_links.aws_s3 = info.files;
-    customFields.aws_thumbnail = info.thumbnail;
-    customFields.aws_index = info.index;
-    record = Object.assign({}, customFields, data)
-    this.push(record);
-    next()
-  }).catch(e => {
-    console.log(`error processing ${customFields.scene_id}: ${e}`)
-    next();
-  });
+    awsLinks(data).then((info) => {
+      //console.log('awslinks', info)
+      customFields.download_links.aws_s3 = info.files
+      customFields.aws_thumbnail = info.thumbnail
+      customFields.aws_index = info.index
+      record = Object.assign({}, customFields, data)
+      this.push(record)
+      next()
+    }).catch(e => {
+      console.log(`error processing ${customFields.scene_id}: ${e}`)
+      next()
+    })
+  //}
 
   //if (thumbnailUrl) {
   //customFields.thumbnail = url.resolve(thumbnailUrl, `${data.LANDSAT_PRODUCT_ID}.jpg`);
@@ -229,7 +238,7 @@ function transform(data, encoding, next) {
 function handler (event, context, cb) {
   var _transform = through2({'objectMode': true, 'consume': true}, transform)
   console.log('Landsat handler:', event)
-  metadata.update(event, _transform, cb);
+  metadata.update(event, _transform, cb)
 }
 
 local.localRun(() => {
