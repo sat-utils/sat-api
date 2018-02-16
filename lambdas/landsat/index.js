@@ -188,12 +188,11 @@ function transform(data, encoding, next) {
 
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
-  if (leftLong > rightLong) {
+  if (Math.abs(rightLong - leftLong) > 300) {
     //console.log(`error processing ${data.sceneID}: Geometry crosses Prime Meridian (${JSON.stringify(data_geometry)})`)
-    console.log(`${data.sceneID} geometry crosses Prime Meridian (${JSON.stringify(data_geometry)})`)
-    //next()
-  }
-  //} else {
+    console.log(`error: ${data.sceneID} looks like a bad geometry (${JSON.stringify(data_geometry)})`)
+    next()
+  } else {
     const google = googleLinks(data);
 
     const customFields = {
@@ -228,7 +227,7 @@ function transform(data, encoding, next) {
       console.log(`error processing ${customFields.scene_id}: ${e}`)
       next()
     })
-  //}
+  }
 
   //if (thumbnailUrl) {
   //customFields.thumbnail = url.resolve(thumbnailUrl, `${data.LANDSAT_PRODUCT_ID}.jpg`);
