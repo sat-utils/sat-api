@@ -22,7 +22,7 @@ default:
       source: 'dist/landsat/'
       handler: index.handler
       timeout: 300
-      memory: 512
+      memory: 768
       envs:
         ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
