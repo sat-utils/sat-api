@@ -189,8 +189,7 @@ function transform(data, encoding, next) {
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
   if (Math.abs(rightLong - leftLong) > 300) {
-    //console.log(`error processing ${data.sceneID}: Geometry crosses Prime Meridian (${JSON.stringify(data_geometry)})`)
-    console.log(`error: ${data.sceneID} looks like a bad geometry (${JSON.stringify(data_geometry)})`)
+    console.log(`error: ${data.sceneID} crosses 180th Meridian (${JSON.stringify(data_geometry)})`)
     next()
   } else {
     const google = googleLinks(data);
