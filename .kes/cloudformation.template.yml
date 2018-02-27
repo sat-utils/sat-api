@@ -252,7 +252,7 @@ Resources:
   ProcessLandsatScenes:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: 'rate(12 hours)'
+      ScheduleExpression: 'cron(0 6,18 * * ? *)'
       State: 'ENABLED'
       Targets:
         - Id: ProcessLandsatScenesScheduler
@@ -271,7 +271,7 @@ Resources:
   ProcessSentinelScenes:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: 'rate(12 hours)'
+      ScheduleExpression: 'cron(0 0,12 * * ? *)'
       State: 'ENABLED'
       Targets:
         - Id: ProcessSentinelScenesScheduler
