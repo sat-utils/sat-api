@@ -30,7 +30,7 @@ default:
       source: 'dist/sentinel/'
       handler: index.handler
       timeout: 300
-      memory: 192
+      memory: 512
       envs:
         ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
