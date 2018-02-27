@@ -138,7 +138,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
       
       var startFile = reverse ? fileCounter - maxFiles + 1: 1
       var endFile
-      console.log(`Invoking ${numLambdas} batches of Lambdas of ${batchSize} files each (Files ${startFile}-${maxEndFile})`)
+      console.log(`Invoking ${numLambdas} batches of Lambdas of ${batchSize} files each with ${extra} extra (Files ${startFile}-${maxEndFile})`)
       for (var i = 0; i < numLambdas; i++) {
         endFile = (i < extra) ? startFile + batchSize: startFile + batchSize - 1
         invokeLambda(satellite, startFile, Math.min(endFile, maxEndFile), arn)
