@@ -3860,9 +3860,9 @@ safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.1.tgz#893312af69b2123def71f57889001671eeb2c853"
 
-sat-api-lib@^0.5.0:
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/sat-api-lib/-/sat-api-lib-0.5.0.tgz#4f1d8fcf35d15993a9916a80f30ae5899c3d27ae"
+sat-api-lib@^0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/sat-api-lib/-/sat-api-lib-0.5.2.tgz#07a1c69bb1cb6dacadd03979e90eea8feb94d752"
   dependencies:
     elasticsearch "^11.0.1"
     geojson-validation "^0.1.6"
