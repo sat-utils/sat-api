@@ -39,6 +39,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
   let lineCounter = 0
   linesPerFile = linesPerFile || 500
   maxLambdas = maxLambdas || 20
+  maxFiles = maxFiles || 0
   arn = arn || ''
 
   const bucket = process.env.bucket || 'sat-api'
@@ -67,7 +68,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
   }
 
   const build = function buildFile(line) {
-    const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
+    
 
     // get the csv header
     if (fileCounter === 0 && lineCounter === 0) header = line.toString()
@@ -83,6 +84,8 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
     lineLength = 0 // reset the buffer
 
     if (lineCounter > linesPerFile) {
+      fileCounter += 1
+      const fileName = `${prefix}/csv/${satellite}/${satellite}_${fileCounter}.csv`;
       const params = {
         Body: currentFile,
         Bucket: bucket,
@@ -91,9 +94,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
       currentFile.end();
       s3.upload(params, (e, d) => { if (e) console.log(e) })
       lineCounter = 0 // start counting the lines again
-      if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter + 1} files`)
-      fileCounter += 1
-
+      if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter} files`)
       // sentinel csv is ordered from old to new so always have to go all the way back
       if ((fileCounter >= maxFiles) && maxFiles != 0 && satellite != 'sentinel') {
         stopSplitting = true
@@ -117,6 +118,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
   newStream.on('end', () => {
     // write the last records
     if (lineCounter > 0) {
+        fileCounter += 1
         const params = {
           Body: currentFile,
           Bucket: bucket,
@@ -128,15 +130,15 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
     console.log(`${fileCounter} total files`)
     // determine batches and run lambdas
     if (arn != '') {
-      maxFiles = (maxFiles === 0) ? fileCounter : maxFiles
+      maxFiles = (maxFiles === 0) ? fileCounter : Math.min(maxFiles, fileCounter)
       var numLambdas = Math.min(maxFiles, maxLambdas)
       var batchSize = Math.floor(maxFiles / numLambdas)
       var extra = maxFiles % numLambdas
-      var maxEndFile = reverse ? fileCounter - 1 : maxFiles - 1
+      var maxEndFile = reverse ? fileCounter : maxFiles
       
-      var startFile = reverse ? fileCounter - maxFiles : 0
+      var startFile = reverse ? fileCounter - maxFiles + 1: 1
       var endFile
-      console.log(`Invoking ${numLambdas} batches of Lambdas up to ${batchSize} each (Files ${startFile}-${maxEndFile})`)
+      console.log(`Invoking ${numLambdas} batches of Lambdas of ${batchSize} files each (Files ${startFile}-${maxEndFile})`)
       for (var i = 0; i < numLambdas; i++) {
         endFile = (i < extra) ? startFile + batchSize: startFile + batchSize - 1
         invokeLambda(satellite, startFile, Math.min(endFile, maxEndFile), arn)
