@@ -55,7 +55,7 @@ function fileExists(url) {
     Key: url.slice(36)
   }
   return new Promise(function(resolve, reject) {
-    s3.headObject(params, function (err, metadata) {  
+    s3.headObject(params, function (err, metadata) {
       if (err && err.code === 'NotFound') {
         reject(url)
       } else {
@@ -72,6 +72,13 @@ function fileExists(url) {
   });*/
 }
 
+Array.prototype.swap = function (x,y) {
+  var b = this[x];
+  this[x] = this[y];
+  this[y] = b;
+  return this;
+}
+
 //! iterate over an array synchronously, invoke function on each element 
 function arrayIterate(values, fn) {
   return new Promise(function(resolve, reject) {
@@ -83,12 +90,10 @@ function arrayIterate(values, fn) {
     // Try the first value
     fn(values[0]).then(function(val) {
       // Resolved, we're all done
-      //console.log('Resolved ' + val);
       resolve(val);
     }).catch(function() {
       // Rejected, remove the first item from the array and recursively
       // try the next one
-      //console.log('Rejected ' + values[0]);
       values.shift();
       arrayIterate(values, fn).then(resolve).catch(reject);
     });
@@ -122,6 +127,9 @@ function awsLinks(data) {
       const rev = sceneId.slice(-2)
       var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`;
       var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html');
+      if (links.length > 1) {
+        links.swap(0, 1)
+      }
 
       arrayIterate(links, fileExists).then(val => {
         prefix = prefix + val.slice(-13, -11)
