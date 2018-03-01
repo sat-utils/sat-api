@@ -1,18 +1,21 @@
-'use strict';
+'use strict'
 
-const got = require('got');
-const proj4 = require('proj4');
-const epsg = require('epsg');
-const range = require('lodash.range');
-const pad = require('lodash.padstart');
-const moment = require('moment');
-const local = require('kes/src/local');
-const metadata = require('../../lib/metadata');
+const got = require('got')
+const proj4 = require('proj4')
+const epsg = require('epsg')
+const kinks = require('turf-kinks')
+const range = require('lodash.range')
+const pad = require('lodash.padstart')
+const moment = require('moment')
+const local = require('kes/src/local')
+const util = require('util')
+const metadata = require('../../lib/metadata')
+var through2 = require('through2')
 
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
 
-function getSceneId(date, mgrs, version = 0) {
-  return `S2A_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
+function getSceneId(sat, date, mgrs, version = 0) {
+  return `${sat}_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
 }
 
 function parseMgrs(mgrs) {
@@ -33,7 +36,7 @@ function getProductUrl(date, productId) {
     productId
   ];
 
-  return url.join('/');
+  return url.join('/')
 }
 
 function getTilePath(date, parsedMgrs) {
@@ -53,7 +56,15 @@ function getTileUrl(tilePath) {
   return `${awsBaseUrl}/${tilePath}`;
 }
 
-async function getSentinelInfo(url) {
+function getSentinelInfo(url) {
+  /*return new Promise(function(resolve, reject) {
+    got(url, { json: true }).then(response => {
+      resolve(response)
+    }).catch(e => {
+      console.log(`error getting metadata: ${e}`)
+      resolve()
+    })
+  })*/
   return got(url, { json: true });
 }
 
@@ -62,25 +73,32 @@ function reproject(geojson) {
     'urn:ogc:def:crs:', ''
   ).replace('8.8.1:', '');
   const from = epsg[crs];
-  const to = proj4.default('EPSG:4326');
+  //const to = proj4.default.defs('EPSG:4326', '+proj=longlat +datum=WGS84 +no_defs');
+  const to = '+proj=longlat +datum=WGS84 +over'
 
+  //console.log(`${geojson.type} ${JSON.stringify(geojson)}`)
   if (geojson.type === 'Polygon') {
-    return {
+    geojson = {
       type: 'Polygon',
       coordinates: [geojson.coordinates[0].map(c => proj4.default(from, to, c))]
     };
   }
   else if (geojson.type === 'Point') {
-    return {
+    geojson = {
       type: 'Point',
       coordinates: proj4.default(from, to, geojson.coordinates)
     };
+  } else {
+    throw Error(`cannot process non Point or Polygon geometries`)
+  }
+  if (kinks(geojson).features.length > 0) {
+    throw Error(`self-intersecting polygon`)
   }
 
-  return geojson;
+  return geojson
 }
 
-function transform(data, callback) {
+function transform(data, encoding, next) {
   const record = {};
   const date = moment(data.SENSING_TIME);
   const mgrs = data.MGRS_TILE;
@@ -90,22 +108,23 @@ function transform(data, callback) {
   const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`;
   const bands = range(1, 13).map(i => pad(i, 3, 'B0'));
   bands.push('B8A');
-
+  const util = require('util')
   getSentinelInfo(tileMetaUrl).then((info) => {
     info = info.body;
-    record.scene_id = getSceneId(date, mgrs);
+    const sat = info.productName.slice(0, 3);
+    record.scene_id = getSceneId(sat, date, mgrs);
     record.product_id = data.PRODUCT_ID;
-    record.satellite_name = 'Sentinel-2A';
+    record.satellite_name = `Sentinel-2${sat.slice(-1)}`;
     record.cloud_coverage = parseFloat(data.CLOUD_COVER);
     record.date = date.format('YYYY-MM-DD');
-    record.thumbnail = `${tileBaseUrl}/preview.jpg`;
-    record.data_geometry = reproject(info.tileDataGeometry);
+    record.thumbnail = `${tileBaseUrl}/preview.jpg`;     
     record.download_links = {
       'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
     };
     record.original_scene_id = data.GRANULE_ID;
-    record.data_coverage_percentage = info.dataCoveragePercentage;
-    record.cloudy_pixel_percentage = info.cloudyPixelPercentage;
+    record.data_geometry = reproject(info.tileDataGeometry)
+    record.data_coverage_percentage = info.dataCoveragePercentage.toString()
+    record.cloudy_pixel_percentage = info.cloudyPixelPercentage
     record.utm_zone = parsedMgrs.utm_zone;
     record.latitude_band = parsedMgrs.latitude_band;
     record.grid_square = parsedMgrs.grid_square;
@@ -117,29 +136,32 @@ function transform(data, callback) {
     record.aws_path = tilePath;
     record.tile_geometry = reproject(info.tileGeometry);
     record.tileOrigin = reproject(info.tileOrigin);
-
-    callback(null, record);
-  }).catch(e => callback(e));
+    this.push(record)
+    next()
+  }).catch(e => {
+    // don't want to break stream, just log and continue
+    console.log(`error processing ${data.PRODUCT_ID}: ${e}`)
+    next()
+  })
 }
 
 function handler(event, context, cb) {
-  metadata.update(event, transform, cb);
+  var _transform = through2({'objectMode': true}, transform)
+  console.log('Sentinel handler:', event)
+  metadata.update(event, _transform, cb);
 }
 
 local.localRun(() => {
   const a = {
-    bucket: 'devseed-kes-deployment',
-    key: 'csv/sentinel',
+    bucket: 'sat-api',
+    key: 'test',
     satellite: 'sentinel',
-    currentFileNum: 200,
-    lastFileNum: 200,
-    direction: 'desc',
+    currentFileNum: 100,
+    lastFileNum: 100,
     arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
   };
 
-  handler(a, null, (e, r) => {
-    console.log(e, r);
-  });
+  handler(a, null, (e, r) => {});
 });
 
 module.exports.handler = handler;

@@ -1,55 +1,70 @@
-## Satellite API
+# Satellite API
 
 [![CircleCI](https://circleci.com/gh/sat-utils/sat-api.svg?style=svg)](https://circleci.com/gh/sat-utils/sat-api)
 
 *One API to search public Satellites metadata*
 
-A live version of this API is deployed to https://api.developmentseed.org/satellites.
+**Note**: This is the legacy (<1.0) version of sat-api and lives on the *legacy* branch of [sat-api](https://github.com/sat-utils/sat-api). The legacy version of sat-search (<1.0) can be used as a client with this API.
 
-This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data.
+# sat-api
 
-### Develop
+This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://api.developmentseed.org/satellites.
 
-To further develop a deployed version of the API, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
+Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/).
 
-    $ yarn install
-    $ yarn run watch
+## Deployment
 
-## Deploy:
+First, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
 
-### New deployment:
+- You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
+- Update `.kes/config.yml` and enter the name of the bucket.
+- If direct access to the elasticsearch instance is needed from fixed IP address, copy `.env.example` to `.env` and add your IP address there.
+-  In the APIGateway console select the sat-api, click on the Binary Support menu on the left and add `'*'` as the Binary media type.
 
-You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
+    $ kes cf deploy -r us-east-1
+    
+Replace us-east-1 with any desired region. This will deploy the CloudFormation stack, which includes API Gateway, Lambda functions, Step Functions, CloudWatch Rules, Elasticsearch, and associated IAM Roles. Additional calls of 'kes cf deploy' will update the existing CloudFormation stack.
 
-Update `.kes/config.yml` and enter the name of the bucket. Also, if you want to access the elasticsearch instance directly from fixed IP address, copy `.env.example` to `.env` and add your IP address there.
+The Landsat and Sentinel ingestors are run as Step Functions every 12 hours (Landsat at 6:00 and 18:00, Sentinel at 0:00 and 12:00), as can be seen under the CloudWatch Rules console. They can be disabled from the console.
 
-There are more configurations that you can update on `.kes/config.yml` before deployment.
+## Elasticsearch Management
 
-    $ kes cf create
-
-Then go to your AWS Lambda Console and open the `sat-api-dev-manager` function.
-
-Run the function with the below payload to create the elasticsearch index with approporiate mapping:
+A Lambda function is included that provides Elasticsearch management functions from within the AWS Lambda Console. Navigate to the Lambda functions console for the region the sat-api stack has been deployed to and locate the *stackName*-manager Lambda function. From here you can configure test events that consist of a JSON payload.
 
 ```
 {
-   "action": "putMapping",
-   "index": "sat-api"
+    "action": action,
+    "index": "sat-api"
 }
 ```
 
-You can find the API's url in your ApiGateway service page. To populate elasticsearch, go to CloudWatch/rules and activate the landsat and sentinel scheduled events. This will run the updater every 12 hours.
+Unless it has been changed in the code, the main index used in the Elasticsearch instance will always be sat-api. The action parameter can be:
 
-### Updates
+- putMapping: Puts a new mapping for indexing. This is done automatically during ingestion if it does not already exist so should never need to be used directly.
+- deleteIndex: This deletes the index. Use with caution!
+- listIndices: This returns a list of all indices. Unless some have been added should include 'sat-api' and '.kibana'
+- reindex: Spawns a reindexing of all records
 
-If you make changes to the source code, use command below to update with CloudFormation:
+## Development
 
-    $ kes cf update
+To further develop the API, install dependenceis with yarn and build the files for deployment (using webpack). This creates moduels under dist/ that can be deployed as the Lambda function source code.
 
-`develop` branch is deployed to staging.
+    $ yarn install
+    $ yarn build
 
-`master` is deployed to production.
+    # to continually watch and build source files
+    $ yarn run watch
 
-### About
-The Sat API was made by [Development Seed](http://developmentseed.org).
+## API Usage Examples
 
+* search globally for Sentinel 2 coverage for 1st of January 2017
+  `https://api.developmentseed.org/satellites/?limit=100&satellite_name=sentinel-2&date_from=2017-01-01&date_to=2017-01-02`
+* search for Sentinel 2 tile '32UMG'
+  `https://api.developmentseed.org/satellites/?limit=100&search=scene_id:S2*201707*32UMG*`
+* search for Landsat 8 scenes that contain a lon,lat point and maximum cloud cover 20%
+  `https://api.developmentseed.org/satellites/?limit=100$satellite_name=landsat-8&contains=12.568337,55.676098&cloud_to=20`
+* search for Landsat 8 scenes since 2017-01-01 that intercect some GeoJSON polygon
+  `https://api.developmentseed.org/satellites/?limit=100$satellite_name=landsat-8&date_from=2017-01-01&intersects={"type":"Polygon","coordinates":[[[12.10968017578125,55.443037320687935],[12.94189453125,55.443037320687935],[12.94189453125,55.85064987433714],[12.10968017578125,55.85064987433714],[12.10968017578125,55.443037320687935]]]}`
+
+## About
+[sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).

@@ -1,65 +1,97 @@
-stackName: sat-api
-stage: dev
+default:
+  stackName: sat-api-v0
 
-buckets:
-  internal: sat-api
+  buckets:
+    internal: sat-api
 
-elasticsearch_main_index: sat-api
+  capabilities:
+    - CAPABILITY_IAM
 
-apis:
-  - name: satellites
+  es:
+    name: es6
+    version: '6.0'
+    instanceCount: 2
+    instanceType: m3.medium.elasticsearch
+    volumeSize: 80
 
-lambdas:
-  - name: landsat
-    handler: landsat.handler
-    timeout: 300
-  - name: sentinel
-    handler: sentinel.handler
-    timeout: 300
-  - name: split
-    handler: split.handler
-    timeout: 300
-  - name: manager
-    handler: manager.handler
-    timeout: 300
-  - name: api
-    handler: api.handler
-    timeout: 100
-    apiGateway:
-      - api: satellites
-        path: 'main'
-        method: get
-      - api: satellites
-        path: 'main'
-        method: post
-        cors: true
-      - api: satellites
-        path: 'main/count'
-        method: get
-      - api: satellites
-        path: 'main/landsat'
-        method: get
-      - api: satellites
-        path: 'main/landsat'
-        method: post
-        cors: true
-      - api: satellites
-        path: 'main/sentinel'
-        method: get
-      - api: satellites
-        path: 'main/sentinel'
-        method: post
-        cors: true
-      - api: satellites
-        path: 'main/geojson'
-        method: get
-      - api: satellites
-        path: 'main/geojson'
-        method: post
-        cors: true
-      - api: satellites
-        path: 'main/health'
-        method: get
+  apis:
+    - name: satellites
 
+  lambdas:
+    - name: landsat
+      source: 'dist/landsat/'
+      handler: index.handler
+      timeout: 300
+      memory: 1024
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+    - name: sentinel
+      source: 'dist/sentinel/'
+      handler: index.handler
+      timeout: 300
+      memory: 512
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+    - name: split
+      source: 'dist/split/'
+      handler: index.handler
+      timeout: 300
+      memory: 1024
+      envs:
+        bucket: '{{buckets.internal}}'
+        prefix: '{{stackName}}'
+    - name: manager
+      source: 'dist/manager/'
+      handler: index.handler
+      timeout: 300
+      memory: 192
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+    - name: api
+      source: 'dist/api/'
+      handler: index.handler
+      timeout: 100
+      envs:
+        ES_INDEX: 'sat-api'
+        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+      apiGateway:
+        - api: satellites
+          path: 'main'
+          method: get
+        - api: satellites
+          path: 'main'
+          method: post
+          cors: true
+        - api: satellites
+          path: 'main/count'
+          method: get
+        - api: satellites
+          path: 'main/landsat'
+          method: get
+        - api: satellites
+          path: 'main/landsat'
+          method: post
+          cors: true
+        - api: satellites
+          path: 'main/sentinel'
+          method: get
+        - api: satellites
+          path: 'main/sentinel'
+          method: post
+          cors: true
+        - api: satellites
+          path: 'main/geojson'
+          method: get
+        - api: satellites
+          path: 'main/geojson'
+          method: post
+          cors: true
+        - api: satellites
+          path: 'main/health'
+          method: get
 
-
+production:
+  stackName: sat-api-test

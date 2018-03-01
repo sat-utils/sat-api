@@ -1,16 +1,94 @@
 version: 2
-jobs:
-  build:
+
+references:
+  container: &container
     docker:
       - image: node:6.11
-    working_directory: ~/sat-api
-    steps:
-      - checkout
+    working_dir: ~/project
 
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v0-repo-{{ .Branch }}-{{ .Revision }}
+        - v0-repo-{{ .Branch }}
+        - v0-repo
+
+  save_repo: &save_repo
+    save_cache:
+      key: v0-repo-{{ .Branch }}-{{ .Revision }}
+      paths:
+        ~/project  
+
+  restore_dependencies: &restore_dependencies
+    restore_cache:
+      keys:
+        - v0-cache-{{ checksum "package.json" }}
+        - v0-cache
+
+  save_dependencies: &save_dependencies
+    save_cache:
+      key: v0-cache-{{ checksum "package.json" }}
+      paths:
+        ~/project/node_modules
+
+  restore_build: &restore_build
+    restore_cache:
+      keys:
+        - v0-build-{{ .Branch }}-{{ .Revision }}
+        - v0-build-{{ .Branch }}
+        - v0-build
+
+  save_build: &save_build
+    save_cache:
+      key: v0-build-{{ .Branch }}-{{ .Revision }}
+      paths:
+        ~/project/dist
+
+  save_env: &save_env
+    run:
+      name: Creating .env for environment variables
+      command: |
+        echo "AWS_REGION=$AWS_REGION" >> .env
+        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env
+        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env
+
+jobs:
+  build:
+    <<: *container
+    steps:
+      - *restore_repo
+      - checkout
+      - *save_repo
+
+      - *restore_dependencies
       - run:
           name: Installing Dependencies
-          command: npm install
+          command: |
+            npm install
+            npm install -g kes
+      - *save_dependencies
+
+      - *restore_build
+      - run:
+          name: Building
+          command: npm run build
+      - *save_build
+
+      - *save_env
 
       - run:
-          name: Running Test
-          command: npm run build
+          name: Deploy to staging
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "_develop" ]; then
+              VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+              kes cf deploy -r us-east-1
+            fi          
+
+      - run:
+          name: Deploy to production
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "_master" ]; then
+              VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+              kes cf deploy -r us-east-1 -d production
+            fi
+          no_output_timeout: "30m"
