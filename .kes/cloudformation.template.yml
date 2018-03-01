@@ -264,7 +264,9 @@ Resources:
                 {
                   "satellite": "landsat",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 10
+                  "maxFiles": 10,
+                  "maxLambdas": 15,
+                  "linesPerFile": 300
                 }
               - stateMachineArn: !Ref LandsatMetadataProcessorStateMachine
 
