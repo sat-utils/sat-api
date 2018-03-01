@@ -1,5 +1,5 @@
 default:
-  stackName: sat-api-v0
+  stackName: sat-api-v1-dev
 
   buckets:
     internal: sat-api
@@ -94,4 +94,4 @@ default:
           method: get
 
 production:
-  stackName: sat-api-test
+  stackName: sat-api-v1

@@ -253,7 +253,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'cron(0 6,18 * * ? *)'
-      State: 'ENABLED'
+      State: 'DISABLED'
       Targets:
         - Id: ProcessLandsatScenesScheduler
           Arn: !Ref SplitFilesStateMachine
@@ -274,7 +274,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'cron(0 0,12 * * ? *)'
-      State: 'ENABLED'
+      State: 'DISABLED'
       Targets:
         - Id: ProcessSentinelScenesScheduler
           Arn: !Ref SplitFilesStateMachine
