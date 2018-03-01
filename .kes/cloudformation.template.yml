@@ -264,7 +264,7 @@ Resources:
                 {
                   "satellite": "landsat",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 10,
+                  "maxFiles": 15,
                   "maxLambdas": 15,
                   "linesPerFile": 300
                 }
