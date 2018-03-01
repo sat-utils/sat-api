@@ -35,7 +35,7 @@ function googleLinks(data) {
   //const sceneId = data.sceneID;
   const productId = data.LANDSAT_PRODUCT_ID;
 
-  const c1Console = `https://console.cloud.google.com/storage/browser/gcp-public-data-landsat/LC08/${path.join(_path, row, productId)}`;
+  const c1Console = `https://console.cloud.google.com/storage/browser/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
   const c1Base = `https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
 
   const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
@@ -198,7 +198,7 @@ function transform(data, encoding, next) {
 
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
-  if (Math.abs(rightLong - leftLong) > 300) {
+  if (leftLong > rightLong) {
     console.log(`warning: skipping ${data.sceneID} for crossing 180th Meridian (${JSON.stringify(data_geometry)})`)
     next()
   } else {
@@ -252,11 +252,10 @@ function handler (event, context, cb) {
 local.localRun(() => {
   const a = {
     bucket: 'sat-api',
-    key: 'test',
+    key: 'testing',
     satellite: 'landsat',
-    currentFileNum: 11,
-    lastFileNum: 11,
-    arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
+    currentFileNum: 293222212,
+    lastFileNum: 293222212
   };
   console.log('running locally')
 
