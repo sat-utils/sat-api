@@ -1,10 +1,10 @@
 {
   "name": "sat-api",
-  "version": "0.3.0",
+  "version": "1.0.0a1",
   "description": "One API to search public Satellites metadata",
   "main": "index.js",
   "repository": "https://github.com/sat-utils/sat-api",
-  "author": "Alireza Jazayeri <alireza@developmentseed.org>",
+  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "scripts": {
     "build": "webpack --progress",

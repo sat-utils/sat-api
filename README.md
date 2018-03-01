@@ -4,8 +4,6 @@
 
 *One API to search public Satellites metadata*
 
-**Note**: This is the legacy (<1.0) version of sat-api and lives on the *legacy* branch of [sat-api](https://github.com/sat-utils/sat-api). The legacy version of sat-search (<1.0) can be used as a client with this API.
-
 # sat-api
 
 This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://api.developmentseed.org/satellites.
@@ -54,17 +52,6 @@ To further develop the API, install dependenceis with yarn and build the files f
 
     # to continually watch and build source files
     $ yarn run watch
-
-## API Usage Examples
-
-* search globally for Sentinel 2 coverage for 1st of January 2017
-  `https://api.developmentseed.org/satellites/?limit=100&satellite_name=sentinel-2&date_from=2017-01-01&date_to=2017-01-02`
-* search for Sentinel 2 tile '32UMG'
-  `https://api.developmentseed.org/satellites/?limit=100&search=scene_id:S2*201707*32UMG*`
-* search for Landsat 8 scenes that contain a lon,lat point and maximum cloud cover 20%
-  `https://api.developmentseed.org/satellites/?limit=100$satellite_name=landsat-8&contains=12.568337,55.676098&cloud_to=20`
-* search for Landsat 8 scenes since 2017-01-01 that intercect some GeoJSON polygon
-  `https://api.developmentseed.org/satellites/?limit=100$satellite_name=landsat-8&date_from=2017-01-01&intersects={"type":"Polygon","coordinates":[[[12.10968017578125,55.443037320687935],[12.94189453125,55.443037320687935],[12.94189453125,55.85064987433714],[12.10968017578125,55.85064987433714],[12.10968017578125,55.443037320687935]]]}`
 
 ## About
 [sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).
