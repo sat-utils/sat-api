@@ -171,12 +171,6 @@ function transform(data, encoding, next) {
 
   const data_geometry = { // eslint-disable-line camelcase
     type: 'Polygon',
-    crs: {
-      type: 'name',
-      properties: {
-        name: 'urn:ogc:def:crs:EPSG:8.9:4326'
-      }
-    },
     coordinates: [[
       [data.upperRightCornerLongitude, data.upperRightCornerLatitude],
       [data.upperLeftCornerLongitude, data.upperLeftCornerLatitude],
