@@ -6,7 +6,9 @@
 
 # sat-api
 
-This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://api.developmentseed.org/satellites.
+v1.0: This API uses Elastic Search as its engine and uses on AWS's Lambda and APIGateway to update and serve the data. A live API of the master branch is deployed to https://sat-api.developmentseed.org
+
+v0.3.0 (sat-api legacy): A sat-api legacy version can be found on the [legacy branch ](https://github.com/sat-utils/sat-api/tree/legacy) and is deployed at https://api.developmentseed.org/satellites.
 
 Documentation is available at http://docs.sat-utils.org/ and can be contributed to [here](https://github.com/sat-utils/sat-api-express/).
 
@@ -44,6 +46,8 @@ Unless it has been changed in the code, the main index used in the Elasticsearch
 - reindex: Spawns a reindexing of all records
 
 ## Development
+
+A live API of the develop branch is auto-deployed to https://sat-api-dev.developmentseed.org
 
 To further develop the API, install dependenceis with yarn and build the files for deployment (using webpack). This creates moduels under dist/ that can be deployed as the Lambda function source code.
 
