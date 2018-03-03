@@ -4,6 +4,9 @@ default:
   buckets:
     internal: sat-api
 
+  tags:
+    project: sat-api
+
   capabilities:
     - CAPABILITY_IAM
 
