@@ -62,18 +62,18 @@ default:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
       apiGateway:
         - api: satellites
-          path: 'main'
+          path: 'items'
           method: get
         - api: satellites
-          path: 'main'
+          path: 'items'
           method: post
           cors: true
         - api: satellites
-          path: 'main/count'
+          path: 'count'
           method: get
           cors: true
         - api: satellites
-          path: 'main/health'
+          path: 'health'
           method: get
 
 production:
