@@ -10,6 +10,10 @@ const local = require('kes/src/local');
 const metadata = require('../../lib/metadata');
 var through2 = require('through2')
 
+// s3 client
+const s3 = new AWS.S3()
+
+
 const bands = [
   'ANG.txt',
   'B1.TIF',
@@ -27,26 +31,6 @@ const bands = [
   'MTL.txt'
 ];
 
-const s3 = new AWS.S3()
-
-function googleLinks(data) {
-  const row = pad(data.row, 3, '0');
-  const _path = pad(data.path, 3, '0');
-  //const sceneId = data.sceneID;
-  const productId = data.LANDSAT_PRODUCT_ID;
-
-  const c1Console = `https://console.cloud.google.com/storage/browser/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
-  const c1Base = `https://storage.googleapis.com/gcp-public-data-landsat/LC08/01/${path.join(_path, row, productId)}`;
-
-  const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
-
-  const c1 = {
-    index: c1Console,
-    files: c1Files
-  };
-
-  return { c1 };
-}
 
 //! Check to see if a URL exists
 function fileExists(url) {
@@ -63,13 +47,6 @@ function fileExists(url) {
       }
     })
   })
-  /*return new Promise(function(resolve, reject) {
-    got(url).then(response => {
-      resolve(url);
-    }).catch(e => {
-      reject(url);
-    });
-  });*/
 }
 
 //! iterate over an array synchronously, invoke function on each element 
@@ -93,7 +70,9 @@ function arrayIterate(values, fn) {
   });
 }
 
+
 function awsLinks(data) {
+  // generates links for the data on AWS
   const row = pad(data.row, 3, '0');
   const _path = pad(data.path, 3, '0');
   const sceneId = data.sceneID;
@@ -137,7 +116,10 @@ function awsLinks(data) {
   });
 }
 
+
 function transform(data, encoding, next) {
+
+  // concert numeric fields to numbers
   const numberFields = [
     'cloudCoverFull',
     'path',
@@ -157,19 +139,18 @@ function transform(data, encoding, next) {
     'sunAzimuth',
     'receivingStation',
     'imageQuality1',
-    //'ROLL_ANGLE',
-    //'GEOMETRIC_RMSE_MODEL',
-    //'GEOMETRIC_RMSE_MODEL_X',
-    //'GEOMETRIC_RMSE_MODEL_Y',
-    //'COLLECTION_NUMBER',
-    //'CLOUD_COVER_LAND'
+    'ROLL_ANGLE',
+    'GEOMETRIC_RMSE_MODEL',
+    'GEOMETRIC_RMSE_MODEL_X',
+    'GEOMETRIC_RMSE_MODEL_Y',
+    'COLLECTION_NUMBER',
+    'CLOUD_COVER_LAND'
   ];
-
   numberFields.forEach(f => {
     data[f] = parseFloat(data[f]);
   });
 
-  const data_geometry = { // eslint-disable-line camelcase
+  const geometry = { // eslint-disable-line camelcase
     type: 'Polygon',
     coordinates: [[
       [data.upperRightCornerLongitude, data.upperRightCornerLatitude],
@@ -182,58 +163,46 @@ function transform(data, encoding, next) {
 
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
-  if (leftLong > rightLong) {
-    console.log(`warning: skipping ${data.sceneID} for crossing 180th Meridian (${JSON.stringify(data_geometry)})`)
+  if (leftLong < -1000000) { //> rightLong) {
+    console.log(`warning: skipping ${data.sceneID} for crossing 180th Meridian (${JSON.stringify(geometry)})`)
     next()
   } else {
-    const google = googleLinks(data);
-
-    const customFields = {
-      scene_id: data.sceneID,
-      product_id: data.LANDSAT_PRODUCT_ID,
-      satellite_name: 'landsat-8',
-      cloud_coverage: data.cloudCoverFull,
-      date: data.acquisitionDate,
-      thumbnail: data.browseURL,
-      data_geometry,
-      download_links: {
-        usgs: `https://earthexplorer.usgs.gov/download/12864/${data.sceneID}/STANDARD/EE`,
-        aws_s3: [],
-        google: google.c1.files
-      },
-      aws_thumbnail: null,
-      aws_index: null,
-      google_index: google.c1.index,
-    };
-
-    delete data.cloudCoverFull
-
     awsLinks(data).then((info) => {
-      //console.log('awslinks', info)
-      customFields.download_links.aws_s3 = info.files
-      customFields.aws_thumbnail = info.thumbnail
-      customFields.aws_index = info.index
-      record = Object.assign({}, customFields, data)
+      const record = {
+        id: data.sceneID,
+        provider: 'USGS',
+        license: 'landsatlicense',
+        geometry: geometry,
+        start: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
+        end: moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
+        links: [
+          {rel: 'thumbnail', 'href': info.thumbnail},
+          {rel: 'thumbnail', 'href': info.index},
+        ],
+        assets: info.files
+      }
+      console.log(`record: ${record.start}`)
       this.push(record)
       next()
     }).catch(e => {
-      console.log(`error processing ${customFields.scene_id}: ${e}`)
+      console.log(`error processing ${data.sceneID}: ${e}`)
       next()
     })
   }
-
-  //if (thumbnailUrl) {
-  //customFields.thumbnail = url.resolve(thumbnailUrl, `${data.LANDSAT_PRODUCT_ID}.jpg`);
-  //}
 }
 
-function handler (event, context, cb) {
+
+function handler (event, context=null, cb=function(){}) {
+  console.log(event)
+  // create stream from transform function
   var _transform = through2({'objectMode': true, 'consume': true}, transform)
-  console.log('Landsat handler:', event)
   metadata.update(event, _transform, cb)
 }
 
+
 local.localRun(() => {
+  console.log('running locally')
+  // test payload
   const a = {
     bucket: 'sat-api',
     key: 'testing',
@@ -241,9 +210,14 @@ local.localRun(() => {
     currentFileNum: 293222212,
     lastFileNum: 293222212
   };
-  console.log('running locally')
-
-  handler(a, null, (e, r) => {});
+  handler(a, null, (e, r) => {
+    if (err) {
+      console.log(`error: ${e}`)
+    } else {
+      console.log(`success: ${r}`)
+    }
+  });
 });
+
 
 module.exports.handler = handler;
