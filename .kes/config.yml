@@ -72,9 +72,6 @@ default:
           path: 'count'
           method: get
           cors: true
-        - api: satellites
-          path: 'health'
-          method: get
 
 production:
   stackName: sat-api-v1
