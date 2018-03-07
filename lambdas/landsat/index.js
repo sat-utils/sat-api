@@ -78,8 +78,9 @@ function awsLinks(data) {
   const sceneId = data.sceneID;
   const productId = data.LANDSAT_PRODUCT_ID;
 
-  const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`;
-  const c1Files = bands.map((b) => `${c1Base}/${productId}_${b}`);
+  const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
+  const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
+  //const c1Files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), `${c1Base}/${productId}_${b}`] }))
 
   const c1 = {
     index: `${c1Base}/index.html`,
@@ -105,7 +106,8 @@ function awsLinks(data) {
         sid = _sceneId + val.slice(-13, -11)
         const pre = {
           index: `${prefix}/index.html`,
-          files: bands.map((b) => `${prefix}/${sid}_${b}`),
+          files: bands.map((b) => [{name: b.slice(0, -4), href: `${prefix}/${sid}_${b}`}]),
+          //files: _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), `${prefix}/${sid}_${b}`] })),
           thumbnail: `${prefix}/${sid}_thumb_large.jpg`
         };
         resolve(pre);
@@ -168,20 +170,32 @@ function transform(data, encoding, next) {
     next()
   } else {
     awsLinks(data).then((info) => {
+      const start = moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS")
+      const end = moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS")
       const record = {
-        id: data.sceneID,
+        id: data.LANDSAT_PRODUCT_ID,
+        bbox: [
+          data.lowerLeftCornerLongitude, data.lowerLeftCornerLatitude, data.upperRightCornerLongitude, data.upperRightCornerLatitude
+        ],
+        geometry: geometry,
+        collection: 'landsat',
         provider: 'USGS',
         license: 'landsatlicense',
-        geometry: geometry,
         start: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
         end: moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
+        // eo extension metadata
+        //'datetime': (end - start)/2 + start
+        'eo.platform': 'landsat-8',
+        'eo.instrument': 'OLI_TIRS',
+        'eo.product': 'landsat-toa',
+        'eo.product_version': '1.0',
+        'eo.cloud_cover': data.cloudCoverFull
         links: [
           {rel: 'thumbnail', 'href': info.thumbnail},
-          {rel: 'thumbnail', 'href': info.index},
+          {rel: 'index', 'href': info.index},
         ],
         assets: info.files
       }
-      console.log(`record: ${record.start}`)
       this.push(record)
       next()
     }).catch(e => {
