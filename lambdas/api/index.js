@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
-const zlib = require('zlib');
-const Api = require('sat-api-lib');
-const util = require('lambda-proxy-utils');
-const get = require('lodash.get');
-const es = require('../../lib/es');
+const zlib = require('zlib')
+const Api = require('sat-api-lib')
+const util = require('lambda-proxy-utils')
+const get = require('lodash.get')
+const es = require('../../lib/es')
 let esClient;
 
 function search(action, req, cb) {
@@ -235,7 +235,7 @@ function getAction(resource) {
  * }
  */
 module.exports.handler = function (event, context, cb) {
-  console.log('API handler');
+  console.log(`API handler: ${JSON.stringify(event)}`)
   const method = event.httpMethod;
   const payload = { query: {}, headers: event.headers };
   const action = getAction(event.resource);
