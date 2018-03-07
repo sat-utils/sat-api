@@ -189,7 +189,7 @@ function transform(data, encoding, next) {
         'eo.instrument': 'OLI_TIRS',
         'eo.product': 'landsat-toa',
         'eo.product_version': '1.0',
-        'eo.cloud_cover': data.cloudCoverFull
+        'eo.cloud_cover': data.cloudCoverFull,
         links: [
           {rel: 'thumbnail', 'href': info.thumbnail},
           {rel: 'index', 'href': info.index},
