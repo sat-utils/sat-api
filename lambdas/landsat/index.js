@@ -79,13 +79,13 @@ function awsLinks(data) {
   const productId = data.LANDSAT_PRODUCT_ID;
 
   const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
-  const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
-  //const c1Files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), `${c1Base}/${productId}_${b}`] }))
+  //const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
+  const c1Files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), {href: `${c1Base}/${productId}_${b}`}] }))
+  c1Files.thumbnail = `${c1Base}/${productId}_thumb_large.jpg`
 
   const c1 = {
     index: `${c1Base}/index.html`,
-    files: c1Files,
-    thumbnail: `${c1Base}/${productId}_thumb_large.jpg`
+    files: c1Files
   };
 
   return new Promise(function(resolve, reject) {
@@ -98,17 +98,18 @@ function awsLinks(data) {
       const _sceneId = sceneId.slice(0, -2);
       var sid;
       const rev = sceneId.slice(-2)
-      var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`;
-      var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html');
+      var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
+      var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html')
+      var files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
+      files.thumbnail = `${prefix}/${sid}_thumb_large.jpg`
 
       arrayIterate(links.reverse(), fileExists).then(val => {
         prefix = prefix + val.slice(-13, -11)
         sid = _sceneId + val.slice(-13, -11)
         const pre = {
           index: `${prefix}/index.html`,
-          files: bands.map((b) => [{name: b.slice(0, -4), href: `${prefix}/${sid}_${b}`}]),
-          //files: _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), `${prefix}/${sid}_${b}`] })),
-          thumbnail: `${prefix}/${sid}_thumb_large.jpg`
+          //files: bands.map((b) => [{name: b.slice(0, -4), href: `${prefix}/${sid}_${b}`}]),
+          files: files
         };
         resolve(pre);
       }).catch(e => {
@@ -185,13 +186,13 @@ function transform(data, encoding, next) {
         end: moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
         // eo extension metadata
         //'datetime': (end - start)/2 + start
-        'eo.platform': 'landsat-8',
-        'eo.instrument': 'OLI_TIRS',
-        'eo.product': 'landsat-toa',
-        'eo.product_version': '1.0',
-        'eo.cloud_cover': data.cloudCoverFull,
+        'eo:platform': 'landsat-8',
+        'eo:instrument': 'OLI_TIRS',
+        'eo:product': 'landsat-toa',
+        'eo:product_version': '1.0',
+        'eo:cloud_cover': data.cloudCoverFull,
         links: [
-          {rel: 'thumbnail', 'href': info.thumbnail},
+          {rel: 'self', 'href': ''},
           {rel: 'index', 'href': info.index},
         ],
         assets: info.files
