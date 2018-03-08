@@ -27,7 +27,6 @@ default:
       timeout: 300
       memory: 1024
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: sentinel
       source: 'dist/sentinel/'
@@ -35,7 +34,6 @@ default:
       timeout: 300
       memory: 512
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: split
       source: 'dist/split/'
@@ -51,14 +49,12 @@ default:
       timeout: 300
       memory: 192
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: api
       source: 'dist/api/'
       handler: index.handler
       timeout: 100
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
       apiGateway:
         - api: stac
@@ -66,6 +62,7 @@ default:
           method: get
         - api: stac
           path: 'collections'
+          method: get
         - api: stac
           path: 'search/stac'
           method: get
