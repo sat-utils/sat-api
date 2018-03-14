@@ -235,7 +235,7 @@ function getAction(resource) {
  * }
  */
 module.exports.handler = function (event, context, cb) {
-  console.log('API handler');
+  console.log(`API handler: ${JSON.stringify(event)}`)
   const method = event.httpMethod;
   const payload = { query: {}, headers: event.headers };
   const action = getAction(event.resource);
