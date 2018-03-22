@@ -179,18 +179,16 @@ function transform(data, encoding, next) {
           data.lowerLeftCornerLongitude, data.lowerLeftCornerLatitude, data.upperRightCornerLongitude, data.upperRightCornerLatitude
         ],
         geometry: geometry,
-        collection: 'landsat',
+        collection: 'landsat-toa',
         provider: 'USGS',
         license: 'https://eros.usgs.gov/about-us/data-citation',
-        datetime: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
-        start: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
-        end: moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
+        datetime: start.toISOString(),
+        start: start.toISOString(),
+        end: end.toISOString(),
         // eo extension metadata
         //'datetime': (end - start)/2 + start
         'eo:platform': 'landsat-8',
         'eo:instrument': 'OLI_TIRS',
-        'eo:product': 'landsat-toa',
-        'eo:product_version': '1.0',
         'eo:cloud_cover': data.cloudCoverFull,
         links: [
           {rel: 'self', 'href': ''},
