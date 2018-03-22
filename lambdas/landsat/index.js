@@ -182,6 +182,7 @@ function transform(data, encoding, next) {
         collection: 'landsat',
         provider: 'USGS',
         license: 'https://eros.usgs.gov/about-us/data-citation',
+        datetime: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
         start: moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
         end: moment(data.sceneStopTime, "YYYY:DDD:HH:mm:ss.SSSSS").toISOString(),
         // eo extension metadata
