@@ -222,11 +222,11 @@ local.localRun(() => {
     bucket: 'sat-api',
     key: 'testing',
     satellite: 'landsat',
-    currentFileNum: 293222212,
-    lastFileNum: 293222212
+    currentFileNum: 1,
+    lastFileNum: 1
   }
 
-  handler(a, null, (e, r) => {
+  handler(a, null, (err, r) => {
     if (err) {
       console.log(`error: ${e}`)
     } else {
