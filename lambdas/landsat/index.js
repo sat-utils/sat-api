@@ -1,12 +1,12 @@
-'use strict';
+'use strict'
 
-const got = require('got');
-const path = require('path');
-const moment = require('moment');
-const pad = require('lodash.padstart');
-const _ = require('lodash');
+const got = require('got')
+const path = require('path')
+const moment = require('moment')
+const pad = require('lodash.padstart')
+const _ = require('lodash')
 const AWS = require('aws-sdk')
-const local = require('kes/src/local');
+const local = require('kes/src/local')
 const metadata = require('../../lib/metadata');
 var through2 = require('through2')
 
@@ -29,7 +29,7 @@ const bands = [
   'B11.TIF',
   'BQA.TIF',
   'MTL.txt'
-];
+]
 
 
 //! Check to see if a URL exists
@@ -55,28 +55,28 @@ function arrayIterate(values, fn) {
     // Are there any values to check?
     if (values.length === 0) {
       // All were rejected
-      reject();
+      reject()
     }
     // Try the first value
     fn(values[0]).then(function(val) {
       // Resolved, we're all done
-      resolve(val);
+      resolve(val)
     }).catch(function() {
       // Rejected, remove the first item from the array and recursively
       // try the next one
       values.shift();
       arrayIterate(values, fn).then(resolve).catch(reject);
-    });
-  });
+    })
+  })
 }
 
 
 function awsLinks(data) {
   // generates links for the data on AWS
-  const row = pad(data.row, 3, '0');
-  const _path = pad(data.path, 3, '0');
-  const sceneId = data.sceneID;
-  const productId = data.LANDSAT_PRODUCT_ID;
+  const row = pad(data.row, 3, '0')
+  const _path = pad(data.path, 3, '0')
+  const sceneId = data.sceneID
+  const productId = data.LANDSAT_PRODUCT_ID
 
   const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
   //const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
@@ -86,7 +86,7 @@ function awsLinks(data) {
   const c1 = {
     index: `${c1Base}/index.html`,
     files: c1Files
-  };
+  }
 
   return new Promise(function(resolve, reject) {
     // AWS doesn't include all C1 scenes, we return the old urls for
@@ -110,13 +110,13 @@ function awsLinks(data) {
           index: `${prefix}/index.html`,
           //files: bands.map((b) => [{name: b.slice(0, -4), href: `${prefix}/${sid}_${b}`}]),
           files: files
-        };
+        }
         resolve(pre);
       }).catch(e => {
         reject(`${prefix} not available`);
-      });   
+      })   
     }
-  });
+  })
 }
 
 
@@ -148,10 +148,10 @@ function transform(data, encoding, next) {
     'GEOMETRIC_RMSE_MODEL_Y',
     'COLLECTION_NUMBER',
     'CLOUD_COVER_LAND'
-  ];
+  ]
   numberFields.forEach(f => {
     data[f] = parseFloat(data[f]);
-  });
+  })
 
   const geometry = { // eslint-disable-line camelcase
     type: 'Polygon',
@@ -162,7 +162,7 @@ function transform(data, encoding, next) {
       [data.lowerRightCornerLongitude, data.lowerRightCornerLatitude],
       [data.upperRightCornerLongitude, data.upperRightCornerLatitude]
     ]]
-  };
+  }
 
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
@@ -224,15 +224,17 @@ local.localRun(() => {
     satellite: 'landsat',
     currentFileNum: 293222212,
     lastFileNum: 293222212
-  };
+  }
+
   handler(a, null, (e, r) => {
     if (err) {
       console.log(`error: ${e}`)
     } else {
       console.log(`success: ${r}`)
     }
-  });
-});
+  })
+
+})
 
 
-module.exports.handler = handler;
+module.exports.handler = handler
