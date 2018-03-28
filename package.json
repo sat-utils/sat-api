@@ -67,7 +67,7 @@
     "moment": "^2.18.1",
     "proj4": "^2.4.3",
     "pump": "^2.0.0",
-    "sat-api-lib": "^0.5.3",
+    "sat-api-lib": "^0.5.4",
     "through2": "0",
     "turf-kinks": "^3.0.12"
   },
