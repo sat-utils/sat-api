@@ -29,10 +29,10 @@ module.exports.handler = function (event, context, cb) {
   const method = event.httpMethod
   const payload = { query: {}, headers: event.headers }
   if (method === 'POST' && event.body) {
-    payload.query = JSON.parse(event.body);
+    payload.query = JSON.parse(event.body)
   }
   else if (method === 'GET' && event.queryStringParameters) {
-    payload.query = event.queryStringParameters;
+    payload.query = event.queryStringParameters
   }
     
   es.client().then((esClient) => {
@@ -42,12 +42,12 @@ module.exports.handler = function (event, context, cb) {
     
     search.search(function (err, resp) {
       if (err) {
-        console.log(err);
-        const res = new util.Response({ cors: true, statusCode: 400 });
-        return cb(null, res.send({ details: err.message }));
+        console.log(err)
+        const res = new util.Response({ cors: true, statusCode: 400 })
+        return cb(null, res.send({ details: err.message }))
       }
-      const res = new util.Response({ cors: true, statusCode: 200 });
-      return cb(null, res.send(resp));
+      const res = new util.Response({ cors: true, statusCode: 200 })
+      return cb(null, res.send(resp))
     }); 
   })
 }
