@@ -419,7 +419,7 @@ Resources:
       Handler: {{handler}}
       MemorySize: {{memory}}
       Role: !GetAtt LambdaRole.Arn
-      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs6.10{{/if}}
+      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{timeout}}
       Tags:
         - Key: Project
