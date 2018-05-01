@@ -1,7 +1,7 @@
 'use strict'
 
 const zlib = require('zlib')
-const Api = require('sat-api-lib')
+const api = require('sat-api-lib')
 const util = require('lambda-proxy-utils')
 const get = require('lodash.get')
 const es = require('../../lib/es')
@@ -37,10 +37,10 @@ module.exports.handler = function (event, context, cb) {
     
   es.client().then((esClient) => {
 
-    const s = new Api.search(payload, esClient);
+    const search = new api.search(payload, esClient);
     //const encoding = get(req, 'headers.Accept-Encoding', null);
     
-    s['search'](function (err, resp) {
+    search.search(function (err, resp) {
       if (err) {
         console.log(err);
         const res = new util.Response({ cors: true, statusCode: 400 });
