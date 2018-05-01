@@ -1,9 +1,9 @@
 'use strict'
-const csv = require('../../lib/metadata.js')
+const ingest = require('../../lib/ingest-csv')
 const local = require('kes/src/local')
 
 module.exports.handler = function (event, context, cb) {
-  csv.split(event.satellite, event.arn, event.maxFiles, event.linesPerFile, event.maxLambdas, cb)
+  ingest.split(event.satellite, event.arn, event.maxFiles, event.linesPerFile, event.maxLambdas, cb)
 }
 
 local.localRun(() => {

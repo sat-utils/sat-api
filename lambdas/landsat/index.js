@@ -7,7 +7,7 @@ const pad = require('lodash.padstart')
 const _ = require('lodash')
 const AWS = require('aws-sdk')
 const local = require('kes/src/local')
-const metadata = require('../../lib/metadata');
+const ingest = require('../../lib/ingest-csv');
 var through2 = require('through2')
 
 // s3 client
@@ -210,7 +210,7 @@ function handler (event, context=null, cb=function(){}) {
   console.log(event)
   // create stream from transform function
   var _transform = through2({'objectMode': true, 'consume': true}, transform)
-  metadata.update(event, _transform, cb)
+  ingest.update(event, _transform, cb)
 }
 
 
