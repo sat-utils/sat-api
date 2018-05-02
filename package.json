@@ -46,7 +46,6 @@
     ]
   },
   "dependencies": {
-    "async.queue": "^0.5.2",
     "aws-sdk": "^2.57.0",
     "bluebird": "^3.5.1",
     "dev-null": "^0.1.1",

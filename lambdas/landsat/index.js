@@ -216,7 +216,7 @@ function handler (event, context=null, cb=function(){}) {
   const lastFileNum = _.get(event, 'lastFileNum', 0)
   const arn = _.get(event, 'arn', null)
   const retries = _.get(event, 'retries', 0)
-  ingest.update({bucket, key, currentFileNum, lastFileNum, arn, retries, cb, transform:_transform}) 
+  ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
 }
 
 

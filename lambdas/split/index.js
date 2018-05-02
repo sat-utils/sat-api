@@ -11,12 +11,11 @@ const local = require('kes/src/local')
 }
 */
 
-
 module.exports.handler = function (event, context, cb) {
   const sat = event.satellite
   const bucket = process.env.bucket || 'sat-api'
-  let prefix = process.env.prefix || 'sat-api-dev'
-  prefix = `${prefix}/csv/${sat}/${sat}_`;
+  let key = process.env.prefix || 'sat-api-dev'
+  key = `${key}/csv/${sat}/${sat}`;
   let reverse = false
 
   switch (sat) {
@@ -29,12 +28,13 @@ module.exports.handler = function (event, context, cb) {
       break
   }
 
-  ingest.split({url, bucket, prefix, arn: event.arn, maxFiles: event.maxFiles,
+  ingest.split({url, bucket, key, arn: event.arn, maxFiles: event.maxFiles,
                 linesPerFile: event.linesPerFile, maxLambdas: event.maxLambdas, reverse, cb})
 }
 
 local.localRun(() => {
   const payload = {
+    satellite: 'landsat',
     arn: '',
     maxFiles: 1,
   }
