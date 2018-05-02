@@ -3,7 +3,7 @@
 const es = require('../../lib/es');
 
 module.exports.handler = function (event, context, cb) {
-  es.connect().then((client) => {
+  es.client().then((client) => {
     if (event.index && event.action) {
       if (event.action === 'putMapping') {
         return es.putMapping(client, event.index);

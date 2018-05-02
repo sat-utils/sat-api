@@ -210,7 +210,13 @@ function handler (event, context=null, cb=function(){}) {
   console.log(event)
   // create stream from transform function
   var _transform = through2({'objectMode': true, 'consume': true}, transform)
-  ingest.update(event, _transform, cb)
+  const bucket = _.get(event, 'bucket')
+  const key = _.get(event, 'key')
+  const currentFileNum = _.get(event, 'currentFileNum', 0)
+  const lastFileNum = _.get(event, 'lastFileNum', 0)
+  const arn = _.get(event, 'arn', null)
+  const retries = _.get(event, 'retries', 0)
+  ingest.update({bucket, key, currentFileNum, lastFileNum, arn, retries, cb, transform:_transform}) 
 }
 
 
@@ -219,8 +225,7 @@ local.localRun(() => {
   // test payload
   const a = {
     bucket: 'sat-api',
-    key: 'testing',
-    satellite: 'landsat',
+    key: 'testing/landsat',
     currentFileNum: 1,
     lastFileNum: 1
   }

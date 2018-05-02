@@ -43,6 +43,8 @@ default:
       envs:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
+        #landsat_arn: "!GetAtt LandsatMetadataProcessorStateMachine.Arn"
+        #sentinel_arn: "!GetAtt sentinelLambdaFunction.Arn"
     - name: manager
       source: 'dist/manager/'
       handler: index.handler
