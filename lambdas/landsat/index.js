@@ -8,28 +8,102 @@ const _ = require('lodash')
 const AWS = require('aws-sdk')
 const local = require('kes/src/local')
 const ingest = require('../../lib/ingest-csv');
+const es = require('../../lib/es')
 var through2 = require('through2')
 
 // s3 client
 const s3 = new AWS.S3()
 
 
-const bands = [
-  'ANG.txt',
-  'B1.TIF',
-  'B2.TIF',
-  'B3.TIF',
-  'B4.TIF',
-  'B5.TIF',
-  'B6.TIF',
-  'B7.TIF',
-  'B8.TIF',
-  'B9.TIF',
-  'B10.TIF',
-  'B11.TIF',
-  'BQA.TIF',
-  'MTL.txt'
-]
+const collection = {
+  "collection_name": "landsat-8",
+  "collection_description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+  "provider": "USGS",
+  "license": "PDDL-1.0",
+  "eo:gsd" : 30,
+  "eo:platform": "landsat-8",
+  "eo:instrument": "OLI_TIRS",
+  "eo:off_nadir": 0,
+  "eo:bands": {
+    "B1": {
+      "common_name": "coastal",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 0.44,
+      "fwhm": 0.02
+    },
+    "B2": {
+      "common_name": "blue",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 0.48,
+      "fwhm": 0.06
+    },
+    "B3": {
+      "common_name": "green",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 0.56,
+      "fwhm": 0.06
+    },
+    "B4": {
+      "common_name": "red",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 0.65,
+      "fwhm": 0.04
+    },
+    "B5": {
+      "common_name": "nir",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 0.86,
+      "fwhm": 0.03
+    },
+    "B6": {
+      "common_name": "swir16",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 1.6,
+      "fwhm": 0.08
+    },
+    "B7": {
+      "common_name": "swir22",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 2.2,
+      "fwhm": 0.2
+    },
+    "B8": {
+      "common_name": "pan",
+      "gsd": 15.0,
+      "accuracy": null,
+      "wavelength": 0.59,
+      "fwhm": 0.18
+    },
+    "B9": {
+      "common_name": "cirrus",
+      "gsd": 30.0,
+      "accuracy": null,
+      "wavelength": 1.37,
+      "fwhm": 0.02
+    },
+    "B10": {
+      "common_name": "lwir11",
+      "gsd": 100.0,
+      "accuracy": null,
+      "wavelength": 10.9,
+      "fwhm": 0.8
+    },
+    "B11": {
+      "common_name": "lwir12",
+      "gsd": 100.0,
+      "accuracy": null,
+      "wavelength": 12.0,
+      "fwhm": 1.0
+    }
+  }
+}
 
 
 //! Check to see if a URL exists
@@ -78,10 +152,22 @@ function awsLinks(data) {
   const sceneId = data.sceneID
   const productId = data.LANDSAT_PRODUCT_ID
 
+  const files = ['ANG.txt','B1.TIF','B2.TIF','B3.TIF','B4.TIF','B5.TIF','B6.TIF',
+                 'B7.TIF','B8.TIF','B9.TIF','B10.TIF','B11.TIF','BQA.TIF','MTL.txt']
+  var _bands = Object.keys(collection["eo:bands"])
+
   const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
   //const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
-  const c1Files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), {href: `${c1Base}/${productId}_${b}`}] }))
-  c1Files.thumbnail = `${c1Base}/${productId}_thumb_large.jpg`
+  var key, val
+  const c1Files = _.fromPairs(files.map(function(b) {
+    key = b.slice(0,-4)
+    val = {href: `${c1Base}/${productId}_${b}`}
+    if (_bands.includes(key)) {
+      val["eo:bands"] = [key]
+    }
+    return [key, val]
+  }))
+  c1Files.thumbnail = {href: `${c1Base}/${productId}_thumb_large.jpg`}
 
   const c1 = {
     index: `${c1Base}/index.html`,
@@ -100,8 +186,8 @@ function awsLinks(data) {
       const rev = sceneId.slice(-2)
       var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html')
-      var files = _.fromPairs(bands.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
-      files.thumbnail = `${prefix}/${sid}_thumb_large.jpg`
+      var files = _.fromPairs(files.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
+      files.thumbnail = {href: `${prefix}/${sid}_thumb_large.jpg`}
 
       arrayIterate(links.reverse(), fileExists).then(val => {
         prefix = prefix + val.slice(-13, -11)
@@ -153,7 +239,7 @@ function transform(data, encoding, next) {
     data[f] = parseFloat(data[f]);
   })
 
-  const geometry = { // eslint-disable-line camelcase
+  const geometry = {
     type: 'Polygon',
     coordinates: [[
       [data.upperRightCornerLongitude, data.upperRightCornerLatitude],
@@ -164,6 +250,7 @@ function transform(data, encoding, next) {
     ]]
   }
 
+  // check for crossing antimeridian
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
   if (leftLong < -1000000) { //> rightLong) {
@@ -179,20 +266,16 @@ function transform(data, encoding, next) {
           data.lowerLeftCornerLongitude, data.lowerLeftCornerLatitude, data.upperRightCornerLongitude, data.upperRightCornerLatitude
         ],
         geometry: geometry,
-        collection: 'landsat-toa',
-        provider: 'USGS',
-        license: 'https://eros.usgs.gov/about-us/data-citation',
+        collection: 'landsat-8',
         datetime: start.toISOString(),
-        start: start.toISOString(),
-        end: end.toISOString(),
-        // eo extension metadata
         //'datetime': (end - start)/2 + start
-        'eo:platform': 'landsat-8',
-        'eo:instrument': 'OLI_TIRS',
-        'eo:cloud_cover': data.cloudCoverFull,
+        // eo extension metadata
+        'eo:cloud_cover': parseInt(data.cloudCoverFull),
+        'eo:sun_azimuth': data.sunAzimuth,
+        'eo:sun_elevation': data.sunElevation,
         links: [
-          {rel: 'self', 'href': ''},
           {rel: 'index', 'href': info.index},
+          {rel: 'collection', 'href': '/collections?id=landsat-8'}
         ],
         assets: info.files
       }
@@ -216,7 +299,18 @@ function handler (event, context=null, cb=function(){}) {
   const lastFileNum = _.get(event, 'lastFileNum', 0)
   const arn = _.get(event, 'arn', null)
   const retries = _.get(event, 'retries', 0)
-  ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+
+  // add collection
+  es.client().then((client) => {
+    es.putMapping(client, 'collections').catch((err) => {})
+    collection.id = collection.collection_name
+    es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
+      console.log('err', err)
+      console.log('updated', updated)
+      console.log('errors', errors)
+    })
+    ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+  })
 }
 
 
