@@ -26,7 +26,6 @@ module.exports.handler = function (event, context, cb) {
       return cb(null, res.send({ details: err.message }))
     }
     const res = new util.Response({ cors: true, statusCode: 200 })
-    //return cb(null, res.send(JSON.stringify(resp, null, 2)))
     return cb(null, res.send(resp))
   }
 
