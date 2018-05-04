@@ -1,5 +1,5 @@
 'use strict'
-const ingest = require('../../lib/ingest-csv')
+const satlib = require('sat-api-lib')
 const local = require('kes/src/local')
 
 /* Example Handler
@@ -28,7 +28,7 @@ module.exports.handler = function (event, context, cb) {
       break
   }
 
-  ingest.split({url, bucket, key, arn: event.arn, maxFiles: event.maxFiles,
+  satlib.ingest.split({url, bucket, key, arn: event.arn, maxFiles: event.maxFiles,
                 linesPerFile: event.linesPerFile, maxLambdas: event.maxLambdas, reverse, cb})
 }
 

@@ -9,8 +9,8 @@ const pad = require('lodash.padstart')
 const moment = require('moment')
 const local = require('kes/src/local')
 const util = require('util')
-const ingest = require('../../lib/ingest-csv')
 var through2 = require('through2')
+const satlib = require('sat-api-lib')
 
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
 
@@ -148,7 +148,7 @@ function transform(data, encoding, next) {
 function handler(event, context, cb) {
   var _transform = through2({'objectMode': true}, transform)
   console.log('Sentinel handler:', event)
-  ingest.update(event, _transform, cb);
+  satlib.ingest.update(event, _transform, cb);
 }
 
 local.localRun(() => {

@@ -7,8 +7,7 @@ const pad = require('lodash.padstart')
 const _ = require('lodash')
 const AWS = require('aws-sdk')
 const local = require('kes/src/local')
-const ingest = require('../../lib/ingest-csv');
-const es = require('../../lib/es')
+const satlib = require('sat-api-lib')
 var through2 = require('through2')
 
 // s3 client
@@ -310,15 +309,15 @@ function handler (event, context=null, cb=function(){}) {
   const retries = _.get(event, 'retries', 0)
 
   // add collection
-  es.client().then((client) => {
-    es.putMapping(client, 'collections').catch((err) => {})
+  satlib.es.client().then((client) => {
+    satlib.es.putMapping(client, 'collections').catch((err) => {})
     collection.id = collection.collection_name
-    es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
+    satlib.es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
       console.log('err', err)
       console.log('updated', updated)
       console.log('errors', errors)
     })
-    ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+    satlib.ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
 

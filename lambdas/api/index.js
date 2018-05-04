@@ -4,7 +4,6 @@ const zlib = require('zlib')
 const satlib = require('sat-api-lib')
 const util = require('lambda-proxy-utils')
 const get = require('lodash.get')
-const es = require('../../lib/es')
 
 
 module.exports.handler = function (event, context, cb) {
@@ -43,7 +42,7 @@ module.exports.handler = function (event, context, cb) {
       // collections api
       console.log('/collections')
       //respond(null, 'collections')
-      es.client().then((esClient) => {
+      satlib.es.client().then((esClient) => {
         const api = new satlib.api(payload, esClient)
         api.search('collections', respond)
       })
@@ -51,7 +50,7 @@ module.exports.handler = function (event, context, cb) {
     case 'search':
       // items api
       console.log('/search')
-      es.client().then((esClient) => {
+      satlib.es.client().then((esClient) => {
         const api = new satlib.api(payload, esClient)
         api.search_items(respond)
       })

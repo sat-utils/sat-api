@@ -1,21 +1,21 @@
 'use strict';
 
-const es = require('../../lib/es');
+const satlib = require('sat-api-lib')
 
 module.exports.handler = function (event, context, cb) {
-  es.client().then((client) => {
+  satlib.es.client().then((client) => {
     if (event.index && event.action) {
       if (event.action === 'putMapping') {
-        return es.putMapping(client, event.index);
+        return satlib.es.putMapping(client, event.index);
       }
       else if (event.action === 'deleteIndex') {
-        return es.deleteIndex(client, event.index);
+        return satlib.es.deleteIndex(client, event.index);
       }
       else if (event.action === 'listIndices') {
-        return es.listIndices(client, event.index);
+        return satlib.es.listIndices(client, event.index);
       }
       else if (event.action === 'reindex') {
-        return es.reindex(client, event.source, event.dest);
+        return satlib.es.reindex(client, event.source, event.dest);
       }
     }
   }).then(r => cb(null, r))
