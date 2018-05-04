@@ -15,8 +15,8 @@ const s3 = new AWS.S3()
 
 
 const collection = {
-  "collection_name": "landsat-8",
-  "collection_description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+  "collection": "landsat-8",
+  "description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
   "provider": "USGS",
   "license": "PDDL-1.0",
   "eo:gsd" : 30,
@@ -28,78 +28,78 @@ const collection = {
       "common_name": "coastal",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 0.44,
-      "fwhm": 0.02
+      "center_wavelength": 0.44,
+      "full_width_half_max": 0.02
     },
     "B2": {
       "common_name": "blue",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 0.48,
-      "fwhm": 0.06
+      "center_wavelength": 0.48,
+      "full_width_half_max": 0.06
     },
     "B3": {
       "common_name": "green",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 0.56,
-      "fwhm": 0.06
+      "center_wavelength": 0.56,
+      "full_width_half_max": 0.06
     },
     "B4": {
       "common_name": "red",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 0.65,
-      "fwhm": 0.04
+      "center_wavelength": 0.65,
+      "full_width_half_max": 0.04
     },
     "B5": {
       "common_name": "nir",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 0.86,
-      "fwhm": 0.03
+      "center_wavelength": 0.86,
+      "full_width_half_max": 0.03
     },
     "B6": {
       "common_name": "swir16",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 1.6,
-      "fwhm": 0.08
+      "center_wavelength": 1.6,
+      "full_width_half_max": 0.08
     },
     "B7": {
       "common_name": "swir22",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 2.2,
-      "fwhm": 0.2
+      "center_wavelength": 2.2,
+      "full_width_half_max": 0.2
     },
     "B8": {
       "common_name": "pan",
       "gsd": 15.0,
       "accuracy": null,
-      "wavelength": 0.59,
-      "fwhm": 0.18
+      "center_wavelength": 0.59,
+      "full_width_half_max": 0.18
     },
     "B9": {
       "common_name": "cirrus",
       "gsd": 30.0,
       "accuracy": null,
-      "wavelength": 1.37,
-      "fwhm": 0.02
+      "center_wavelength": 1.37,
+      "full_width_half_max": 0.02
     },
     "B10": {
       "common_name": "lwir11",
       "gsd": 100.0,
       "accuracy": null,
-      "wavelength": 10.9,
-      "fwhm": 0.8
+      "center_wavelength": 10.9,
+      "full_width_half_max": 0.8
     },
     "B11": {
       "common_name": "lwir12",
       "gsd": 100.0,
       "accuracy": null,
-      "wavelength": 12.0,
-      "fwhm": 1.0
+      "center_wavelength": 12.0,
+      "full_width_half_max": 1.0
     }
   }
 }
@@ -311,7 +311,7 @@ function handler (event, context=null, cb=function(){}) {
   // add collection
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
-    collection.id = collection.collection_name
+    collection.id = collection.collection
     satlib.es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
       console.log('err', err)
       console.log('updated', updated)
