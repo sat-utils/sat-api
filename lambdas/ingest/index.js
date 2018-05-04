@@ -5,19 +5,24 @@ const local = require('kes/src/local')
 /* Example Handler
 {
   'satellite': 'landsat',
-  'arn': '...',
+  'arn': *arn of step function to do transform*,
 
 
 }
 */
 
 module.exports.handler = function (event, context, cb) {
+  console.log('ingest event: ', JSON.stringify(event))
   const sat = event.satellite
   const bucket = process.env.bucket || 'sat-api'
   let key = process.env.prefix || 'sat-api-dev'
-  key = `${key}/csv/${sat}/${sat}`;
-  let reverse = false
-
+  key = `${key}/ingest/${sat}/`
+  const maxFiles = _.get(event, 'maxFiles', 0)
+  const linesPerFile = _.get(event, 'linesPerFile', 500)
+  const maxLambdas = _.get(event, 'maxLambdas', 20)
+  const arn = _.get(event, 'arn', '')
+  
+  let url, reverse = false
   switch (sat) {
     case 'landsat':
       url = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv'
@@ -28,8 +33,7 @@ module.exports.handler = function (event, context, cb) {
       break
   }
 
-  satlib.ingest.split({url, bucket, key, arn: event.arn, maxFiles: event.maxFiles,
-                linesPerFile: event.linesPerFile, maxLambdas: event.maxLambdas, reverse, cb})
+  satlib.ingestcsv.split({url, bucket, key, arn, maxFiles, linesPerFile, maxLambdas, reverse, cb})
 }
 
 local.localRun(() => {

@@ -7,10 +7,10 @@ const kinks = require('turf-kinks')
 const range = require('lodash.range')
 const pad = require('lodash.padstart')
 const moment = require('moment')
-const local = require('kes/src/local')
-const util = require('util')
-var through2 = require('through2')
+const through2 = require('through2')
 const satlib = require('sat-api-lib')
+const local = require('kes/src/local')
+
 
 const collection = {
   "collection": "sentinel-2",
@@ -59,11 +59,14 @@ const collection = {
   }
 }
 
+
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
+
 
 function getSceneId(sat, date, mgrs, version = 0) {
   return `${sat}_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
 }
+
 
 function parseMgrs(mgrs) {
   return {
@@ -72,6 +75,7 @@ function parseMgrs(mgrs) {
     'grid_square': mgrs.slice(mgrs.length - 2, mgrs.length)
   };
 }
+
 
 function getProductUrl(date, productId) {
   const url = [
@@ -86,6 +90,7 @@ function getProductUrl(date, productId) {
   return url.join('/')
 }
 
+
 function getTilePath(date, parsedMgrs) {
   return [
     'tiles',
@@ -99,9 +104,11 @@ function getTilePath(date, parsedMgrs) {
   ].join('/');
 }
 
+
 function getTileUrl(tilePath) {
   return `${awsBaseUrl}/${tilePath}`;
 }
+
 
 function getSentinelInfo(url) {
   /*return new Promise(function(resolve, reject) {
@@ -114,6 +121,7 @@ function getSentinelInfo(url) {
   })*/
   return got(url, { json: true });
 }
+
 
 function reproject(geojson) {
   const crs = geojson.crs.properties.name.replace(
@@ -144,6 +152,7 @@ function reproject(geojson) {
   return geojson
 }
 
+
 function transform(data, encoding, next) {
   const date = moment(data.SENSING_TIME)
   const mgrs = data.MGRS_TILE
@@ -163,10 +172,10 @@ function transform(data, encoding, next) {
       bbox: [],
       geometry: reproject(info.tileDataGeometry),
       collection: 'sentinel-2',
-      datetime = date.format('YYYY-MM-DD'),
-      cloud_cover = parseFloat(data.CLOUD_COVER),
-      thumbnail = `${tileBaseUrl}/preview.jpg`,
-      assets = bands.map((b) => `${tileBaseUrl}/${b}.jp2`),
+      datetime: date.format('YYYY-MM-DD'),
+      cloud_cover: parseFloat(data.CLOUD_COVER),
+      thumbnail: `${tileBaseUrl}/preview.jpg`,
+      assets: bands.map((b) => `${tileBaseUrl}/${b}.jp2`),
       links: [
         {rel: 'collection', 'href': '/collections?id=sentinel-2'}
       ],
@@ -207,7 +216,7 @@ function handler(event, context=null, cb=function(){}) {
       console.log('updated', updated)
       console.log('errors', errors)
     })
-    satlib.ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+    satlib.ingestcsv.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
 

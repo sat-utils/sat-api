@@ -35,8 +35,8 @@ default:
       memory: 512
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-    - name: split
-      source: 'dist/split/'
+    - name: ingest
+      source: 'dist/ingest/'
       handler: index.handler
       timeout: 300
       memory: 1024

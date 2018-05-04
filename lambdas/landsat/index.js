@@ -8,7 +8,7 @@ const _ = require('lodash')
 const AWS = require('aws-sdk')
 const local = require('kes/src/local')
 const satlib = require('sat-api-lib')
-var through2 = require('through2')
+const through2 = require('through2')
 
 // s3 client
 const s3 = new AWS.S3()
@@ -317,7 +317,7 @@ function handler (event, context=null, cb=function(){}) {
       console.log('updated', updated)
       console.log('errors', errors)
     })
-    satlib.ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+    satlib.ingestcsv.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
 
