@@ -186,7 +186,16 @@ function awsLinks(data) {
       const rev = sceneId.slice(-2)
       var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html')
-      var files = _.fromPairs(files.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
+      //var files = _.fromPairs(files.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
+      var key, val
+      var files = _.fromPairs(files.map(function(b) {
+        key = b.slice(0,-4)
+        val = {href: `${c1Base}/${productId}_${b}`}
+        if (_bands.includes(key)) {
+          val["eo:bands"] = [key]
+        }
+        return [key, val]
+      }))
       files.thumbnail = {href: `${prefix}/${sid}_thumb_large.jpg`}
 
       arrayIterate(links.reverse(), fileExists).then(val => {

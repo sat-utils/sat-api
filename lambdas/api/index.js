@@ -10,6 +10,7 @@ const es = require('../../lib/es')
 module.exports.handler = function (event, context, cb) {
   console.log(`API handler: ${JSON.stringify(event)}`)
 
+  // get payload
   const method = event.httpMethod
   const payload = { query: {}, headers: event.headers }
   if (method === 'POST' && event.body) {
@@ -19,6 +20,7 @@ module.exports.handler = function (event, context, cb) {
     payload.query = event.queryStringParameters
   }
 
+  // send response to browser
   function respond(err, resp) {
     if (err) {
       console.log(err)
@@ -31,8 +33,6 @@ module.exports.handler = function (event, context, cb) {
 
 
   const resources = event.resource.split('/')
-  console.log(resources)
-
   switch (resources[1]) {
     case 'api':
       // this should return API doc
@@ -53,8 +53,7 @@ module.exports.handler = function (event, context, cb) {
       console.log('/search')
       es.client().then((esClient) => {
         const api = new satlib.api(payload, esClient)
-        //const encoding = get(req, 'headers.Accept-Encoding', null)
-        api.search('items', respond)
+        api.search_items(respond)
       })
 
       break
