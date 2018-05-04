@@ -12,6 +12,53 @@ const util = require('util')
 var through2 = require('through2')
 const satlib = require('sat-api-lib')
 
+const collection = {
+  "collection": "sentinel-2",
+  "description": "Sentinel-2a and Sentinel-2b imagery",
+  "provider": "ESA",
+  "license": "",
+  "eo:gsd": 10,
+  "eo:instrument": "MSI",
+  "eo:off_nadir": 0,
+  "eo:bands": {
+    "B01": {
+      "common_name": "",
+      "gsd": 10.0,
+      "accuracy": null,
+      "center_wavelength": 0,
+      "full_width_half_max": 0
+    },
+    "B02": {
+      "common_name": "",
+      "gsd": 10.0,
+      "accuracy": null,
+      "center_wavelength": 0,
+      "full_width_half_max": 0
+    },
+    "B03": {
+      "common_name": "",
+      "gsd": 10.0,
+      "accuracy": null,
+      "center_wavelength": 0,
+      "full_width_half_max": 0
+    },
+    "B04": {
+      "common_name": "",
+      "gsd": 10.0,
+      "accuracy": null,
+      "center_wavelength": 0,
+      "full_width_half_max": 0
+    },
+    "B05": {
+      "common_name": "",
+      "gsd": 10.0,
+      "accuracy": null,
+      "center_wavelength": 0,
+      "full_width_half_max": 0
+    }
+  }
+}
+
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
 
 function getSceneId(sat, date, mgrs, version = 0) {
@@ -94,48 +141,43 @@ function reproject(geojson) {
   if (kinks(geojson).features.length > 0) {
     throw Error(`self-intersecting polygon`)
   }
-
   return geojson
 }
 
 function transform(data, encoding, next) {
-  const record = {};
-  const date = moment(data.SENSING_TIME);
-  const mgrs = data.MGRS_TILE;
-  const parsedMgrs = parseMgrs(mgrs);
-  const tilePath = getTilePath(date, parsedMgrs);
-  const tileBaseUrl = getTileUrl(tilePath);
-  const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`;
-  const bands = range(1, 13).map(i => pad(i, 3, 'B0'));
-  bands.push('B8A');
-  const util = require('util')
+  const date = moment(data.SENSING_TIME)
+  const mgrs = data.MGRS_TILE
+  const parsedMgrs = parseMgrs(mgrs)
+  const tilePath = getTilePath(date, parsedMgrs)
+  const tileBaseUrl = getTileUrl(tilePath)
+  const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`
+  const bands = range(1, 13).map(i => pad(i, 3, 'B0'))
+  bands.push('B8A')
+  console.log('date mgrs', date, mgrs)
   getSentinelInfo(tileMetaUrl).then((info) => {
-    info = info.body;
-    const sat = info.productName.slice(0, 3);
-    record.scene_id = getSceneId(sat, date, mgrs);
-    record.product_id = data.PRODUCT_ID;
-    record.satellite_name = `Sentinel-2${sat.slice(-1)}`;
-    record.cloud_coverage = parseFloat(data.CLOUD_COVER);
-    record.date = date.format('YYYY-MM-DD');
-    record.thumbnail = `${tileBaseUrl}/preview.jpg`;     
-    record.download_links = {
-      'aws_s3': bands.map((b) => `${tileBaseUrl}/${b}.jp2`)
-    };
-    record.original_scene_id = data.GRANULE_ID;
-    record.data_geometry = reproject(info.tileDataGeometry)
-    record.data_coverage_percentage = info.dataCoveragePercentage.toString()
-    record.cloudy_pixel_percentage = info.cloudyPixelPercentage
-    record.utm_zone = parsedMgrs.utm_zone;
-    record.latitude_band = parsedMgrs.latitude_band;
-    record.grid_square = parsedMgrs.grid_square;
-    record.product_path = info.productPath;
-    record.timestamp = info.timestamp;
-    record.spacecraft_name = record.satellite_name;
-    record.product_meta_link = `${getProductUrl(date, record.product_name)}/metadata.xml`;
-    record.original_tile_meta = tileMetaUrl;
-    record.aws_path = tilePath;
-    record.tile_geometry = reproject(info.tileGeometry);
-    record.tileOrigin = reproject(info.tileOrigin);
+    info = info.body
+    const sat = info.productName.slice(0, 3)
+    const satname = `Sentinel-2${sat.slice(-1)}`
+    const record = {
+      id: getSceneId(sat, date, mgrs),
+      bbox: [],
+      geometry: reproject(info.tileDataGeometry),
+      collection: 'sentinel-2',
+      datetime = date.format('YYYY-MM-DD'),
+      cloud_cover = parseFloat(data.CLOUD_COVER),
+      thumbnail = `${tileBaseUrl}/preview.jpg`,
+      assets = bands.map((b) => `${tileBaseUrl}/${b}.jp2`),
+      links: [
+        {rel: 'collection', 'href': '/collections?id=sentinel-2'}
+      ],
+      'eo:platform': satname,
+      'sentinel:product_id': data.PRODUCT_ID,
+      'sentinel:timestamp': info.timestamp,
+      'sentinel:original_scene_id': data.GRANULE_ID,
+      'sentinel:utm_zone': parsedMgrs.utm_zone,
+      'sentinel:tile_geometry': reproject(info.tileGeometry),
+      'sentinel:tileOrigin': reproject(info.tileOrigin)
+    }
     this.push(record)
     next()
   }).catch(e => {
@@ -145,23 +187,48 @@ function transform(data, encoding, next) {
   })
 }
 
-function handler(event, context, cb) {
+
+function handler(event, context=null, cb=function(){}) {
+  console.log(event)
+  const bucket = _.get(event, 'bucket')
+  const key = _.get(event, 'key')
+  const currentFileNum = _.get(event, 'currentFileNum', 0)
+  const lastFileNum = _.get(event, 'lastFileNum', 0)
+  const arn = _.get(event, 'arn', null)
+  const retries = _.get(event, 'retries', 0)
   var _transform = through2({'objectMode': true}, transform)
-  console.log('Sentinel handler:', event)
-  satlib.ingest.update(event, _transform, cb);
+
+  // add collection
+  satlib.es.client().then((client) => {
+    satlib.es.putMapping(client, 'collections').catch((err) => {})
+    collection.id = collection.collection
+    satlib.es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
+      console.log('err', err)
+      console.log('updated', updated)
+      console.log('errors', errors)
+    })
+    satlib.ingest.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+  })
 }
 
+
+// running locally
 local.localRun(() => {
   const a = {
     bucket: 'sat-api',
-    key: 'test',
-    satellite: 'sentinel',
-    currentFileNum: 100,
-    lastFileNum: 100,
-    arn: 'arn:aws:states:us-east-1:552819999234:stateMachine:landsat-meta'
+    key: 'testing/sentinel',
+    currentFileNum: 1,
+    lastFileNum: 1
   };
 
-  handler(a, null, (e, r) => {});
+  handler(a, null, (err, r) => {
+    if (err) {
+      console.log(`error: ${e}`)
+    } else {
+      console.log(`success: ${r}`)
+    }
+  })
 });
+
 
 module.exports.handler = handler;
