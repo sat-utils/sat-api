@@ -122,7 +122,7 @@ Resources:
                 Action:
                   - states:StartExecution
                 Resource:
-                  - !Ref SplitFilesStateMachine
+                  - !Ref IngestFilesStateMachine
 
 {{# if es.name}}
   #################################################
@@ -168,18 +168,18 @@ Resources:
   # Step Functions BEGIN
   #################################################
 
-  SplitFilesStateMachine:
+  IngestFilesStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
         !Sub |
             {
-              "Comment": "Split CSV files for landsat/sentinel to multiple files",
-              "StartAt": "Split",
+              "Comment": "Ingest metadata",
+              "StartAt": "Ingest",
               "States": {
-                "Split": {
+                "Ingest": {
                   "Type": "Task",
-                  "Resource": "${splitLambdaFunction.Arn}",
+                  "Resource": "${ingestLambdaFunction.Arn}",
                   "Retry": [
                     {
                       "ErrorEquals": ["States.ALL"],
@@ -256,7 +256,7 @@ Resources:
       State: 'DISABLED'
       Targets:
         - Id: ProcessLandsatScenesScheduler
-          Arn: !Ref SplitFilesStateMachine
+          Arn: !Ref IngestFilesStateMachine
           RoleArn: !GetAtt [EventRole, Arn]
           Input:
             Fn::Sub:
@@ -277,7 +277,7 @@ Resources:
       State: 'DISABLED'
       Targets:
         - Id: ProcessSentinelScenesScheduler
-          Arn: !Ref SplitFilesStateMachine
+          Arn: !Ref IngestFilesStateMachine
           RoleArn: !GetAtt [EventRole, Arn]
           Input:
             Fn::Sub:
