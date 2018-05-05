@@ -4,6 +4,7 @@ const got = require('got')
 const proj4 = require('proj4')
 const epsg = require('epsg')
 const kinks = require('turf-kinks')
+//const bbox = require('@turf/bbox')
 const range = require('lodash.range')
 const pad = require('lodash.padstart')
 const moment = require('moment')
@@ -22,39 +23,90 @@ const collection = {
   "eo:off_nadir": 0,
   "eo:bands": {
     "B01": {
-      "common_name": "",
-      "gsd": 10.0,
+      "common_name": "coastal",
+      "gsd": 60.0,
       "accuracy": null,
-      "center_wavelength": 0,
-      "full_width_half_max": 0
+      "center_wavelength": 0.4439,
+      "full_width_half_max": 0.027
     },
     "B02": {
-      "common_name": "",
+      "common_name": "blue",
       "gsd": 10.0,
       "accuracy": null,
-      "center_wavelength": 0,
-      "full_width_half_max": 0
+      "center_wavelength": 0.4966,
+      "full_width_half_max": 0.098
     },
     "B03": {
-      "common_name": "",
+      "common_name": "green",
       "gsd": 10.0,
       "accuracy": null,
-      "center_wavelength": 0,
-      "full_width_half_max": 0
+      "center_wavelength": 0.56,
+      "full_width_half_max": 0.045
     },
     "B04": {
-      "common_name": "",
+      "common_name": "red",
       "gsd": 10.0,
       "accuracy": null,
-      "center_wavelength": 0,
-      "full_width_half_max": 0
+      "center_wavelength": 0.6645,
+      "full_width_half_max": 0.038
     },
     "B05": {
-      "common_name": "",
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 0.7039,
+      "full_width_half_max": 0.019
+    },
+    "B06": {
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 0.7402,
+      "full_width_half_max": 0.018
+    },
+    "B07": {
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 0.7825,
+      "full_width_half_max": 0.028
+    },
+    "B08": {
+      "common_name": "nir",
       "gsd": 10.0,
       "accuracy": null,
-      "center_wavelength": 0,
-      "full_width_half_max": 0
+      "center_wavelength": 0.8351,
+      "full_width_half_max": 0.145
+    },
+    "B8A": {
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 0.8648,
+      "full_width_half_max": 0.033
+    },
+    "B09": {
+      "gsd": 60.0,
+      "accuracy": null,
+      "center_wavelength": 0.945,
+      "full_width_half_max": 0.026
+    },
+    "B10": {
+      "common_name": "cirrus",
+      "gsd": 60.0,
+      "accuracy": null,
+      "center_wavelength": 1.3735,
+      "full_width_half_max": 0.075
+    },
+    "B11": {
+      "common_name": "swir16",
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 1.6137,
+      "full_width_half_max": 0.143
+    },
+    "B12": {
+      "common_name": "swir22",
+      "gsd": 20.0,
+      "accuracy": null,
+      "center_wavelength": 2.22024,
+      "full_width_half_max": 0.242
     }
   }
 }
@@ -63,17 +115,20 @@ const collection = {
 const awsBaseUrl = 'https://sentinel-s2-l1c.s3.amazonaws.com';
 
 
-function getSceneId(sat, date, mgrs, version = 0) {
-  return `${sat}_tile_${date.format('YYYYMMDD')}_${mgrs}_${version}`;
-}
-
-
 function parseMgrs(mgrs) {
-  return {
+  var vals = {
     'utm_zone': parseInt(mgrs),
     'latitude_band': mgrs.slice(mgrs.length - 3, mgrs.length - 2),
     'grid_square': mgrs.slice(mgrs.length - 2, mgrs.length)
-  };
+  }
+  const alphaVal = vals['latitude_band'].toLowerCase().charCodeAt(0) - 97 + 1
+  if (alphaVal > 13) {
+    // northern hemisphere
+    vals['epsg'] = `326${vals.utm_zone}`
+  } else {
+    vals['epsg'] = `327${vals.utm_zone}`
+  }
+  return vals
 }
 
 
@@ -154,44 +209,46 @@ function reproject(geojson) {
 
 
 function transform(data, encoding, next) {
-  const date = moment(data.SENSING_TIME)
+  const dt = moment(data.SENSING_TIME)
   const mgrs = data.MGRS_TILE
   const parsedMgrs = parseMgrs(mgrs)
-  const tilePath = getTilePath(date, parsedMgrs)
+  const tilePath = getTilePath(dt, parsedMgrs)
   const tileBaseUrl = getTileUrl(tilePath)
-  const tileMetaUrl = `${tileBaseUrl}/tileInfo.json`
   const bands = range(1, 13).map(i => pad(i, 3, 'B0'))
   bands.push('B8A')
-  console.log('date mgrs', date, mgrs)
-  getSentinelInfo(tileMetaUrl).then((info) => {
+  getSentinelInfo(`${tileBaseUrl}/tileInfo.json`).then((info) => {
     info = info.body
     const sat = info.productName.slice(0, 3)
     const satname = `Sentinel-2${sat.slice(-1)}`
+    var val
+    var files = _.fromPairs(bands.map(function(b) {
+      val = {href: `${tileBaseUrl}/${b}.jp2`, "eo:bands": b}
+      return [b, val]
+    }))
+    files.thumbnail = {href: `${tileBaseUrl}/preview.jpg`}
+    files.tki = {href: `${tileBaseUrl}/TKI.jp2`, description: 'True Color Image'}
     const record = {
-      id: getSceneId(sat, date, mgrs),
-      bbox: [],
+      id: data.GRANULE_ID,
+      //bbox: bbox(info.tileDataGeometry),
       geometry: reproject(info.tileDataGeometry),
       collection: 'sentinel-2',
-      datetime: date.format('YYYY-MM-DD'),
-      cloud_cover: parseFloat(data.CLOUD_COVER),
-      thumbnail: `${tileBaseUrl}/preview.jpg`,
-      assets: bands.map((b) => `${tileBaseUrl}/${b}.jp2`),
-      links: [
-        {rel: 'collection', 'href': '/collections?id=sentinel-2'}
-      ],
+      datetime: dt.toISOString(),
       'eo:platform': satname,
+      'eo:cloud_cover': parseInt(data.CLOUD_COVER),
+      'eo:epsg': parsedMgrs.epsg,
+      assets: files,
+      links: [
+        {rel: 'metadata', 'href': `${tileBaseUrl}/metadata.xml`}
+      ],
       'sentinel:product_id': data.PRODUCT_ID,
-      'sentinel:timestamp': info.timestamp,
-      'sentinel:original_scene_id': data.GRANULE_ID,
-      'sentinel:utm_zone': parsedMgrs.utm_zone,
-      'sentinel:tile_geometry': reproject(info.tileGeometry),
-      'sentinel:tileOrigin': reproject(info.tileOrigin)
+      //'sentinel:tile_geometry': reproject(info.tileGeometry),
+      //'sentinel:tileOrigin': reproject(info.tileOrigin)
     }
     this.push(record)
     next()
   }).catch(e => {
     // don't want to break stream, just log and continue
-    console.log(`error processing ${data.PRODUCT_ID}: ${e}`)
+    console.log(`error processing ${data.GRANULE_ID}: ${e}`)
     next()
   })
 }
@@ -210,8 +267,7 @@ function handler(event, context=null, cb=function(){}) {
   // add collection
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
-    collection.id = collection.collection
-    satlib.es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
+    satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
       console.log('err', err)
       console.log('updated', updated)
       console.log('errors', errors)
