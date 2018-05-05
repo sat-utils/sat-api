@@ -283,7 +283,6 @@ function transform(data, encoding, next) {
         'eo:sun_elevation': data.sunElevation,
         links: [
           {rel: 'index', 'href': info.index},
-          {rel: 'collection', 'href': '/collections?id=landsat-8'}
         ],
         assets: info.files
       }
@@ -311,8 +310,7 @@ function handler (event, context=null, cb=function(){}) {
   // add collection
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
-    collection.id = collection.collection
-    satlib.es.saveRecords(client, [collection], index='collections', (err, updated, errors) => {
+    satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
       console.log('err', err)
       console.log('updated', updated)
       console.log('errors', errors)
