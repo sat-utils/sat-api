@@ -46,6 +46,7 @@
     ]
   },
   "dependencies": {
+    "@turf/bbox": "^6.0.1",
     "aws-sdk": "^2.57.0",
     "bluebird": "^3.5.1",
     "dev-null": "^0.1.1",
