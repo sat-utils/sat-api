@@ -222,7 +222,7 @@ function transform(data, encoding, next) {
     const satname = `Sentinel-2${sat.slice(-1)}`
     var val
     var files = _.fromPairs(bands.map(function(b) {
-      val = {href: `${tileBaseUrl}/${b}.jp2`, "eo:bands": b}
+      val = {href: `${tileBaseUrl}/${b}.jp2`, "eo:bands": [b]}
       return [b, val]
     }))
     files.thumbnail = {href: `${tileBaseUrl}/preview.jpg`}
