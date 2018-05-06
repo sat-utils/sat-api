@@ -311,11 +311,9 @@ function handler (event, context=null, cb=function(){}) {
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
     satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
-      console.log('err', err)
-      console.log('updated', updated)
-      console.log('errors', errors)
+      if (err) console.log('Error: ', err)
     })
-    satlib.ingestcsv.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+    satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
 
