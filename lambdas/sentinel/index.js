@@ -4,7 +4,6 @@ const got = require('got')
 const proj4 = require('proj4')
 const epsg = require('epsg')
 const kinks = require('turf-kinks')
-//const bbox = require('@turf/bbox')
 const range = require('lodash.range')
 const pad = require('lodash.padstart')
 const moment = require('moment')
@@ -17,7 +16,7 @@ const collection = {
   "collection": "sentinel-2",
   "description": "Sentinel-2a and Sentinel-2b imagery",
   "provider": "ESA",
-  "license": "",
+  "license": "https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice",
   "eo:gsd": 10,
   "eo:instrument": "MSI",
   "eo:off_nadir": 0,
@@ -227,10 +226,15 @@ function transform(data, encoding, next) {
     }))
     files.thumbnail = {href: `${tileBaseUrl}/preview.jpg`}
     files.tki = {href: `${tileBaseUrl}/TKI.jp2`, description: 'True Color Image'}
+    // reproject to EPSG:4326
+    var geom = reproject(info.tileDataGeometry)
+    const lons = geom['coordinates'][0].map((pt) => { return pt[0] })
+    const lats = geom['coordinates'][0].map((pt) => { return pt[1] })
+    const bbox = [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]
     const record = {
       id: data.GRANULE_ID,
-      //bbox: bbox(info.tileDataGeometry),
-      geometry: reproject(info.tileDataGeometry),
+      bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
+      geometry: geom,
       collection: 'sentinel-2',
       datetime: dt.toISOString(),
       'eo:platform': satname,
@@ -268,11 +272,9 @@ function handler(event, context=null, cb=function(){}) {
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
     satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
-      console.log('err', err)
-      console.log('updated', updated)
-      console.log('errors', errors)
+      if (err) console.log('Error: ', err)
     })
-    satlib.ingestcsv.update({bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
+    satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
 
