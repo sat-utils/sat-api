@@ -137,8 +137,8 @@ function arrayIterate(values, fn) {
     }).catch(function() {
       // Rejected, remove the first item from the array and recursively
       // try the next one
-      values.shift();
-      arrayIterate(values, fn).then(resolve).catch(reject);
+      values.shift()
+      arrayIterate(values, fn).then(resolve).catch(reject)
     })
   })
 }
@@ -151,7 +151,7 @@ function awsLinks(data) {
   const sceneId = data.sceneID
   const productId = data.LANDSAT_PRODUCT_ID
 
-  const files = ['ANG.txt','B1.TIF','B2.TIF','B3.TIF','B4.TIF','B5.TIF','B6.TIF',
+  var files = ['ANG.txt','B1.TIF','B2.TIF','B3.TIF','B4.TIF','B5.TIF','B6.TIF',
                  'B7.TIF','B8.TIF','B9.TIF','B10.TIF','B11.TIF','BQA.TIF','MTL.txt']
   var _bands = Object.keys(collection["eo:bands"])
 
@@ -176,38 +176,35 @@ function awsLinks(data) {
   return new Promise(function(resolve, reject) {
     // AWS doesn't include all C1 scenes, we return the old urls for
     // any scenes that is before May 1 2017
-    info = {};
+    info = {}
     if (moment(data.acquisitionDate) > moment('2017-04-30')) {
       resolve(c1)
     } else {
-      const _sceneId = sceneId.slice(0, -2);
-      var sid;
+      const _sceneId = sceneId.slice(0, -2)
+      var sid, key
       const rev = sceneId.slice(-2)
       var prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       var links = _.range(rev, -1, -1).map(r => `${prefix}` + pad(r, 2, '0') + '/index.html')
-      //var files = _.fromPairs(files.map(function(b) { return [b.slice(0,-4), {href: `${prefix}/${sid}_${b}`}] }))
-      var key, val
-      var files = _.fromPairs(files.map(function(b) {
-        key = b.slice(0,-4)
-        val = {href: `${c1Base}/${productId}_${b}`}
-        if (_bands.includes(key)) {
-          val["eo:bands"] = [key]
-        }
-        return [key, val]
-      }))
-      files.thumbnail = {href: `${prefix}/${sid}_thumb_large.jpg`}
 
       arrayIterate(links.reverse(), fileExists).then(val => {
         prefix = prefix + val.slice(-13, -11)
         sid = _sceneId + val.slice(-13, -11)
+        files = _.fromPairs(files.map((b) => {
+          key = b.slice(0,-4)
+          val = {href: `${prefix}/${sid}_${b}`}
+          if (_bands.includes(key)) {
+            val["eo:bands"] = [key]
+          }
+          return [key, val]
+        }))
+        files.thumbnail = {href: `${prefix}/${sid}_thumb_large.jpg`}
         const pre = {
           index: `${prefix}/index.html`,
-          //files: bands.map((b) => [{name: b.slice(0, -4), href: `${prefix}/${sid}_${b}`}]),
           files: files
         }
-        resolve(pre);
-      }).catch(e => {
-        reject(`${prefix} not available`);
+        resolve(pre)
+      }).catch((err) => {
+        reject(`${prefix} not available: `, err)
       })   
     }
   })
@@ -244,7 +241,7 @@ function transform(data, encoding, next) {
     'CLOUD_COVER_LAND'
   ]
   numberFields.forEach(f => {
-    data[f] = parseFloat(data[f]);
+    data[f] = parseFloat(data[f])
   })
 
   const geometry = {
