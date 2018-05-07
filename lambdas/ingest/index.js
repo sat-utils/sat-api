@@ -19,7 +19,7 @@ module.exports.handler = function (event, context, cb) {
   key = `${key}/ingest/${sat}/`
   const maxFiles = _.get(event, 'maxFiles', 0)
   const linesPerFile = _.get(event, 'linesPerFile', 500)
-  const maxLambdas = _.get(event, 'maxLambdas', 20)
+  const maxLambdas = _.get(event, 'maxLambdas', 30)
   const arn = _.get(event, 'arn', '')
   
   let url, reverse = false
