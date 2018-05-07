@@ -226,6 +226,7 @@ function transform(data, encoding, next) {
     }))
     files.thumbnail = {href: `${tileBaseUrl}/preview.jpg`}
     files.tki = {href: `${tileBaseUrl}/TKI.jp2`, description: 'True Color Image'}
+    files.metadata = {href: `${tileBaseUrl}/metadata.xml`}
     // reproject to EPSG:4326
     var geom = reproject(info.tileDataGeometry)
     const lons = geom['coordinates'][0].map((pt) => { return pt[0] })
@@ -241,9 +242,7 @@ function transform(data, encoding, next) {
       'eo:cloud_cover': parseInt(data.CLOUD_COVER),
       'eo:epsg': parsedMgrs.epsg,
       assets: files,
-      links: [
-        {rel: 'metadata', 'href': `${tileBaseUrl}/metadata.xml`}
-      ],
+      links: [],
       'sentinel:product_id': data.PRODUCT_ID,
       //'sentinel:tile_geometry': reproject(info.tileGeometry),
       //'sentinel:tileOrigin': reproject(info.tileOrigin)
