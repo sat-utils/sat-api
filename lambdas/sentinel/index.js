@@ -258,7 +258,7 @@ function transform(data, encoding, next) {
 
 
 function handler(event, context=null, cb=function(){}) {
-  console.log(event)
+  console.log(JSON.stringify(event))
   const bucket = _.get(event, 'bucket')
   const key = _.get(event, 'key')
   const currentFileNum = _.get(event, 'currentFileNum', 0)

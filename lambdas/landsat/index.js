@@ -294,7 +294,7 @@ function transform(data, encoding, next) {
 
 
 function handler (event, context=null, cb=function(){}) {
-  console.log(event)
+  console.log(JSON.stringify(event))
   // create stream from transform function
   var _transform = through2({'objectMode': true, 'consume': true}, transform)
   const bucket = _.get(event, 'bucket')
