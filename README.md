@@ -8,7 +8,7 @@ v1.0: This API uses Elastic Search as its engine and uses on AWS's Lambda and AP
 
 v0.3.0 (sat-api legacy): A sat-api legacy version can be found on the [legacy branch ](https://github.com/sat-utils/sat-api/tree/legacy) and is deployed at https://api.developmentseed.org/satellites.
 
-# SpatioTemporal Asset Catalog (STAC) compliant
+## SpatioTemporal Asset Catalog (STAC) compliant
 
 A STAC is made up of `items`, which is data for a specific time and place. An `item` may contain multiple files (e.g., bands, quality data), but covers an identical geographical footprint for specific date and time. There are only a few so it is worth listing what the core fields are:
 
@@ -20,7 +20,7 @@ A STAC is made up of `items`, which is data for a specific time and place. An `i
 - assets: This contains the individual resources that are accessed via a URI. Typically a web URL, this could also be a location on s3 of Google
 - links: links are not the actual data, but any weblinks associated with the data. A 'self' link is required.
 
-## STAC extensions
+#### STAC extensions
 The STAC specification is designed to be extended for different types of geospatial data, each of which may have different set of important metadata fields. LiDAR, Video, Mosaics, and Earth Observation imagery are all different types of data that could may eventually have their own extension.
 
 The most common and immediate use case is what we call Earth Observeration data. This refers to raster imagery taken from a sensor at discreate date and time with multiple bands from the visible through long wave infrared. This may commonly be called a granule, or a scene, but in STAC it is referred to as an `item`.
@@ -66,7 +66,7 @@ Replace us-east-1 with any desired region. This will deploy the CloudFormation s
 
 The Landsat and Sentinel ingestors are run as Step Functions every 12 hours (Landsat at 6:00 and 18:00, Sentinel at 0:00 and 12:00), as can be seen under the CloudWatch Rules console. They can be disabled from the console.
 
-## Elasticsearch Management
+#### Elasticsearch Management
 
 A Lambda function is included that provides Elasticsearch management functions from within the AWS Lambda Console. Navigate to the Lambda functions console for the region the sat-api stack has been deployed to and locate the *stackName*-manager Lambda function. From here you can configure test events that consist of a JSON payload.
 
