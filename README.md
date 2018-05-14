@@ -27,6 +27,7 @@ The most common and immediate use case is what we call Earth Observeration data.
 
 Rather then get into the specifics of the EO spec, which can be found in the [stac-spec GitHub repository](https://github.com/radiantearth/stac-spec/blob/master/extensions/stac-eo-spec.md) I will instead use examples from sat-api.
 
+
 ## Searching sat-api
 Now with an undersanding of how STAC items and collections work we can look at how to query data. Behind the scenes sat-api queries both collections and items to find matches, so that if you search for "eo:off_nadir=0", it will return all of the landsat-8 scenes even though eo:off_nadir doesn't appear in the `items` themselves, only in the landsat-8 collection.
 
@@ -44,9 +45,6 @@ For numeric fields a range of values can be specified by providing the begin and
 
 #### Geospatial searches
 No search term is more important however than the a geospatial query to find data covering a specific area. The core STAC spec allows for searching by providing a bounding box, with more complex 'intersects' query to query against user provided polygons. Sat-api does not currently support the [simpler] bounding box query, but does support the 'intersects' query.
-
-- Example geospatial query
-
 
 **Caveat emptor**: Due to the way sat-api does the two pronged search of collections and items, a side effect is that queries fields that are absent from both will match scenes. For example, if a typo occurs in your query like "datetme=2017-08", then that parameter will be ignored but no warning will be issued. This problem will be fixed once we implement validators into the API.
 
