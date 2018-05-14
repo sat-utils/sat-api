@@ -264,8 +264,8 @@ Resources:
                 {
                   "satellite": "landsat",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 10,
-                  "maxLambdas": 15,
+                  "maxFiles": 8,
+                  "maxLambdas": 10,
                   "linesPerFile": 300
                 }
               - stateMachineArn: !Ref LandsatMetadataProcessorStateMachine
@@ -285,7 +285,9 @@ Resources:
                 {
                   "satellite": "sentinel",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 50
+                  "linesPerFile": 300,
+                  "maxFiles": 60,
+                  "maxLambdas": 10
                 }
               - stateMachineArn: !Ref SentinelMetadataProcessorStateMachine
 
