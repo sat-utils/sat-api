@@ -27,77 +27,66 @@ const collection = {
     "B1": {
       "common_name": "coastal",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 0.44,
       "full_width_half_max": 0.02
     },
     "B2": {
       "common_name": "blue",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 0.48,
       "full_width_half_max": 0.06
     },
     "B3": {
       "common_name": "green",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 0.56,
       "full_width_half_max": 0.06
     },
     "B4": {
       "common_name": "red",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 0.65,
       "full_width_half_max": 0.04
     },
     "B5": {
       "common_name": "nir",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 0.86,
       "full_width_half_max": 0.03
     },
     "B6": {
       "common_name": "swir16",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 1.6,
       "full_width_half_max": 0.08
     },
     "B7": {
       "common_name": "swir22",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 2.2,
       "full_width_half_max": 0.2
     },
     "B8": {
       "common_name": "pan",
       "gsd": 15.0,
-      "accuracy": null,
       "center_wavelength": 0.59,
       "full_width_half_max": 0.18
     },
     "B9": {
       "common_name": "cirrus",
       "gsd": 30.0,
-      "accuracy": null,
       "center_wavelength": 1.37,
       "full_width_half_max": 0.02
     },
     "B10": {
       "common_name": "lwir11",
       "gsd": 100.0,
-      "accuracy": null,
       "center_wavelength": 10.9,
       "full_width_half_max": 0.8
     },
     "B11": {
       "common_name": "lwir12",
       "gsd": 100.0,
-      "accuracy": null,
       "center_wavelength": 12.0,
       "full_width_half_max": 1.0
     }

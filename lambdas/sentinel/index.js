@@ -24,86 +24,73 @@ const collection = {
     "B01": {
       "common_name": "coastal",
       "gsd": 60.0,
-      "accuracy": null,
       "center_wavelength": 0.4439,
       "full_width_half_max": 0.027
     },
     "B02": {
       "common_name": "blue",
       "gsd": 10.0,
-      "accuracy": null,
       "center_wavelength": 0.4966,
       "full_width_half_max": 0.098
     },
     "B03": {
       "common_name": "green",
       "gsd": 10.0,
-      "accuracy": null,
       "center_wavelength": 0.56,
       "full_width_half_max": 0.045
     },
     "B04": {
       "common_name": "red",
       "gsd": 10.0,
-      "accuracy": null,
       "center_wavelength": 0.6645,
       "full_width_half_max": 0.038
     },
     "B05": {
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 0.7039,
       "full_width_half_max": 0.019
     },
     "B06": {
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 0.7402,
       "full_width_half_max": 0.018
     },
     "B07": {
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 0.7825,
       "full_width_half_max": 0.028
     },
     "B08": {
       "common_name": "nir",
       "gsd": 10.0,
-      "accuracy": null,
       "center_wavelength": 0.8351,
       "full_width_half_max": 0.145
     },
     "B8A": {
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 0.8648,
       "full_width_half_max": 0.033
     },
     "B09": {
       "gsd": 60.0,
-      "accuracy": null,
       "center_wavelength": 0.945,
       "full_width_half_max": 0.026
     },
     "B10": {
       "common_name": "cirrus",
       "gsd": 60.0,
-      "accuracy": null,
       "center_wavelength": 1.3735,
       "full_width_half_max": 0.075
     },
     "B11": {
       "common_name": "swir16",
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 1.6137,
       "full_width_half_max": 0.143
     },
     "B12": {
       "common_name": "swir22",
       "gsd": 20.0,
-      "accuracy": null,
       "center_wavelength": 2.22024,
       "full_width_half_max": 0.242
     }
