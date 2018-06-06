@@ -278,9 +278,9 @@ function transform(data, encoding, next) {
         'eo:cloud_cover': parseInt(data.cloudCoverFull),
         'eo:sun_azimuth': data.sunAzimuth,
         'eo:sun_elevation': data.sunElevation,
-        links: [
-          {rel: 'index', 'href': info.index},
-        ],
+        links: {
+          'index': {'href': info.index},
+        },
         assets: info.files
       }
       this.push(record)

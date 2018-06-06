@@ -242,7 +242,7 @@ function transform(data, encoding, next) {
       'eo:cloud_cover': parseInt(data.CLOUD_COVER),
       'eo:epsg': parsedMgrs.epsg,
       assets: files,
-      links: [],
+      links: {},
       'sentinel:product_id': data.PRODUCT_ID,
       //'sentinel:tile_geometry': reproject(info.tileGeometry),
       //'sentinel:tileOrigin': reproject(info.tileOrigin)
