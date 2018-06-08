@@ -250,6 +250,9 @@ function transform(data, encoding, next) {
   if (leftLong < -1000000) { //> rightLong) {
     console.log(`warning: skipping ${data.sceneID} for crossing 180th Meridian (${JSON.stringify(geometry)})`)
     next()
+  } else if ((moment(data.acquisitionDate) < moment('2013-05-26'))) {
+    console.log(`skipping pre-service data ${data.sceneID}`)
+    next()
   } else {
     awsLinks(data).then((info) => {
       const start = moment(data.sceneStartTime, "YYYY:DDD:HH:mm:ss.SSSSS")
