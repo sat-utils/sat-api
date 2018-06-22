@@ -13,8 +13,9 @@ const local = require('kes/src/local')
 
 
 const collection = {
-  "collection": "sentinel-2",
-  "description": "Sentinel-2a and Sentinel-2b imagery",
+  "cx:id": "sentinel-2-l1c",
+  "cx:name": "Sentinel 2 L1C",
+  "cx:description": "Sentinel-2a and Sentinel-2b imagery",
   "provider": "ESA",
   "license": "https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice",
   "eo:gsd": 10,
@@ -223,7 +224,7 @@ function transform(data, encoding, next) {
       id: data.GRANULE_ID,
       bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
       geometry: geom,
-      collection: 'sentinel-2',
+      'cx:id': 'sentinel-2-l1c',
       datetime: dt.toISOString(),
       'eo:platform': satname,
       'eo:cloud_cover': parseInt(data.CLOUD_COVER),
@@ -257,7 +258,7 @@ function handler(event, context=null, cb=function(){}) {
   // add collection
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
-    satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
+    satlib.es.saveRecords(client, [collection], index='collections', 'cx:id', (err, updated, errors) => {
       if (err) console.log('Error: ', err)
     })
     satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 

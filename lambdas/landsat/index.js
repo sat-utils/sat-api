@@ -15,8 +15,9 @@ const s3 = new AWS.S3()
 
 
 const collection = {
-  "collection": "landsat-8",
-  "description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+  "cx:id": "landsat-8-l1",
+  "cs:name": "Landsat 8 L1",
+  "cx:description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
   "provider": "USGS",
   "license": "PDDL-1.0",
   "eo:gsd" : 30,
@@ -263,7 +264,7 @@ function transform(data, encoding, next) {
           data.lowerLeftCornerLongitude, data.lowerLeftCornerLatitude, data.upperRightCornerLongitude, data.upperRightCornerLatitude
         ],
         geometry: geometry,
-        collection: 'landsat-8',
+        'cx:id': 'landsat-8-l1',
         datetime: start.toISOString(),
         //'datetime': (end - start)/2 + start
         // eo extension metadata
@@ -299,7 +300,7 @@ function handler (event, context=null, cb=function(){}) {
   // add collection
   satlib.es.client().then((client) => {
     satlib.es.putMapping(client, 'collections').catch((err) => {})
-    satlib.es.saveRecords(client, [collection], index='collections', 'collection', (err, updated, errors) => {
+    satlib.es.saveRecords(client, [collection], index='collections', 'cx:id', (err, updated, errors) => {
       if (err) console.log('Error: ', err)
     })
     satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
