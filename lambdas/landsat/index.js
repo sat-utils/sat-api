@@ -16,7 +16,7 @@ const s3 = new AWS.S3()
 
 const collection = {
   "cx:id": "landsat-8-l1",
-  "cs:name": "Landsat 8 L1",
+  "cx:name": "Landsat 8 L1",
   "cx:description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
   "provider": "USGS",
   "license": "PDDL-1.0",
@@ -268,7 +268,7 @@ function transform(data, encoding, next) {
         datetime: start.toISOString(),
         //'datetime': (end - start)/2 + start
         // eo extension metadata
-        'eo:cloud_cover': parseInt(data.cloudCoverFull),
+        'eo:cloud_cover': parseInt(data.cloudCover),
         'eo:sun_azimuth': data.sunAzimuth,
         'eo:sun_elevation': data.sunElevation,
         links: {
