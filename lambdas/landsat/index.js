@@ -205,7 +205,6 @@ function transform(data, encoding, next) {
 
   // concert numeric fields to numbers
   const numberFields = [
-    'cloudCoverFull',
     'path',
     'row',
     'upperLeftCornerLatitude',
@@ -271,6 +270,8 @@ function transform(data, encoding, next) {
         'eo:cloud_cover': parseInt(data.cloudCover),
         'eo:sun_azimuth': data.sunAzimuth,
         'eo:sun_elevation': data.sunElevation,
+        'landsat:path': path,
+        'landsat:row': row,
         links: {
           'index': {'href': info.index},
         },
