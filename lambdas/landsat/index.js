@@ -270,8 +270,8 @@ function transform(data, encoding, next) {
         'eo:cloud_cover': parseInt(data.cloudCover),
         'eo:sun_azimuth': data.sunAzimuth,
         'eo:sun_elevation': data.sunElevation,
-        'landsat:path': path,
-        'landsat:row': row,
+        'landsat:path': data.path,
+        'landsat:row': data.row,
         links: {
           'index': {'href': info.index},
         },
