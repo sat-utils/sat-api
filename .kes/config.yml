@@ -1,8 +1,6 @@
 default:
   stackName: sat-api-v1-dev
 
-  api_url: "{{API_URL_DEV}}"
-
   buckets:
     internal: sat-api
 
@@ -30,7 +28,6 @@ default:
       memory: 1024
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        API_URL: "{{api_url}}"
     - name: sentinel
       source: 'dist/sentinel/'
       handler: index.handler
@@ -38,7 +35,6 @@ default:
       memory: 512
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        API_URL: "{{api_url}}"
     - name: ingest
       source: 'dist/ingest/'
       handler: index.handler
@@ -47,7 +43,6 @@ default:
       envs:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
-        API_URL: "{{api_url}}"
         #landsat_arn: "!GetAtt LandsatMetadataProcessorStateMachine.Arn"
         #sentinel_arn: "!GetAtt sentinelLambdaFunction.Arn"
     - name: manager
@@ -57,7 +52,6 @@ default:
       memory: 192
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        API_URL: "{{api_url}}"
     - name: api
       source: 'dist/api/'
       handler: index.handler
@@ -82,4 +76,3 @@ default:
 production:
   stackName: sat-api-v1
 
-  api_url: "{{API_URL_PROD}}"
