@@ -60,17 +60,8 @@ default:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
       apiGateway:
         - api: stac
-          path: 'api'
+          path: '{proxy+}'
           method: get
-        - api: stac
-          path: 'collections'
-          method: get
-        - api: stac
-          path: 'search/stac'
-          method: get
-        - api: stac
-          path: 'search/stac'
-          method: post
           cors: true
 
 production:
