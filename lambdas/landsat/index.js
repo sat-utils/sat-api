@@ -248,10 +248,13 @@ function transform(data, encoding, next) {
   const leftLong = Math.min(data.lowerLeftCornerLongitude, data.upperLeftCornerLongitude)
   const rightLong = Math.max(data.lowerRightCornerLongitude, data.upperRightCornerLongitude)
   if (leftLong < -1000000) { //> rightLong) {
-    console.log(`warning: skipping ${data.sceneID} for crossing 180th Meridian (${JSON.stringify(geometry)})`)
+    console.log(`warning: skipping ${data.sceneID} for crossing anti-meridian (${JSON.stringify(geometry)})`)
     next()
   } else if ((moment(data.acquisitionDate) < moment('2013-05-26'))) {
     console.log(`skipping pre-service data ${data.sceneID}`)
+    next()
+  } else if (data.DATA_TYPE_L1 == 'OLI_TIRS_L1GT') {
+    console.log(`skipping L1GT data ${data.sceneID}`)
     next()
   } else {
     awsLinks(data).then((info) => {
