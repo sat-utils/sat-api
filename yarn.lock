@@ -204,10 +204,6 @@ arrify@^1.0.0, arrify@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/arrify/-/arrify-1.0.1.tgz#898508da2226f380df904728456849c1501a4b0d"
 
-asap@~2.0.3:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.5.tgz#522765b50c3510490e52d7dcfe085ef9ba96958f"
-
 asn1.js@^4.0.0:
   version "4.9.1"
   resolved "https://registry.yarnpkg.com/asn1.js/-/asn1.js-4.9.1.tgz#48ba240b45a9280e94748990ba597d216617fd40"
@@ -281,7 +277,7 @@ aws-sdk@^2.14.0:
     xml2js "0.4.17"
     xmlbuilder "4.2.1"
 
-aws-sdk@^2.2.19, aws-sdk@^2.57.0:
+aws-sdk@^2.57.0:
   version "2.63.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.63.0.tgz#b3d2a8de0acc3192e4e4c79110b2d397f9fb407d"
   dependencies:
@@ -1370,16 +1366,6 @@ elasticsearch-writable-stream@^2.0.1:
     flushwritable "^1.0.0"
     lodash "^4.6.1"
 
-elasticsearch@^11.0.1:
-  version "11.0.1"
-  resolved "https://registry.yarnpkg.com/elasticsearch/-/elasticsearch-11.0.1.tgz#d180684c6bde7ecfa0fa24e62fa1c872eeae08e7"
-  dependencies:
-    chalk "^1.0.0"
-    forever-agent "^0.6.0"
-    lodash "^3.10.0"
-    lodash-compat "^3.0.0"
-    promise "^7.1.1"
-
 elasticsearch@^14.2.2:
   version "14.2.2"
   resolved "https://registry.yarnpkg.com/elasticsearch/-/elasticsearch-14.2.2.tgz#6bbb63b19b17fa97211b22eeacb0f91197f4d6b6"
@@ -1857,7 +1843,7 @@ foreground-child@^1.3.3, foreground-child@^1.5.3, foreground-child@^1.5.6:
     cross-spawn "^4"
     signal-exit "^3.0.0"
 
-forever-agent@^0.6.0, forever-agent@~0.6.1:
+forever-agent@~0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/forever-agent/-/forever-agent-0.6.1.tgz#fbc71f0c41adeb37f96c577ad1ed42d8fdacca91"
 
@@ -2165,11 +2151,9 @@ hosted-git-info@^2.1.4:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.4.2.tgz#0076b9f46a270506ddbaaea56496897460612a67"
 
-http-aws-es@^1.1.3:
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/http-aws-es/-/http-aws-es-1.1.3.tgz#64951843b5c511305072570d7c2c509f78144d6b"
-  dependencies:
-    aws-sdk "^2.2.19"
+http-aws-es@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/http-aws-es/-/http-aws-es-4.0.0.tgz#ffc95907ebc3c7985206853ff45e22264b2bd062"
 
 http-signature@~1.1.0:
   version "1.1.1"
@@ -2710,10 +2694,6 @@ locate-path@^2.0.0:
     p-locate "^2.0.0"
     path-exists "^3.0.0"
 
-lodash-compat@^3.0.0:
-  version "3.10.2"
-  resolved "https://registry.yarnpkg.com/lodash-compat/-/lodash-compat-3.10.2.tgz#c6940128a9d30f8e902cd2cf99fd0cba4ecfc183"
-
 lodash.capitalize@^4.2.1:
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/lodash.capitalize/-/lodash.capitalize-4.2.1.tgz#f826c9b4e2a8511d84e3aca29db05e1a4f3b72a9"
@@ -2785,10 +2765,6 @@ lodash.values@^4.3.0:
 lodash@2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-2.4.2.tgz#fadd834b9683073da179b3eae6d9c0d15053f73e"
-
-lodash@^3.10.0:
-  version "3.10.1"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
 
 lodash@^4.0.0, lodash@^4.12.0, lodash@^4.14.0, lodash@^4.2.0, lodash@^4.3.0, lodash@^4.6.1, lodash@^4.8.0:
   version "4.17.4"
@@ -3446,12 +3422,6 @@ proj4@^2.4.3:
     mgrs "1.0.0"
     wkt-parser "^1.1.3"
 
-promise@^7.1.1:
-  version "7.1.1"
-  resolved "https://registry.yarnpkg.com/promise/-/promise-7.1.1.tgz#489654c692616b8aa55b0724fa809bb7db49c5bf"
-  dependencies:
-    asap "~2.0.3"
-
 prompt@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/prompt/-/prompt-1.0.0.tgz#8e57123c396ab988897fb327fd3aedc3e735e4fe"
@@ -3844,13 +3814,13 @@ safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.1.tgz#893312af69b2123def71f57889001671eeb2c853"
 
-sat-api-lib@^0.5.2:
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/sat-api-lib/-/sat-api-lib-0.5.2.tgz#07a1c69bb1cb6dacadd03979e90eea8feb94d752"
+sat-api-lib@^1.0.0b2:
+  version "1.0.0-b2"
+  resolved "https://registry.yarnpkg.com/sat-api-lib/-/sat-api-lib-1.0.0-b2.tgz#dbb7d7009c07a551679e1ec37a0c21f5e646996a"
   dependencies:
-    elasticsearch "^11.0.1"
+    elasticsearch "^14.2.2"
     geojson-validation "^0.1.6"
-    http-aws-es "^1.1.3"
+    http-aws-es "^4.0.0"
     lodash "^4.12.0"
     moment "^2.15.1"
     turf-area "^3.0.1"
