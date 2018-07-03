@@ -168,7 +168,12 @@ function awsLinks(data) {
     // any scenes that is before May 1 2017
     info = {}
     if (moment(data.acquisitionDate) > moment('2017-04-30')) {
-      resolve(c1)
+      // check that file exists
+      fileExists(c1.index).then(val => {
+        resolve(c1)
+      }).catch((err) => {
+        reject(`${c1.index} not available: `, err)
+      })
     } else {
       const _sceneId = sceneId.slice(0, -2)
       var sid, key
@@ -252,9 +257,6 @@ function transform(data, encoding, next) {
     next()
   } else if ((moment(data.acquisitionDate) < moment('2013-05-26'))) {
     console.log(`skipping pre-service data ${data.sceneID}`)
-    next()
-  } else if (data.DATA_TYPE_L1 == 'OLI_TIRS_L1GT') {
-    console.log(`skipping L1GT data ${data.sceneID}`)
     next()
   } else {
     awsLinks(data).then((info) => {
