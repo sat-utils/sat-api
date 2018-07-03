@@ -30,22 +30,52 @@ module.exports.handler = function (event, context, cb) {
     return cb(null, res.send(resp))
   }
 
-
-  const resources = event.resource.split('/')
-  switch (resources[1]) {
+  // split and remove empty strings
+  const resources = event.path.split('/').filter(x => x)
+  console.log('resources', resources)
+  let msg;
+  switch (resources[0]) {
     case 'api':
-      // this should return API doc
-      console.log('/api')
-      respond(null, 'TODO - return API doc')
+      msg = 'TODO - return API doc'
+      console.log(msg, resources)
+      respond(null, msg)
       break
     case 'collections':
-      // collections api
-      console.log('/collections')
-      //respond(null, 'collections')
-      satlib.es.client().then((esClient) => {
-        const api = new satlib.api(payload, esClient)
-        api.search('collections', respond)
-      })
+      if (resources.length == 1) {
+        satlib.es.client().then((esClient) => {
+          payload.query['limit'] = 100
+          const api = new satlib.api(payload, esClient)
+          api.search('collections', respond)
+        })
+        break
+       } else if (resources.length == 2) {
+        msg = 'endpoint not defined'
+        console.log(msg, resources)
+        respond(null, msg)
+        break
+      }
+      payload.query['c:id'] = resources[1]
+      switch (resources[2]) {
+        case 'items':
+          console.log('search items in this collection')
+          // this is a search across items in this collection
+          satlib.es.client().then((esClient) => {
+            const api = new satlib.api(payload, esClient)
+            api.search_items(respond)
+          })
+          break    
+        case 'definition':
+          console.log('collection definition')
+          satlib.es.client().then((esClient) => {
+          const api = new satlib.api(payload, esClient)
+            api.search('collections', respond)
+          })
+          break
+        default:
+          msg = 'endpoint not defined'
+          console.log(msg, resources)
+          respond(null, msg)
+      }
       break
     case 'search':
       // items api
@@ -54,8 +84,6 @@ module.exports.handler = function (event, context, cb) {
         const api = new satlib.api(payload, esClient)
         api.search_items(respond)
       })
-
       break
   }
-
 }
