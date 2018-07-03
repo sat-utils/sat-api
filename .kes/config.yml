@@ -52,6 +52,9 @@ default:
       memory: 192
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+        ES_ARN: "!GetAtt {{es.name}}Domain.DomainArn"
+        ROLE_ARN: "!GetAtt LambdaRole.Arn"
+        BUCKET: "{{buckets.internal}}"
     - name: api
       source: 'dist/api/'
       handler: index.handler
