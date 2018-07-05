@@ -17,16 +17,19 @@ module.exports.handler = function (event, context, cb) {
       return satlib.es.reindex(client, event.source, event.dest);
     }
     else if (event.action === 'createRepo') {
+      let settings = {
+        bucket: process.env.BUCKET,
+        role_arn: process.env.ROLE_ARN,
+      }
+      if (process.env.AWS_REGION == 'us-east-1') {
+        settings.endpoint = 's3.amazonaws.com'
+      } else {
+        settings.region = process.env.AWS_REGION
+      }
+      console.log('settings', settings)
       return client.snapshot.createRepository({
         repository: 'sat-api',
-        body: {
-          type: 's3',
-          settings: {
-            bucket: process.env.bucket,
-            region: process.env.AWS_REGION,
-            role_arn: process.env.ROLE_ARN,
-          },
-        },
+        body: {type: 's3', settings},
       })
     } else if (event.action === 'takeSnapshot') {
       client.snapshot.create({
