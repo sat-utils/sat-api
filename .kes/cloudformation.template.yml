@@ -20,6 +20,7 @@ Resources:
           Principal:
             Service:
             - lambda.amazonaws.com
+            - es.amazonaws.com
           Action:
           - sts:AssumeRole
       Path: "/"
@@ -80,6 +81,13 @@ Resources:
                 - states:DescribeActivity
                 - states:StartExecution
                 Resource: arn:aws:states:*:*:*
+
+              # Allow access to ES
+              - Effect: Allow
+                Action:
+                - es:*
+                Resource:
+                - "arn:aws:es:*:*:domain/*"
   StepsRole:
     Type: "AWS::IAM::Role"
     Properties:
