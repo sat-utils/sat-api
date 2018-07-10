@@ -12,13 +12,13 @@ v0.3.0 (sat-api legacy): A sat-api legacy version can be found on the [legacy br
 
 A STAC is made up of `items`, which is data for a specific time and place. An `item` may contain multiple files (e.g., bands, quality data), but covers an identical geographical footprint for specific date and time. There are only a few so it is worth listing what the core fields are:
 
-- id: A unique ID assigned by the data provider for this item.
-- geometry: Polygon geojson geometry describing the area covered by the data
-- datetime: The date and time of the item
-- provider: Although an optional field, this is the name of the person or organization providing the data.
-- license: The name of the license regarding data use.
-- assets: This contains the individual resources that are accessed via a URI. Typically a web URL, this could also be a location on s3 of Google
-- links: links are not the actual data, but any weblinks associated with the data. A 'self' link is required.
+- `id`: A unique ID assigned by the data provider for this item.
+- `geometry`: Polygon geojson geometry describing the area covered by the data
+- `datetime`: The date and time of the item
+- `provider`: Although an optional field, this is the name of the person or organization providing the data.
+- `license`: The name of the license regarding data use.
+- `assets`: This contains the individual resources that are accessed via a URI. Typically a web URL, this could also be a location on s3 of Google
+- `links`: links are not the actual data, but any weblinks associated with the data. A 'self' link is required.
 
 #### STAC extensions
 The STAC specification is designed to be extended for different types of geospatial data, each of which may have different set of important metadata fields. LiDAR, Video, Mosaics, and Earth Observation imagery are all different types of data that could may eventually have their own extension.
@@ -29,7 +29,7 @@ Rather then get into the specifics of the EO spec, which can be found in the [st
 
 
 ## Searching sat-api
-Now with an undersanding of how STAC items and collections work we can look at how to query data. Behind the scenes sat-api queries both collections and items to find matches, so that if you search for "eo:off_nadir=0", it will return all of the landsat-8 scenes even though eo:off_nadir doesn't appear in the `items` themselves, only in the landsat-8 collection.
+Now with an undersanding of how STAC items and collections work we can look at how to query data. Behind the scenes sat-api queries both collections and items to find matches, so that if you search for `eo:off_nadir=0`, it will return all of the Landsat-8 scenes even though `eo:off_nadir` doesn't appear in the `items` themselves, only in the landsat-8 collection.
 
 Any metadata field that appears in the `items` or `collection` properties can be queried by providing those as parameters in the form of key=value as shown below.
 
@@ -46,7 +46,7 @@ For numeric fields a range of values can be specified by providing the begin and
 #### Geospatial searches
 No search term is more important however than the a geospatial query to find data covering a specific area. The core STAC spec allows for searching by providing a bounding box, with more complex 'intersects' query to query against user provided polygons. Sat-api does not currently support the [simpler] bounding box query, but does support the 'intersects' query.
 
-**Caveat emptor**: Due to the way sat-api does the two pronged search of collections and items, a side effect is that queries fields that are absent from both will match scenes. For example, if a typo occurs in your query like "datetme=2017-08", then that parameter will be ignored but no warning will be issued. This problem will be fixed once we implement validators into the API.
+**Caveat emptor**: Due to the way sat-api does the two pronged search of collections and items, a side effect is that queries fields that are absent from both will match scenes. For example, if a typo occurs in your query like `datetme=2017-08`, then that parameter will be ignored but no warning will be issued. This problem will be fixed once we implement validators into the API.
 
 
 ## Deploy your own sat-api
@@ -83,10 +83,10 @@ A Lambda function is included that provides Elasticsearch management functions f
 
 Unless it has been changed in the code, the main index used in the Elasticsearch instance will always be sat-api. The action parameter can be:
 
-- putMapping: Puts a new mapping for indexing. This is done automatically during ingestion if it does not already exist so should never need to be used directly.
-- deleteIndex: This deletes the index. Use with caution!
-- listIndices: This returns a list of all indices. Unless some have been added should include 'items', 'collections' and '.kibana'
-- reindex: Spawns a reindexing of all records
+- `putMapping`: Puts a new mapping for indexing. This is done automatically during ingestion if it does not already exist so should never need to be used directly.
+- `deleteIndex`: This deletes the index. Use with caution!
+- `listIndices`: This returns a list of all indices. Unless some have been added should include 'items', 'collections' and '.kibana'
+- `reindex`: Spawns a reindexing of all records
 
 ## Development
 
