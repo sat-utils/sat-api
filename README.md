@@ -51,16 +51,22 @@ No search term is more important however than the a geospatial query to find dat
 
 ## Deploy your own sat-api
 
-First, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough):
+First, make sure you have AWS credentials with necessary access to AWS Lambda and AWS APIGateway (an admin level access will do enough).
+
+To simplify deployment to AWS, we make use of [`kes`](http://devseed.com/kes/), a tool for CloudFormation deployment. It can be installed with:
+
+    $ npm install -g kes
 
 - You MUST create a bucket on S3 that is used for storing deployment artifacts and metadata csv files.
 - Update `.kes/config.yml` and enter the name of the bucket.
 - If direct access to the elasticsearch instance is needed from fixed IP address, copy `.env.example` to `.env` and add your IP address there.
--  In the APIGateway console select the sat-api, click on the Binary Support menu on the left and add `'*'` as the Binary media type.
+- Deploy the system with `kes`. It can take some time for AWS to create the various resources, so be patient.
 
-    $ kes cf deploy -r us-east-1
+      $ kes cf deploy -r us-east-1
     
-Replace us-east-1 with any desired region. This will deploy the CloudFormation stack, which includes API Gateway, Lambda functions, Step Functions, CloudWatch Rules, Elasticsearch, and associated IAM Roles. Additional calls of 'kes cf deploy' will update the existing CloudFormation stack.
+    Replace `us-east-1` with any desired region. This will deploy the CloudFormation stack, which includes API Gateway, Lambda functions, Step Functions, CloudWatch Rules, Elasticsearch, and associated IAM Roles. Additional calls of `kes cf deploy` will update the existing CloudFormation stack.
+
+- Once the system is initialized, go to the API Gateway console and select the "sat-api-..." entry, click on the _Settings_ menu, and then click _Add Binary Media Type_ option and add `'*'` as the Binary media type.
 
 The Landsat and Sentinel ingestors are run as Step Functions every 12 hours (Landsat at 6:00 and 18:00, Sentinel at 0:00 and 12:00), as can be seen under the CloudWatch Rules console. They can be disabled from the console.
 
