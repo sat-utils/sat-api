@@ -5,3 +5,5 @@ build
 dist
 .kes/cloudformation.yml
 ddd.js
+package-lock.json
+yarn.lock
