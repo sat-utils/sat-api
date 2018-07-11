@@ -3,11 +3,9 @@
 const got = require('got')
 const path = require('path')
 const moment = require('moment')
-const pad = require('lodash.padstart')
 const _ = require('lodash')
 const AWS = require('aws-sdk')
-const local = require('kes/src/local')
-const satlib = require('sat-api-lib')
+const satlib = require('@sat-utils/api-lib')
 const through2 = require('through2')
 
 // s3 client
@@ -136,8 +134,8 @@ function arrayIterate(values, fn) {
 
 function awsLinks(data) {
   // generates links for the data on AWS
-  const row = pad(data.row, 3, '0')
-  const _path = pad(data.path, 3, '0')
+  const row = _.pad(data.row, 3, '0')
+  const _path = _.pad(data.path, 3, '0')
   const sceneId = data.sceneID
   const productId = data.LANDSAT_PRODUCT_ID
 
@@ -312,27 +310,6 @@ function handler (event, context=null, cb=function(){}) {
     satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
-
-
-local.localRun(() => {
-  console.log('running locally')
-  // test payload
-  const a = {
-    bucket: 'sat-api',
-    key: 'testing/landsat',
-    currentFileNum: 1,
-    lastFileNum: 1
-  }
-
-  handler(a, null, (err, r) => {
-    if (err) {
-      console.log(`error: ${e}`)
-    } else {
-      console.log(`success: ${r}`)
-    }
-  })
-
-})
 
 
 module.exports.handler = handler

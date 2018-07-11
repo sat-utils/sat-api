@@ -8,8 +8,7 @@ const range = require('lodash.range')
 const pad = require('lodash.padstart')
 const moment = require('moment')
 const through2 = require('through2')
-const satlib = require('sat-api-lib')
-const local = require('kes/src/local')
+const satlib = require('@sat-utils/api-lib')
 
 
 const collection = {
@@ -264,25 +263,5 @@ function handler(event, context=null, cb=function(){}) {
     satlib.ingestcsv.update({client, bucket, key, transform:_transform, cb, currentFileNum, lastFileNum, arn, retries}) 
   })
 }
-
-
-// running locally
-local.localRun(() => {
-  const a = {
-    bucket: 'sat-api',
-    key: 'testing/sentinel',
-    currentFileNum: 1,
-    lastFileNum: 1
-  };
-
-  handler(a, null, (err, r) => {
-    if (err) {
-      console.log(`error: ${e}`)
-    } else {
-      console.log(`success: ${r}`)
-    }
-  })
-});
-
 
 module.exports.handler = handler;

@@ -1,9 +1,9 @@
 'use strict'
 
 const zlib = require('zlib')
-const satlib = require('sat-api-lib')
 const util = require('lambda-proxy-utils')
 const get = require('lodash.get')
+const satlib = require('@sat-utils/api-lib')
 
 
 module.exports.handler = function (event, context, cb) {

@@ -1,6 +1,5 @@
 'use strict'
-const satlib = require('sat-api-lib')
-const local = require('kes/src/local')
+const satlib = require('@sat-utils/api-lib')
 
 /* Example Handler
 {
@@ -35,15 +34,3 @@ module.exports.handler = function (event, context, cb) {
 
   satlib.ingestcsv.split({url, bucket, key, arn, maxFiles, linesPerFile, maxLambdas, reverse, cb})
 }
-
-local.localRun(() => {
-  const payload = {
-    satellite: 'landsat',
-    arn: '',
-    maxFiles: 1,
-  }
-
-  module.exports.handler(payload, null, (e, r) => {
-    console.log(e, r)
-  })
-})

@@ -1,6 +1,6 @@
 'use strict';
 
-const satlib = require('sat-api-lib')
+const satlib = require('@sat-utils/api-lib')
 
 module.exports.handler = function (event, context, cb) {
   satlib.es.client().then((client) => {

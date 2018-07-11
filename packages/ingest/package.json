@@ -1,0 +1,26 @@
+{
+  "name": "@sat-utils/ingest",
+  "version": "1.0.0",
+  "description": "ingest lambda function of sat-api",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sat-utils/sat-api.git"
+  },
+  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sat-utils/sat-api/issues"
+  },
+  "scripts": {
+    "build": "webpack"
+  },
+  "homepage": "https://github.com/sat-utils/sat-api#readme",
+  "dependencies": {
+    "@sat-utils/api-lib": "^1.0.0"
+  },
+  "devDependencies": {
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
+  }
+}

@@ -7,3 +7,4 @@ dist
 ddd.js
 package-lock.json
 yarn.lock
+*.lerna_backup
