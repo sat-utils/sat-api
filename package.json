@@ -1,90 +1,24 @@
 {
   "name": "sat-api",
-  "version": "1.0.0b5",
+  "version": "1.0.0",
   "description": "One API to search public Satellites metadata",
   "main": "index.js",
   "repository": "https://github.com/sat-utils/sat-api",
   "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --progress",
-    "watch": "webpack -w --progress"
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "es6": true
-    },
-    "extends": "standard",
-    "rules": {
-      "semi": [
-        2,
-        "always"
-      ],
-      "space-before-function-paren": "off",
-      "spaced-comment": "off",
-      "no-extra-semi": 2,
-      "brace-style": [
-        "error",
-        "stroustrup"
-      ],
-      "semi-spacing": [
-        2,
-        {
-          "before": false,
-          "after": true
-        }
-      ]
-    }
-  },
-  "babel": {
-    "presets": [
-      "es2015"
-    ],
-    "plugins": [
-      "transform-async-to-generator"
-    ]
+    "test": "lerna run test"
   },
   "dependencies": {
-    "@turf/bbox": "^6.0.1",
-    "aws-sdk": "^2.57.0",
-    "bluebird": "^3.5.1",
-    "dev-null": "^0.1.1",
-    "elasticsearch": "^14.2.2",
-    "elasticsearch-streams": "^0.0.10",
-    "elasticsearch-writable-stream": "^2.0.1",
-    "electron": "^1.6.10",
-    "epsg": "^0.3.0",
-    "fast-csv": "^2.4.0",
-    "geojson-validation": "^0.2.0",
-    "got": "^7.0.0",
-    "kes": "^2.2.2",
-    "lambda-proxy-utils": "^1.2.4",
-    "lodash.get": "^4.4.2",
-    "lodash.padstart": "^4.6.1",
-    "lodash.range": "^3.2.0",
-    "moment": "^2.18.1",
-    "proj4": "^2.4.3",
-    "pump": "^2.0.0",
-    "sat-api-lib": "^1.0.0b5",
-    "through2": "0",
-    "turf-kinks": "^3.0.12"
+    "kes": "^2.2.2"
   },
   "devDependencies": {
-    "babel-core": "^6.24.1",
-    "babel-loader": "^7.0.0",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-polyfill": "^6.23.0",
-    "babel-preset-es2015": "^6.24.1",
-    "eslint": "^3.19.0",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.3.0",
-    "eslint-plugin-node": "^4.2.2",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "json-loader": "^0.5.4",
-    "prepend-loader": "^0.0.2",
-    "tap": "^10.3.3",
-    "webpack": "^2.6.0"
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jsdoc": "^3.5.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.7.0",
+    "lerna": "^2.11.0"
   }
 }
