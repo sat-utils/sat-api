@@ -10,6 +10,7 @@
     "bootstrap": "lerna bootstrap",
     "clean": "lerna clean",
     "build": "lerna run build",
+    "linkall": "lerna exec -- yarn link",
     "test": "lerna run test"
   },
   "dependencies": {
