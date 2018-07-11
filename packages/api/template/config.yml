@@ -22,14 +22,14 @@ default:
 
   lambdas:
     landsat:
-      source: 'dist/landsat/'
+      source: 'node_modules/@sat-utils/landsat/dist/'
       handler: index.handler
       timeout: 300
       memory: 1024
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     sentinel:
-      source: 'dist/sentinel/'
+      source: 'node_modules/@sat-utils/sentinel/dist/'
       handler: index.handler
       timeout: 300
       memory: 512
@@ -44,7 +44,7 @@ default:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
     manager:
-      source: 'dist/manager/'
+      source: 'node_modules/@sat-utils/manager/dist/'
       handler: index.handler
       timeout: 300
       memory: 192
@@ -54,7 +54,7 @@ default:
         ROLE_ARN: "!GetAtt LambdaRole.Arn"
         BUCKET: "{{buckets.internal}}"
     api:
-      source: 'dist/api/'
+      source: 'node_modules/@sat-utils/api/dist/'
       handler: index.handler
       timeout: 100
       envs:
