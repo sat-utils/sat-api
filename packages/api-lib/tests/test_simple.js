@@ -5,7 +5,7 @@ var _ = require('lodash');
 var path = require('path');
 var nock = require('nock');
 var test = require('ava');
-var Search = require('../index.js');
+var Search = require('../index').api;
 var payload = require('./events/simple.json');
 
 test.before('setup nock', function (t) {

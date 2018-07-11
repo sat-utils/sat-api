@@ -5,7 +5,7 @@ var path = require('path');
 var nock = require('nock');
 var test = require('ava');
 var gjv = require('geojson-validation');
-var Search = require('../index.js').api;
+var Search = require('../index').api;
 var payload = require('./events/geojson.json');
 
 test.before('setup nock', function (t) {
