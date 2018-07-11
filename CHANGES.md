@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- New API version conforming to the STAC (https://github.com/radiantearth/stac-spec/) spec
+- Added support for [STAC specification](https://github.com/radiantearth/stac-spec/)
+- The following packages are released
+  - @sat-utils/api
+  - @sat-utils/api-lib
+  - @sat-utils/ingest
+  - @sat-utils/landsat
+  - @sat-utils/sentinel
+  - @sat-utils/manager
+- A new document is added on how to configure and deploy and instance of sat-api
+
+### Changed
+- All lambdas and packages moved to `/packages` and lerna is used for managing them
+- npm packages are published under `@sat-utils` org on npm
+
+### Removed
+- /geojson endpoint
+- /count endpoint
+
 
 
 ## [v2.0.0] - 2017-06-14

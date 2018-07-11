@@ -1,12 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'stack: {{stackName}} | deployed by Kes'
-#Parameters:
-#  ConfigS3Bucket:
-#    Type: String
-#    Description: S3 bucket that holds deployment artifacts
-#  ArtifactPath:
-#    Type: String
-#    Description: Path within the deployment bucket containing artifacts
+Description: 'sat-api | stack: {{stackName}} | deployed by Kes'
 
 Resources:
   # role for Lambdas that are NOT used with APIGateway
@@ -451,3 +444,10 @@ Resources:
   #################################################
   # Lambda config END
   #################################################
+
+Outputs:
+
+  ApiAddress:
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "stacRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/stage/"]]
+      {{/if}}
