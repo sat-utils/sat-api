@@ -9,13 +9,15 @@ jobs:
       - checkout
 
       - run:
-          name: Installing Dependencies
+          name: Install
           command: |
             yarn
             yarn bootstrap
-            yarn build
       - run:
-          name: Run test
+          name: Build 
+          command: yarn build 
+      - run:
+          name: Test
           command: yarn test
 
       # - run:
