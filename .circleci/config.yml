@@ -6,16 +6,7 @@ jobs:
       - image: circleci/node:8.11
     working_dir: ~/project
     steps:
-      - restore_cache:
-          keys:
-            - v0-repo-{{ .Branch }}-{{ .Revision }}
-            - v0-repo-{{ .Branch }}
-            - v0-repo
       - checkout
-      - save_cache:
-          key: v0-cache-{{ checksum "package.json" }}
-          paths:
-            - ~/project/node_modules
 
       - run:
           name: Installing Dependencies
