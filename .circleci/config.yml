@@ -10,9 +10,10 @@ jobs:
 
       - run:
           name: Install
-          command: |
-            yarn
-            yarn bootstrap
+          command: yarn
+      - run:
+          name: Bootstrap
+          command: yarn bootstrap 
       - run:
           name: Build 
           command: yarn build 
