@@ -1,6 +1,7 @@
 'use strict'
 const satlib = require('sat-api-lib')
 const local = require('kes/src/local')
+const _ = require('lodash')
 
 /* Example Handler
 {
