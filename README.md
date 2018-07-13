@@ -1,4 +1,4 @@
-# Satellite API
+# sat-api 
 
 [![CircleCI](https://circleci.com/gh/sat-utils/sat-api.svg?style=svg)](https://circleci.com/gh/sat-utils/sat-api)
 
@@ -88,11 +88,12 @@ A live API of the develop branch is auto-deployed to https://sat-api.development
 
 To further develop the API, install dependenceis with yarn and build the files for deployment (using webpack). This creates moduels under dist/ that can be deployed as the Lambda function source code.
 
-    $ yarn install
+    $ yarn
+    $ yarn bootstrap
     $ yarn build
 
     # to continually watch and build source files
-    $ yarn run watch
+    $ yarn watch
 
 ## About
 [sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).

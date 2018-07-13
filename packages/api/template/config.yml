@@ -1,8 +1,7 @@
 default:
   stackName: sat-api-v3
 
-  buckets:
-    internal: change-me 
+  system_bucket: change-me 
 
   tags:
     project: sat-api
@@ -15,7 +14,7 @@ default:
     version: '6.0'
     instanceCount: 1
     instanceType: t2.small.elasticsearch
-    volumeSize: 80
+    volumeSize: 35 
 
   apis:
     - name: stac
@@ -36,12 +35,12 @@ default:
       envs:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     ingest:
-      source: 'dist/ingest/'
+      source: 'node_modules/@sat-utils/ingest/dist/'
       handler: index.handler
       timeout: 300
       memory: 1024
       envs:
-        bucket: '{{buckets.internal}}'
+        bucket: '{{system_bucket}}'
         prefix: '{{stackName}}'
     manager:
       source: 'node_modules/@sat-utils/manager/dist/'
@@ -52,7 +51,7 @@ default:
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
         ES_ARN: "!GetAtt {{es.name}}Domain.DomainArn"
         ROLE_ARN: "!GetAtt LambdaRole.Arn"
-        BUCKET: "{{buckets.internal}}"
+        BUCKET: "{{system_bucket}}"
     api:
       source: 'node_modules/@sat-utils/api/dist/'
       handler: index.handler
