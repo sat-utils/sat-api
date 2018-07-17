@@ -1,39 +1,39 @@
-'use strict';
+'use strict'
 
-const satlib = require('@sat-utils/api-lib');
+const satlib = require('@sat-utils/api-lib')
 
 module.exports.handler = function hander(event, context, cb) {
-  let esClient;
+  let esClient
   return satlib.es.client().then((client) => {
-    esClient = client;
+    esClient = client
     if (event.action === 'putMapping') {
-      return satlib.es.putMapping(esClient, event.index);
+      return satlib.es.putMapping(esClient, event.index)
     }
     else if (event.action === 'deleteIndex') {
-      return satlib.es.deleteIndex(esClient, event.index);
+      return satlib.es.deleteIndex(esClient, event.index)
     }
     else if (event.action === 'listIndices') {
-      return satlib.es.listIndices(esClient, event.index);
+      return satlib.es.listIndices(esClient, event.index)
     }
     else if (event.action === 'reindex') {
-      return satlib.es.reindex(esClient, event.source, event.dest);
+      return satlib.es.reindex(esClient, event.source, event.dest)
     }
     else if (event.action === 'createRepo') {
       const settings = {
         bucket: process.env.BUCKET,
         role_arn: process.env.ROLE_ARN
-      };
+      }
       if (process.env.AWS_REGION === 'us-east-1') {
-        settings.endpoint = 's3.amazonaws.com';
+        settings.endpoint = 's3.amazonaws.com'
       }
       else {
-        settings.region = process.env.AWS_REGION;
+        settings.region = process.env.AWS_REGION
       }
-      console.log('settings', settings);
+      console.log('settings', settings)
       return esClient.snapshot.createRepository({
         repository: 'sat-api',
         body: { type: 's3', settings }
-      });
+      })
     }
     else if (event.action === 'takeSnapshot') {
       return esClient.snapshot.create({
@@ -42,11 +42,11 @@ module.exports.handler = function hander(event, context, cb) {
         body: {
           indices: 'collections,items'
         }
-      }).then(console.log);
+      }).then(console.log)
     }
 
-    return cb('No supported action was found');
+    return cb('No supported action was found')
   })
     .then((r) => cb(null, r))
-    .catch(cb);
-};
+    .catch(cb)
+}
