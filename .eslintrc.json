@@ -55,6 +55,7 @@
     "spaced-comment": "off",
     "require-yield": "off",
     "prefer-template": "warn",
+    "prefer-promise-reject-errors": "off",
     "no-underscore-dangle": "off",
     "comma-dangle": [
       "warn",
