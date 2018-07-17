@@ -1,0 +1,32 @@
+{"Records": 
+  [{"EventVersion": "1.0",
+    "EventSubscriptionArn": "arn:aws:sns:eu-west-1:214830741341:NewSentinel2Product:fbc81a1b-e53f-4cd2-a26b-d70efa534c92",
+    "EventSource": "aws:sns",
+    "Sns": {
+      "SignatureVersion": "1",
+      "Timestamp": "2017-09-08T17:10:43.133Z",
+      "Signature": "M0r9TyTjWaLm86ZKwVlHot/bkCcsJv13qkNOm5kG2Nhnqf7tdu9hCJ1GWMClIpBPf1xpgwDJ1swNEPgqayqfmTvnbeYo47oEI/TcszSR7npRcNDZuAXJor7/nqucEiUAg+4YrKMSCk77abafI3aSbX/Z/7LGEyQitWYiKbfoBjKzDk1wDpCJp7amv0cpiJqDk1r+gygWiG8M9WIDjjtmQNN0SEk9Lfr2MhWHL/x9KeRC+wgTvgbyqCykC2XJlp3IN4pB17lGSNWiKHndx6cZvA3jMiTWqjrRnk3NySF/F6V3K70xoSjNDbC6sXiVBuB/3GvmQuoFxByMhKj1sjGJkg==",
+      "SigningCertUrl": "https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-433026a4050d206028891664da859041.pem",
+      "MessageId": "e91a6f3a-d9dd-5d08-a658-3d16088e9863",
+      "Message": { "name" : "S2B_MSIL1C_20170811T012659_N0205_R074_T55UES_20170811T013019",
+        "id" : "f32bf1a2-2d71-4a87-a64e-e1a4cd221941",
+        "path" : "products/2017/8/11/S2B_MSIL1C_20170811T012659_N0205_R074_T55UES_20170811T013019",
+        "timestamp" : "2017-08-11T01:26:59.027Z",
+        "datatakeIdentifier" : "GS2B_20170811T012659_002245_N02.05",
+        "sciHubIngestion" : "2017-09-02T09:22:46.926Z",
+        "s3Ingestion" : "2017-09-08T17:10:42.312Z",
+        "tiles" : [ { "path" : "tiles/55/U/ES/2017/8/11/0",
+          "timestamp" : "2017-08-11T01:30:19.107Z",
+          "utmZone" : 55,
+          "latitudeBand" : "U",
+          "gridSquare" : "ES",
+          "datastrip" :
+          { "id" : "S2B_OPER_MSI_L1C_DS_SGS__20170811T064431_S20170811T013019_N02.05",
+            "path" : "products/2017/8/11/S2B_MSIL1C_20170811T012659_N0205_R074_T55UES_20170811T013019/datastrip/0" } }
+            ],
+            "datastrips" : [ { "id" : "S2B_OPER_MSI_L1C_DS_SGS__20170811T064431_S20170811T013019_N02.05",
+              "path" : "products/2017/8/11/S2B_MSIL1C_20170811T012659_N0205_R074_T55UES_20170811T013019/datastrip/0" } ]},
+              "MessageAttributes": {}, "Type": "Notification",
+              "UnsubscribeUrl": "https://sns.eu-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:eu-west-1:214830741341:NewSentinel2Product:fbc81a1b-e53f-4cd2-a26b-d70efa534c92",
+              "TopicArn": "arn:aws:sns:eu-west-1:214830741341:NewSentinel2Product",
+              "Subject": "S2B_MSIL1C_20170811T012659_N0205_R074_T55UES_20170811T013019"}}]}

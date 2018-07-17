@@ -1,0 +1,3 @@
+sentinel_s3==0.8.0
+elasticsearch==5.4.0
+requests==2.18.4
