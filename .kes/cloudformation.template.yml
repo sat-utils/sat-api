@@ -20,6 +20,7 @@ Resources:
           Principal:
             Service:
             - lambda.amazonaws.com
+            - es.amazonaws.com
           Action:
           - sts:AssumeRole
       Path: "/"
@@ -80,6 +81,13 @@ Resources:
                 - states:DescribeActivity
                 - states:StartExecution
                 Resource: arn:aws:states:*:*:*
+
+              # Allow access to ES
+              - Effect: Allow
+                Action:
+                - es:*
+                Resource:
+                - "arn:aws:es:*:*:domain/*"
   StepsRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -122,7 +130,7 @@ Resources:
                 Action:
                   - states:StartExecution
                 Resource:
-                  - !Ref SplitFilesStateMachine
+                  - !Ref IngestFilesStateMachine
 
 {{# if es.name}}
   #################################################
@@ -168,18 +176,18 @@ Resources:
   # Step Functions BEGIN
   #################################################
 
-  SplitFilesStateMachine:
+  IngestFilesStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString:
         !Sub |
             {
-              "Comment": "Split CSV files for landsat/sentinel to multiple files",
-              "StartAt": "Split",
+              "Comment": "Ingest metadata",
+              "StartAt": "Ingest",
               "States": {
-                "Split": {
+                "Ingest": {
                   "Type": "Task",
-                  "Resource": "${splitLambdaFunction.Arn}",
+                  "Resource": "${ingestLambdaFunction.Arn}",
                   "Retry": [
                     {
                       "ErrorEquals": ["States.ALL"],
@@ -253,10 +261,10 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'cron(0 6,18 * * ? *)'
-      State: 'ENABLED'
+      State: 'DISABLED'
       Targets:
         - Id: ProcessLandsatScenesScheduler
-          Arn: !Ref SplitFilesStateMachine
+          Arn: !Ref IngestFilesStateMachine
           RoleArn: !GetAtt [EventRole, Arn]
           Input:
             Fn::Sub:
@@ -264,8 +272,8 @@ Resources:
                 {
                   "satellite": "landsat",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 10,
-                  "maxLambdas": 15,
+                  "maxFiles": 8,
+                  "maxLambdas": 10,
                   "linesPerFile": 300
                 }
               - stateMachineArn: !Ref LandsatMetadataProcessorStateMachine
@@ -274,10 +282,10 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'cron(0 0,12 * * ? *)'
-      State: 'ENABLED'
+      State: 'DISABLED'
       Targets:
         - Id: ProcessSentinelScenesScheduler
-          Arn: !Ref SplitFilesStateMachine
+          Arn: !Ref IngestFilesStateMachine
           RoleArn: !GetAtt [EventRole, Arn]
           Input:
             Fn::Sub:
@@ -285,7 +293,9 @@ Resources:
                 {
                   "satellite": "sentinel",
                   "arn": "${stateMachineArn}",
-                  "maxFiles": 50
+                  "linesPerFile": 300,
+                  "maxFiles": 60,
+                  "maxLambdas": 10
                 }
               - stateMachineArn: !Ref SentinelMetadataProcessorStateMachine
 
@@ -419,7 +429,7 @@ Resources:
       Handler: {{handler}}
       MemorySize: {{memory}}
       Role: !GetAtt LambdaRole.Arn
-      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs6.10{{/if}}
+      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs8.10{{/if}}
       Timeout: {{timeout}}
       Tags:
         - Key: Project

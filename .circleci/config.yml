@@ -83,6 +83,7 @@ jobs:
               VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
               kes cf deploy -r us-east-1
             fi          
+          no_output_timeout: "30m"
 
       - run:
           name: Deploy to production

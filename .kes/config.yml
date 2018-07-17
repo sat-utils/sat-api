@@ -1,8 +1,11 @@
 default:
-  stackName: sat-api-v0
+  stackName: sat-api-v1-dev
 
   buckets:
     internal: sat-api
+
+  tags:
+    project: sat-api
 
   capabilities:
     - CAPABILITY_IAM
@@ -15,7 +18,7 @@ default:
     volumeSize: 80
 
   apis:
-    - name: satellites
+    - name: stac
 
   lambdas:
     - name: landsat
@@ -24,7 +27,6 @@ default:
       timeout: 300
       memory: 1024
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
     - name: sentinel
       source: 'dist/sentinel/'
@@ -32,66 +34,39 @@ default:
       timeout: 300
       memory: 512
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-    - name: split
-      source: 'dist/split/'
+    - name: ingest
+      source: 'dist/ingest/'
       handler: index.handler
       timeout: 300
       memory: 1024
       envs:
         bucket: '{{buckets.internal}}'
         prefix: '{{stackName}}'
+        #landsat_arn: "!GetAtt LandsatMetadataProcessorStateMachine.Arn"
+        #sentinel_arn: "!GetAtt sentinelLambdaFunction.Arn"
     - name: manager
       source: 'dist/manager/'
       handler: index.handler
       timeout: 300
       memory: 192
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
+        ES_ARN: "!GetAtt {{es.name}}Domain.DomainArn"
+        ROLE_ARN: "!GetAtt LambdaRole.Arn"
+        BUCKET: "{{buckets.internal}}"
     - name: api
       source: 'dist/api/'
       handler: index.handler
       timeout: 100
       envs:
-        ES_INDEX: 'sat-api'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
       apiGateway:
-        - api: satellites
-          path: 'main'
+        - api: stac
+          path: '{proxy+}'
           method: get
-        - api: satellites
-          path: 'main'
-          method: post
           cors: true
-        - api: satellites
-          path: 'main/count'
-          method: get
-        - api: satellites
-          path: 'main/landsat'
-          method: get
-        - api: satellites
-          path: 'main/landsat'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/sentinel'
-          method: get
-        - api: satellites
-          path: 'main/sentinel'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/geojson'
-          method: get
-        - api: satellites
-          path: 'main/geojson'
-          method: post
-          cors: true
-        - api: satellites
-          path: 'main/health'
-          method: get
 
 production:
-  stackName: sat-api-test
+  stackName: sat-api-v1
+
