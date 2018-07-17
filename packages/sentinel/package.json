@@ -24,6 +24,9 @@
     "turf-kinks": "^3.0.12",
     "lodash.range": "^3.2.0",
     "lodash.padstart": "^4.6.1",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.frompairs": "^4.0.1",
+    "lodash.get": "^4.4.2",
     "moment": "^2.22.2",
     "through2": "^2.0.3"
   },
