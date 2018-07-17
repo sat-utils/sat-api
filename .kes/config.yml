@@ -2,7 +2,7 @@ default:
   stackName: sat-api-v1-dev
 
   buckets:
-    internal: sat-api
+    internal: cbers-sat-api
 
   tags:
     project: sat-api
@@ -14,8 +14,8 @@ default:
     name: es6
     version: '6.0'
     instanceCount: 2
-    instanceType: m3.medium.elasticsearch
-    volumeSize: 80
+    instanceType: t2.small.elasticsearch
+    volumeSize: 10
 
   apis:
     - name: stac
