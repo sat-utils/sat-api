@@ -1,50 +1,27 @@
-'use strict';
+'use strict'
 
-var _ = require('lodash')
-var moment = require('moment')
-var area = require('turf-area')
-var intersect = require('turf-intersect')
-var logger = require('./logger')
-var queries = require('./queries')
-
-// converts string intersect to js object
-var intersectsToObj = function (intersects) {
-  if (_.isString(intersects)) {
-    try {
-      intersects = JSON.parse(intersects);
-    } catch (e) {
-      throw new Error('Invalid Geojson');
-    }
-  }
-
-  return intersects;
-}
-
+const _ = require('lodash')
+const logger = require('./logger')
+const queries = require('./queries')
 
 // Search class
 function Search(event, esClient) {
-  var params = {}
+  let params = {}
 
   if (_.has(event, 'query') && !_.isEmpty(event.query)) {
     params = event.query
-  } else if (_.has(event, 'body') && !_.isEmpty(event.body)) {
+  }
+  else if (_.has(event, 'body') && !_.isEmpty(event.body)) {
     params = event.body
   }
 
   this.headers = event.headers
 
-  // AOI Coverage
-  /*this.aoiCoverage = null;
-  if (_.has(params, 'coverage')) {
-    this.aoiCoverage = params['coverage']
-    params = _.omit(params, ['coverage'])
-  }*/
-
   this.merge = false
   if (_.has(params, 'merge')) {
-    this.merge = params['merge']
+    this.merge = params.merge
     params = _.omit(params, ['merge'])
-  }  
+  }
 
   // get page number
   this.page = parseInt((params.page) ? params.page : 1)
@@ -61,71 +38,22 @@ function Search(event, esClient) {
   console.log(`Queries: ${JSON.stringify(this.queries)}`)
 }
 
-
-/*var aoiCoveragePercentage = function (feature, scene, aoiArea) {
-  var intersectObj = intersect(feature, scene);
-  if (intersectObj === undefined) {
-    return 0;
-  }
-
-  var intersectArea = area(intersectObj);
-  var percentage = (intersectArea / aoiArea) * 100;
-
-  return percentage;
-}
-
-
-Search.prototype.calculateAoiCoverage = function (response) {
-  var self = this;
-  if (this.aoiCoverage && _.has(this.params, 'intersects')) {
-    this.params.intersects = intersectsToObj(this.params.intersects);
-    var coverage = parseFloat(this.aoiCoverage);
-    var newResponse = [];
-    var aoiArea = area(self.params.intersects);
-
-    response.forEach(function (r) {
-      var gj = self.params.intersects;
-      var percentage = 0;
-
-      if (gj.type === 'FeatureCollection') {
-        gj.features.forEach(function (f) {
-          percentage += aoiCoveragePercentage(f.geometry, r.data_geometry, aoiArea);
-        });
-      } else if (gj.type === 'Feature') {
-        percentage = aoiCoveragePercentage(gj.geometry, r.data_geometry, aoiArea);
-      } else if (gj.type === 'Polygon') {
-        percentage = aoiCoveragePercentage(gj, r.data_geometry, aoiArea);
-      }
-
-      if (percentage >= coverage) {
-        newResponse.push(r);
-      }
-    });
-
-    return newResponse;
-  } else {
-    return response;
-  }
-}*/
-
-
 // search for items using collection and items
-Search.prototype.search_items = function(callback) {
+Search.prototype.search_items = (callback) => {
   // check collection first
   this.search_collections((err, resp) => {
-    var collections = resp.features.map((c) => {
-      return c.properties['c:id']
-    })
+    const collections = resp.features.map((c) => c.properties['c:id'])
     console.log('matched collections', collections)
     console.log('queries before', JSON.stringify(this.queries))
-    var qs
+    let qs
     if (collections.length === 0) {
-      qs = {bool: {must_not: {exists: {'field': 'c:id'}}}}  
-    } else {
-      qs = collections.map((c) => { return {"match": {"c:id": {"query": c}}} })
-      qs = {bool: {should: qs}}
+      qs = { bool: { must_not: { exists: { field: 'c:id' } } } }
     }
-    if (!this.queries.query.hasOwnProperty('match_all')) {
+    else {
+      qs = collections.map((c) => ({ match: { 'c:id': { query: c } } }))
+      qs = { bool: { should: qs } }
+    }
+    if (!_.has(this.queries.query, 'match_all')) {
       this.queries.query.bool.must.push(qs)
     }
     console.log('queries after', JSON.stringify(this.queries))
@@ -134,16 +62,16 @@ Search.prototype.search_items = function(callback) {
 }
 
 
-Search.prototype.search_collections = function (callback) {
+Search.prototype.search_collections = (callback) => {
   // hacky way to get all collections
-  var sz = this.size
-  var frm = this.frm
+  const sz = this.size
+  const frm = this.frm
   // to ensure all collections get returned
   this.size = 100
   this.frm = 0
   // really hacky way to remove geometry from search of collections...temporary
-  var geom
-  if (this.params.hasOwnProperty('intersects')) {
+  let geom
+  if (_.has(this.params, 'intersects')) {
     geom = this.params.intersects
     this.params = _.omit(this.params, 'intersects')
     // redo es queries excluding intersects
@@ -164,24 +92,24 @@ Search.prototype.search_collections = function (callback) {
 }
 
 
-Search.prototype.search = function (index, callback) {
-  var self = this
+Search.prototype.search = (index, callback) => {
+  const self = this
 
-  var searchParams = {
+  const searchParams = {
     index: index,
     body: this.queries,
     size: this.size,
     from: this.frm,
-    _source: this.fields  
+    _source: this.fields
   }
 
   console.log('Search parameters: ', JSON.stringify(searchParams))
 
-  this.client.search(searchParams).then(function (body) {
+  this.client.search(searchParams).then((body) => {
     console.log(`body: ${JSON.stringify(body)}`)
-    var count = body.hits.total;
+    const count = body.hits.total
 
-    var response = {
+    const response = {
       type: 'FeatureCollection',
       properties: {
         found: count,
@@ -196,23 +124,28 @@ Search.prototype.search = function (index, callback) {
     //  return c[i]._source.collection
     //})
 
-    for (var i = 0; i < body.hits.hits.length; i++) {
-      var props = body.hits.hits[i]._source
+    response.features = _.range(body.hits.hits.length).map((i) => {
+      let props = body.hits.hits[i]._source
       props = _.omit(props, ['bbox', 'geometry', 'assets', 'links', 'eo:bands'])
-      var links = body.hits.hits[i]._source.links || []
+      const links = body.hits.hits[i]._source.links || []
       // add self and collection links
-      let host = ('X-Forwarded-Host' in self.headers ? self.headers['X-Forwarded-Host'] : self.headers['Host'])
-      let api_url = `${self.headers['X-Forwarded-Proto']}://${host}`
+      const host = (
+        'X-Forwarded-Host' in self.headers ?
+          self.headers['X-Forwarded-Host'] : self.headers.Host
+      )
+      const apiUrl = `${self.headers['X-Forwarded-Proto']}://${host}`
       let prefix = '/search/stac'
       if (index === 'collections') {
         prefix = '/collections'
-        links['self'] = {'rel': 'self', 'href': `${api_url}${prefix}?c:id=${props['collection']}`}
-      } else {
-        links['self'] = {'rel': 'self', 'href': `${api_url}${prefix}?id=${props['id']}`}
-        if (props.hasOwnProperty('c:id'))
-          links['collection'] = {'href': `${api_url}/collections/${props['c:id']}/definition`}
+        links.self = { rel: 'self', href: `${apiUrl}${prefix}?c:id=${props.collection}` }
       }
-      response.features.push({
+      else {
+        links.self = { rel: 'self', href: `${apiUrl}${prefix}?id=${props.id}` }
+        if (_.has(props, 'c:id')) {
+          links.collection = { href: `${apiUrl}/collections/${props['c:id']}/definition` }
+        }
+      }
+      return {
         type: 'Feature',
         properties: props,
         bbox: body.hits.hits[i]._source.bbox,
@@ -220,14 +153,14 @@ Search.prototype.search = function (index, callback) {
         assets: body.hits.hits[i]._source.assets,
         links,
         'eo:bands': body.hits.hits[i]._source['eo:bands']
-      })
-    }
+      }
+    })
 
-    return callback(null, response);
-  }, function (err) {
+    return callback(null, response)
+  }, (err) => {
     logger.error(err)
     return callback(err)
-  });
+  })
 }
 
 

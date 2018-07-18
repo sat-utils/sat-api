@@ -15,6 +15,9 @@ jobs:
           name: Bootstrap
           command: yarn bootstrap 
       - run:
+          name: Lint
+          command: yarn eslint
+      - run:
           name: Build 
           command: yarn build 
       - run:

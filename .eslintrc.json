@@ -7,6 +7,9 @@
     "mocha": true
   },
   "rules": {
+    "semi": [2, "never"],
+    "radix": "off",
+    "no-console": "off",
     "indent": [ "error", 2 ],
     "require-jsdoc": "off",
     "valid-jsdoc": [ "error", {
@@ -53,6 +56,7 @@
     "spaced-comment": "off",
     "require-yield": "off",
     "prefer-template": "warn",
+    "prefer-promise-reject-errors": "off",
     "no-underscore-dangle": "off",
     "comma-dangle": [
       "warn",

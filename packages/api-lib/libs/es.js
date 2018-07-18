@@ -7,38 +7,25 @@ const through2 = require('through2')
 const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
 const pump = require('pump')
 
-let esClient;
+let esClient
 
 /*
 This module looks for the ES_HOST environment variable which is the URL to the
 elasticsearch host
 */
-
-
-async function Client() {
-  if (!esClient) {
-    esClient = await connect()
-    console.log('connected to elasticsearch');
-  } else {
-    console.log('using existing elasticsearch connection')
-  }
-  return esClient
-}
-
-
 // Connect to an Elasticsearch cluster
 async function connect() {
-  
   let esConfig
   let client
 
   // use local client
   if (!process.env.ES_HOST) {
-    client = new elasticsearch.Client({host: 'localhost:9200'})
-  } else {
+    client = new elasticsearch.Client({ host: 'localhost:9200' })
+  }
+  else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
-      resolve()
+      return resolve()
     }))
 
     esConfig = {
@@ -49,49 +36,61 @@ async function connect() {
         credentials: AWS.config.credentials
       },
       // Note that this doesn't abort the query.
-      requestTimeout: 120000  // milliseconds
+      requestTimeout: 120000 // milliseconds
     }
     client = new elasticsearch.Client(esConfig)
   }
 
-  await new Promise((resolve, reject) => client.ping({requestTimeout: 1000}, (err) => {
+  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
     if (err) {
       console.log('unable to connect to elasticsearch')
       reject('unable to connect to elasticsearch')
-    } else {
+    }
+    else {
       resolve()
     }
   }))
   return client
 }
 
-
-async function listIndices(esClient, index) {
-  return esClient.indices.get({ index })
+async function Client() {
+  if (!esClient) {
+    esClient = await connect()
+    console.log('connected to elasticsearch')
+  }
+  else {
+    console.log('using existing elasticsearch connection')
+  }
+  return esClient
 }
 
 
-async function putMapping(esClient, index) {
+async function listIndices(client, index) {
+  return client.indices.get({ index })
+}
+
+
+async function putMapping(client, index) {
   // make sure the index doesn't exist
-  const exist = await esClient.indices.exists({index})
+  const exist = await client.indices.exists({ index })
   if (!exist) {
     console.log(`Creating index: ${index}`)
-    return esClient.indices.create({
+    return client.indices.create({
       index,
       body: {
         mappings: {
-          'doc': {
+          doc: {
             /*'_all': {
               enabled: true
             },*/
             properties: {
               datetime: { type: 'date' },
-              "eo:cloud_cover": { type: 'integer' },
-              "eo:gsd": { type: 'float' },
-              "eo:off_nadir": { type: 'float' },
-              "eo:azimuth": { type: 'float' },
-              "eo:sun_azimuth": { type: 'float' },
-              "eo:sun_elevation": { type: 'float' },
+              'eo:cloud_cover': { type: 'integer' },
+              'eo:gsd': { type: 'float' },
+              'eo:off_nadir': { type: 'float' },
+              'eo:azimuth': { type: 'float' },
+              'eo:sun_azimuth': { type: 'float' },
+              'eo:sun_elevation': { type: 'float' },
               geometry: {
                 type: 'geo_shape',
                 tree: 'quadtree',
@@ -102,14 +101,16 @@ async function putMapping(esClient, index) {
         }
       }
     }).catch((err) => {
-      console.log("Error creating index, already created: ", err)
+      console.log('Error creating index, already created: ', err)
     })
   }
+
+  return Promise.resolve()
 }
 
 
-async function reindex(esClient, source, dest) {
-  return esClient.reindex({
+async function reindex(client, source, dest) {
+  return client.reindex({
     body: {
       source: {
         index: source
@@ -122,23 +123,22 @@ async function reindex(esClient, source, dest) {
 }
 
 
-async function deleteIndex(esClient, index) {
-  return esClient.indices.delete({ index })
+async function deleteIndex(client, index) {
+  return client.indices.delete({ index })
 }
 
 
-function streamToEs(stream, transform, esClient, index) {
+function streamToEs(stream, transform, client, index) {
   // Given an input stream and a transform, write records to an elasticsearch instance
 
-  var n_records = 0
-  var n_csv = 0
-  var n_transformed = 0
+  let nRecords = 0
+  let nTransformed = 0
 
-  var toEs = through2({'objectMode': true, 'consume': true}, function(data, encoding, next) {
-    var record = {
+  const toEs = through2({ objectMode: true, consume: true }, (data, encoding, next) => {
+    const record = {
       index,
-      type: 'doc', 
-      id: data['id'],
+      type: 'doc',
+      id: data.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {
@@ -150,54 +150,66 @@ function streamToEs(stream, transform, esClient, index) {
     next()
   })
 
-  var esStream = new ElasticsearchWritableStream(esClient, {
+  const esStream = new ElasticsearchWritableStream(client, {
     highWaterMark: 100,
     flushTimeout: 1000
   })
 
   return new Promise((resolve, reject) => {
-    pump(stream, transform, toEs, esStream, function(err) {
+    pump(stream, transform, toEs, esStream, (err) => {
       if (err) {
         console.log('error:', err)
-        reject(n_transformed)
-      } else {
-        console.log(`Finished: ${n_records} csv records, ${n_transformed} transformed, `)
-        resolve(n_transformed)
+        reject(nTransformed)
+      }
+      else {
+        console.log(`Finished: ${nRecords} csv records, ${nTransformed} transformed, `)
+        resolve(nTransformed)
       }
     })
 
     // count records
-    stream.on('data', (data) => {n_records++})
-    toEs.on('data', (data) => {n_transformed++})
+    stream.on('data', () => {
+      nRecords += 1
+    })
+    toEs.on('data', () => {
+      nTransformed += 1
+    })
   })
 }
 
 
-async function saveRecords(esClient, records, index, idfield, callback) {
+async function saveRecords(client, records, index, idfield, callback) {
   const body = []
 
   records.forEach((r) => {
-    body.push({ update: { _index: index, _type: 'doc', _id: r[idfield], _retry_on_conflict: 3 } });
+    body.push({
+      update: {
+        _index: index, _type: 'doc', _id: r[idfield], _retry_on_conflict: 3
+      }
+    })
     body.push({ doc: r, doc_as_upsert: true })
   })
 
-  var updated = 0
-  var errors = 0
+  let updated = 0
+  let errors = 0
 
-  return esClient.bulk({ body }, (err, resp) => {
+  return client.bulk({ body }, (err, resp) => {
     if (err) {
       console.log(err)
-    } else {
+    }
+    else {
       if (resp.errors) {
-        resp.items.forEach(r => {
-          if (r.update.status == 400) {
+        resp.items.forEach((r) => {
+          if (r.update.status === 400) {
             console.log(r.update.error.reason)
-            errors++
-          } else {
-            updated++
+            errors += 1
+          }
+          else {
+            updated += 1
           }
         })
-      } else {
+      }
+      else {
         updated = resp.items.length
       }
       //added = added + resp.items.length

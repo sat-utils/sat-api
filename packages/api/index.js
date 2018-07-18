@@ -1,12 +1,12 @@
+/* eslint-disable new-cap */
+
 'use strict'
 
-const zlib = require('zlib')
 const util = require('lambda-proxy-utils')
-const get = require('lodash.get')
 const satlib = require('@sat-utils/api-lib')
 
 
-module.exports.handler = function (event, context, cb) {
+module.exports.handler = (event, context, cb) => {
   console.log(`API handler: ${JSON.stringify(event)}`)
 
   // get payload
@@ -31,59 +31,62 @@ module.exports.handler = function (event, context, cb) {
   }
 
   // split and remove empty strings
-  const resources = event.path.split('/').filter(x => x)
+  const resources = event.path.split('/').filter((x) => x)
   console.log('resources', resources)
-  let msg;
+  let msg
   switch (resources[0]) {
-    case 'api':
-      msg = 'TODO - return API doc'
+  case 'api':
+    msg = 'TODO - return API doc'
+    console.log(msg, resources)
+    respond(null, msg)
+    break
+  case 'collections':
+    if (resources.length === 1) {
+      satlib.es.client().then((esClient) => {
+        payload.query.limit = 100
+        const api = new satlib.api(payload, esClient)
+        api.search('collections', respond)
+      })
+      break
+    }
+    else if (resources.length === 2) {
+      msg = 'endpoint not defined'
       console.log(msg, resources)
       respond(null, msg)
       break
-    case 'collections':
-      if (resources.length == 1) {
-        satlib.es.client().then((esClient) => {
-          payload.query['limit'] = 100
-          const api = new satlib.api(payload, esClient)
-          api.search('collections', respond)
-        })
-        break
-       } else if (resources.length == 2) {
-        msg = 'endpoint not defined'
-        console.log(msg, resources)
-        respond(null, msg)
-        break
-      }
-      payload.query['c:id'] = resources[1]
-      switch (resources[2]) {
-        case 'items':
-          console.log('search items in this collection')
-          // this is a search across items in this collection
-          satlib.es.client().then((esClient) => {
-            const api = new satlib.api(payload, esClient)
-            api.search_items(respond)
-          })
-          break    
-        case 'definition':
-          console.log('collection definition')
-          satlib.es.client().then((esClient) => {
-          const api = new satlib.api(payload, esClient)
-            api.search('collections', respond)
-          })
-          break
-        default:
-          msg = 'endpoint not defined'
-          console.log(msg, resources)
-          respond(null, msg)
-      }
-      break
-    case 'search':
-      // items api
-      console.log('/search')
+    }
+    payload.query['c:id'] = resources[1]
+    switch (resources[2]) {
+    case 'items':
+      console.log('search items in this collection')
+      // this is a search across items in this collection
       satlib.es.client().then((esClient) => {
         const api = new satlib.api(payload, esClient)
         api.search_items(respond)
       })
       break
+    case 'definition':
+      console.log('collection definition')
+      satlib.es.client().then((esClient) => {
+        const api = new satlib.api(payload, esClient)
+        api.search('collections', respond)
+      })
+      break
+    default:
+      msg = 'endpoint not defined'
+      console.log(msg, resources)
+      respond(null, msg)
+    }
+    break
+  case 'search':
+    // items api
+    console.log('/search')
+    satlib.es.client().then((esClient) => {
+      const api = new satlib.api(payload, esClient)
+      api.search_items(respond)
+    })
+    break
+  default:
+    cb('Case not found')
   }
 }
