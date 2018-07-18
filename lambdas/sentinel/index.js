@@ -10,7 +10,7 @@ const moment = require('moment')
 const through2 = require('through2')
 const satlib = require('sat-api-lib')
 const local = require('kes/src/local')
-
+const _ = require('lodash')
 
 const collection = {
   "c:id": "sentinel-2-l1c",
