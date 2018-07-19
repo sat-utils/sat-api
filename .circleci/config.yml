@@ -23,3 +23,8 @@ jobs:
       - run:
           name: Test
           command: yarn test
+    
+      - run:
+          name: Build Documentation
+          command: |
+            yarn docs-build

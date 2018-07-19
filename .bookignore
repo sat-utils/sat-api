@@ -1,0 +1,8 @@
+.*
+bin
+package*
+CONTRIBUTING.md
+tests
+CHANGELOG.md
+lerna.json
+_book
