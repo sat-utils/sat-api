@@ -7,6 +7,8 @@
   "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "docs-build": "gitbook build",
+    "docs-serve": "gitbook serve",
     "bootstrap": "lerna bootstrap",
     "clean": "lerna clean",
     "build": "lerna run build",
@@ -24,6 +26,7 @@
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
+    "gitbook-cli": "^2.3.2",
     "lerna": "^2.11.0"
   }
 }
