@@ -93,8 +93,7 @@ Resources:
               - iam:GetRole
               - iam:PassRole
               Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/${Prefix}*
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/${Prefix}*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
 
             - Effect: Allow
               Action:
