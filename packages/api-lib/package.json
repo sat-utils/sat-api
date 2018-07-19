@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/api-lib",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A library for creating a search API of public Satellites metadata using Elasticsearch",
   "main": "index.js",
   "scripts": {
@@ -16,6 +16,9 @@
     "files": "tests/*.js",
     "verbose": true,
     "serial": true
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "bugs": {
     "url": "https://github.com/sat-utils/sat-api/issues"
