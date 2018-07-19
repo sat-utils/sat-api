@@ -25,17 +25,6 @@ jobs:
           command: yarn test
     
       - run:
-          name: Generate and Deploy Documentation
+          name: Build Documentation
           command: |
             yarn docs-build
-
-            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              cd _book
-              git init
-              git config user.name "Devseed"
-              git config user.email "info@developmentseed.org"
-              git add -A
-              git commit -m "Automated build in circleci"
-              git push --force --quiet git@github.com:sat-utils/sat-api master:gh-pages
-              rm -rf .git
-            fi
