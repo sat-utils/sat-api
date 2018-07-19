@@ -11,7 +11,7 @@ https://www.npmjs.com/org/sat-utils
 
 ## Documentation
 
-Access the documenation [here](docs) or on [gitbook(https://sat-utils.gitbook.io/sat-api/).
+Access the documenation [here](docs) or on [gitbook](https://sat-utils.gitbook.io/sat-api/).
 
 ## Development
 
