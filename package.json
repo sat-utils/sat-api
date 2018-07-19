@@ -14,6 +14,7 @@
     "build": "lerna run build",
     "linkall": "lerna exec -- yarn link",
     "test": "lerna run test",
+    "update": "lerna publish --skip-git --skip-npm",
     "eslint": "eslint packages/* --ext .js"
   },
   "dependencies": {

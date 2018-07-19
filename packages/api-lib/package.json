@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/api-lib",
-  "version": "1.0.0",
+  "version": "0.0.2",
   "description": "A library for creating a search API of public Satellites metadata using Elasticsearch",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,9 @@
     "verbose": true,
     "serial": true
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "bugs": {
     "url": "https://github.com/sat-utils/sat-api/issues"
   },
@@ -24,17 +27,17 @@
   "dependencies": {
     "elasticsearch": "^14.2.2",
     "elasticsearch-writable-stream": "^2.0.1",
-    "pump": "^3.0.0",
     "fast-csv": "^2.4.1",
     "geojson-validation": "^0.1.6",
     "http-aws-es": "^4.0.0",
     "lodash": "^4.12.0",
     "moment": "^2.15.1",
+    "p-limit": "^2.0.0",
+    "pump": "^3.0.0",
     "turf-area": "^3.0.1",
     "turf-intersect": "^3.0.10",
     "turf-kinks": "^3.0.12",
-    "winston": "^2.2.0",
-    "p-limit": "^2.0.0"
+    "winston": "^2.2.0"
   },
   "devDependencies": {
     "ava": "^0.16.0",
