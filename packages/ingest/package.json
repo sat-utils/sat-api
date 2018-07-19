@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/ingest",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "ingest lambda function of sat-api",
   "main": "index.js",
   "repository": {
