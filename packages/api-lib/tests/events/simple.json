@@ -1,0 +1,196 @@
+{
+  "simpleGet": {
+    "query": {}
+  },
+  "simplePost": {
+    "body": {}
+  },
+  "simplePostLimit2": {
+    "body": {
+      "limit": 2
+    }
+  },
+  "simplePostLimit2WithFields": {
+    "body": {
+      "limit": 2,
+      "fields": "date,thumbnail"
+    }
+  },
+  "postDatRange": {
+    "body": {
+      "date_from": "2015-11-05",
+      "date_to": "2016-05-05"
+    }
+  },
+  "postIntersects_coverage_zero": {
+    "body": {
+      "aoi_coverage_percentage": 0,
+      "intersects": {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -76.5032958984375,
+                36.7520891569463
+              ],
+              [
+                -76.5032958984375,
+                37.081475648860525
+              ],
+              [
+                -75.926513671875,
+                37.081475648860525
+              ],
+              [
+                -75.926513671875,
+                36.7520891569463
+              ],
+              [
+                -76.5032958984375,
+                36.7520891569463
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "postIntersects_coverage_100": {
+    "body": {
+      "aoi_coverage_percentage": 100,
+      "limit": 10,
+      "intersects": {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -77.354736328125,
+                37.38761749978395
+              ],
+              [
+                -77.354736328125,
+                37.75768707689704
+              ],
+              [
+                -76.849365234375,
+                37.75768707689704
+              ],
+              [
+                -76.849365234375,
+                37.38761749978395
+              ],
+              [
+                -77.354736328125,
+                37.38761749978395
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "postIntersects_coverage_50": {
+    "body": {
+      "aoi_coverage_percentage": 50,
+      "limit": 10,
+      "intersects": {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                -76.640625,
+                37.983174833513395
+              ],
+              [
+                -76.640625,
+                38.31149091244452
+              ],
+              [
+                -76.300048828125,
+                38.31149091244452
+              ],
+              [
+                -76.300048828125,
+                37.983174833513395
+              ],
+              [
+                -76.640625,
+                37.983174833513395
+              ]
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "getIntersects": {
+    "query": {
+      "intersects": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {},
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [
+                    -41.41845703125,
+                    35.209721645221386
+                  ],
+                  [
+                    -41.41845703125,
+                    35.746512259918504
+                  ],
+                  [
+                    -40.71533203125,
+                    35.746512259918504
+                  ],
+                  [
+                    -40.71533203125,
+                    35.209721645221386
+                  ],
+                  [
+                    -41.41845703125,
+                    35.209721645221386
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "getIntersectsInvalid": {
+    "query": {
+      "intersects": "{"
+    }
+  },
+  "getIntersectsString": {
+    "query": {
+      "intersects": "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-41.41845703125,35.209721645221386],[-41.41845703125,35.746512259918504],[-40.71533203125,35.746512259918504],[-40.71533203125,35.209721645221386],[-41.41845703125,35.209721645221386]]]}}]}"
+    }
+  },
+  "getIntersectsWithSatellineName": {
+    "query": {
+      "intersects": "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[-76.5032958984375,36.7520891569463],[-76.5032958984375,37.081475648860525],[-75.926513671875,37.081475648860525],[-75.926513671875,36.7520891569463],[-76.5032958984375,36.7520891569463]]]}}",
+      "satellite_name": "sentinel"
+    }
+  },
+  "getSelfIntersectingPolygon": {
+    "query": {
+      "intersects": "{\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[35.2693,54.958],[35.2688,54.957],[35.2707,54.955],[35.2691,54.956],[35.2693,54.958]]]},\"properties\":{}}"
+    }
+  }
+}

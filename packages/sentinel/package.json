@@ -1,0 +1,40 @@
+{
+  "name": "@sat-utils/sentinel",
+  "version": "0.0.2",
+  "description": "Lambda function for ingesting sentinel metadata to sat-api",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sat-utils/sat-api.git"
+  },
+  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sat-utils/sat-api/issues"
+  },
+  "scripts": {
+    "build": "webpack"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/sat-utils/sat-api#readme",
+  "dependencies": {
+    "@sat-utils/api-lib": "^0.0.2",
+    "epsg": "^0.3.0",
+    "got": "^8.3.2",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.frompairs": "^4.0.1",
+    "lodash.get": "^4.4.2",
+    "lodash.padstart": "^4.6.1",
+    "lodash.range": "^3.2.0",
+    "moment": "^2.22.2",
+    "proj4": "^2.4.4",
+    "through2": "^2.0.3",
+    "turf-kinks": "^3.0.12"
+  },
+  "devDependencies": {
+    "webpack": "~4.5.0",
+    "webpack-cli": "~2.0.14"
+  }
+}

@@ -1,95 +1,42 @@
 version: 2
 
-references:
-  container: &container
-    docker:
-      - image: node:6.11
-    working_dir: ~/project
-
-  restore_repo: &restore_repo
-    restore_cache:
-      keys:
-        - v0-repo-{{ .Branch }}-{{ .Revision }}
-        - v0-repo-{{ .Branch }}
-        - v0-repo
-
-  save_repo: &save_repo
-    save_cache:
-      key: v0-repo-{{ .Branch }}-{{ .Revision }}
-      paths:
-        ~/project  
-
-  restore_dependencies: &restore_dependencies
-    restore_cache:
-      keys:
-        - v0-cache-{{ checksum "package.json" }}
-        - v0-cache
-
-  save_dependencies: &save_dependencies
-    save_cache:
-      key: v0-cache-{{ checksum "package.json" }}
-      paths:
-        ~/project/node_modules
-
-  restore_build: &restore_build
-    restore_cache:
-      keys:
-        - v0-build-{{ .Branch }}-{{ .Revision }}
-        - v0-build-{{ .Branch }}
-        - v0-build
-
-  save_build: &save_build
-    save_cache:
-      key: v0-build-{{ .Branch }}-{{ .Revision }}
-      paths:
-        ~/project/dist
-
-  save_env: &save_env
-    run:
-      name: Creating .env for environment variables
-      command: |
-        echo "AWS_REGION=$AWS_REGION" >> .env
-        echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env
-        echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env
-
 jobs:
   build:
-    <<: *container
+    docker:
+      - image: circleci/node:8.11
+    working_directory: ~/project
     steps:
-      - *restore_repo
       - checkout
-      - *save_repo
 
-      - *restore_dependencies
       - run:
-          name: Installing Dependencies
+          name: Install
+          command: yarn
+      - run:
+          name: Bootstrap
+          command: yarn bootstrap 
+      - run:
+          name: Lint
+          command: yarn eslint
+      - run:
+          name: Build 
+          command: yarn build 
+      - run:
+          name: Test
+          command: yarn test
+    
+      - run:
+          name: Build Documentation
           command: |
-            npm install
-            npm install -g kes
-      - *save_dependencies
-
-      - *restore_build
-      - run:
-          name: Building
-          command: npm run build
-      - *save_build
-
-      - *save_env
-
-      - run:
-          name: Deploy to staging
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "_develop" ]; then
-              VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
-              kes cf deploy -r us-east-1
-            fi          
-          no_output_timeout: "30m"
-
-      - run:
-          name: Deploy to production
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "_master" ]; then
-              VERSION=$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
-              kes cf deploy -r us-east-1 -d production
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              yarn docs-build
             fi
-          no_output_timeout: "30m"
+      
+      - run:
+          name: Deploy example to aws
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd example
+              yarn
+              ./node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment dev --region us-east-1 --role arn:aws:iam::552819999234:role/sat-api-deployer-role-DeployerRole-JBBKUABAELDR
+            fi
+

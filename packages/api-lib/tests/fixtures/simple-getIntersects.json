@@ -1,0 +1,77 @@
+[
+    {
+        "scope": "http://localhost:9200",
+        "method": "POST",
+        "path": "/sat-api/_search?size=1&from=0",
+        "body": {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "geo_shape": {
+                                "data_geometry": {
+                                    "shape": {
+                                        "type": "polygon",
+                                        "coordinates": [
+                                            [
+                                                [
+                                                    -41.41845703125,
+                                                    35.209721645221386
+                                                ],
+                                                [
+                                                    -41.41845703125,
+                                                    35.746512259918504
+                                                ],
+                                                [
+                                                    -40.71533203125,
+                                                    35.746512259918504
+                                                ],
+                                                [
+                                                    -40.71533203125,
+                                                    35.209721645221386
+                                                ],
+                                                [
+                                                    -41.41845703125,
+                                                    35.209721645221386
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort": [
+                {
+                    "date": {
+                        "order": "desc"
+                    }
+                }
+            ]
+        },
+        "status": 200,
+        "response": {
+            "took": 17,
+            "timed_out": false,
+            "_shards": {
+                "total": 5,
+                "successful": 5,
+                "failed": 0
+            },
+            "hits": {
+                "total": 0,
+                "max_score": null,
+                "hits": []
+            }
+        },
+        "headers": {
+            "access-control-allow-origin": "*",
+            "content-type": "application/json; charset=UTF-8",
+            "server": "Jetty(8.1.12.v20130726)",
+            "content-length": "123",
+            "connection": "keep-alive"
+        }
+    }
+]

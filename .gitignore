@@ -3,5 +3,9 @@ dist
 .env
 build
 dist
-.kes/cloudformation.yml
+cloudformation.yml
 ddd.js
+package-lock.json
+yarn.lock
+*.lerna_backup
+_book

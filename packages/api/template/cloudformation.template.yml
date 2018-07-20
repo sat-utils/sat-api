@@ -1,0 +1,464 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'sat-api | stack: {{stackName}} | deployed by Kes'
+
+Resources:
+  # role for Lambdas that are NOT used with APIGateway
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - es.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: SatApiUpdaterLambdaRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Allow Lambda logging
+              - Effect: Allow
+                Action:
+                - logs:DescribeLogStreams
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+              # Allow writing to s3 buckets
+              - Effect: Allow
+                Action:
+                - s3:AbortMultipartUpload
+                - s3:Get*
+                - s3:Put*
+                - s3:List*
+                - s3:DeleteObject
+                - s3:DeleteObjectVersion
+                Resource:
+                - !Sub arn:aws:s3:::*
+                - !Sub arn:aws:s3:::*/*
+
+              # Allow lambdas to call other lambdas
+              - Effect: Allow
+                Action:
+                - lambda:GetFunction
+                - lambda:invokeFunction
+                Resource:
+                - "*"
+
+              - Effect: Allow
+                Action:
+                - kinesis:DescribeStream
+                - kinesis:GetShardIterator
+                - kinesis:GetRecords
+                - kinesis:PutRecord
+                - kinesis:PutRecords
+                - kinesis:ListStreams
+                Resource:
+                - 'arn:aws:kinesis:*:*:stream/{{stackName}}-*'
+
+              # Allow access to step functions
+              - Effect: Allow
+                Action:
+                - states:ListActivities
+                - states:SendTaskFailure
+                - states:SendTaskFailure
+                - states:SendTaskSuccess
+                - states:GetActivityTask
+                - states:DescribeActivity
+                - states:StartExecution
+                Resource: arn:aws:states:*:*:*
+
+              # Allow access to ES
+              - Effect: Allow
+                Action:
+                - es:*
+                Resource:
+                - "arn:aws:es:*:*:domain/*"
+  StepsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: StepsRole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "lambda:InvokeFunction"
+                Resource: "*"
+
+  EventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 'events.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Path: '/service-role/'
+      Policies:
+        - PolicyName: EventRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                Resource:
+                  - !Ref IngestFilesStateMachine
+
+{{# if es.name}}
+  #################################################
+  # ElasticSearch config BEGIN
+  #################################################
+  {{es.name}}Domain:
+    Type: "AWS::Elasticsearch::Domain"
+    Properties:
+      DomainName: {{stackName}}-{{es.name}}
+      ElasticsearchVersion: {{# if es.version}}{{es.version}}{{ else }}5.3{{/if}}
+      ElasticsearchClusterConfig:
+        InstanceCount: {{# if es.instanceCount}}{{es.instanceCount}}{{ else }}'1'{{/if}}
+        InstanceType: {{# if es.instanceType}}{{es.instanceType}}{{ else }}"t2.small.elasticsearch"{{/if}}
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: "0"
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: {{es.volumeSize}}
+      Tags:
+        - Key: StackName
+          Value: {{stackName}}
+      {{#each tags}}
+        - Key: {{@key}}
+          Value: {{this}}
+      {{/each}}
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !GetAtt [LambdaRole, Arn]
+            Action: "es:*"
+            Resource:
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+          - Effect: "Allow"
+            Principal:
+              AWS: !GetAtt [EventRole, Arn]
+            Action: "es:*"
+            Resource:
+              - Fn::Sub: "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/{{stackName}}-{{es.name}}/*"
+  #################################################
+  # ElasticSearch config END
+  #################################################
+{{/if}}
+
+
+  #################################################
+  # Step Functions BEGIN
+  #################################################
+
+  IngestFilesStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub |
+            {
+              "Comment": "Ingest metadata",
+              "StartAt": "Ingest",
+              "States": {
+                "Ingest": {
+                  "Type": "Task",
+                  "Resource": "${ingestLambdaFunction.Arn}",
+                  "Retry": [
+                    {
+                      "ErrorEquals": ["States.ALL"],
+                      "IntervalSeconds": 5,
+                      "MaxAttempts": 1,
+                      "BackoffRate": 2.0
+                    }
+                  ],
+                  "End": true
+                }
+              }
+            }
+      RoleArn: !GetAtt [StepsRole, Arn]
+
+
+  LandsatMetadataProcessorStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub |
+            {
+              "Comment": "Process Landsat Metadata and push to ES",
+              "StartAt": "Landsat",
+              "States": {
+                "Landsat": {
+                  "Type": "Task",
+                  "Resource": "${landsatLambdaFunction.Arn}",
+                  "Retry": [{
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 1
+                  }],
+                  "End": true
+                }
+              }
+            }
+      RoleArn: !GetAtt [StepsRole, Arn]
+
+  SentinelMetadataProcessorStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub |
+            {
+              "Comment": "Process Sentinel-2 Metadata and push to ES",
+              "StartAt": "Sentinel",
+              "States": {
+                "Sentinel": {
+                  "Type": "Task",
+                  "Resource": "${sentinelLambdaFunction.Arn}",
+                  "Retry": [{
+                    "ErrorEquals": ["States.ALL"],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 1
+                  }],
+                  "End": true
+                }
+              }
+            }
+      RoleArn: !GetAtt [StepsRole, Arn]
+
+  #################################################
+  # Step Functions END
+  #################################################
+
+  #################################################
+  # CloudWatch Events START
+  #################################################
+
+  ProcessLandsatScenes:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 6,18 * * ? *)'
+      State: 'DISABLED'
+      Targets:
+        - Id: ProcessLandsatScenesScheduler
+          Arn: !Ref IngestFilesStateMachine
+          RoleArn: !GetAtt [EventRole, Arn]
+          Input:
+            Fn::Sub:
+              - |
+                {
+                  "satellite": "landsat",
+                  "arn": "${stateMachineArn}",
+                  "maxFiles": 8,
+                  "maxLambdas": 10,
+                  "linesPerFile": 300
+                }
+              - stateMachineArn: !Ref LandsatMetadataProcessorStateMachine
+
+  ProcessSentinelScenes:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 0,12 * * ? *)'
+      State: 'DISABLED'
+      Targets:
+        - Id: ProcessSentinelScenesScheduler
+          Arn: !Ref IngestFilesStateMachine
+          RoleArn: !GetAtt [EventRole, Arn]
+          Input:
+            Fn::Sub:
+              - |
+                {
+                  "satellite": "sentinel",
+                  "arn": "${stateMachineArn}",
+                  "linesPerFile": 300,
+                  "maxFiles": 60,
+                  "maxLambdas": 10
+                }
+              - stateMachineArn: !Ref SentinelMetadataProcessorStateMachine
+
+  #################################################
+  # CloudWatch Events END
+  #################################################
+
+  #################################################
+  # APIGateway config BEGIN
+  #################################################
+{{# if apiMethods}}
+
+{{# each apiDependencies}}
+  ApiGatewayDeployment{{name}}:
+    DependsOn:
+  {{#each methods}}
+    - {{name}}
+  {{/each}}
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: {{name}}RestApi
+      StageName: stage
+{{/each}}
+
+{{#each apiMethods}}
+  {{name}}:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ResourceId:
+        Ref: {{resource}}
+      RestApiId:
+        Ref: {{api}}RestApi
+      HttpMethod: {{method}}
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Join:
+          - ''
+          - - 'arn:aws:apigateway:'
+            - Ref: AWS::Region
+            - :lambda:path/2015-03-31/functions/
+            - Fn::GetAtt:
+              - {{lambda}}LambdaFunction
+              - Arn
+            - /invocations
+
+{{/each}}
+
+{{#each apiMethodsOptions}}
+  {{name}}:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: '''Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'''
+            method.response.header.Access-Control-Allow-Methods: '''OPTIONS,PUT,POST,GET,DELETE'''
+            method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: ''
+          StatusCode: '200'
+        RequestTemplates:
+          application/json: '{statusCode:200}'
+        Type: MOCK
+      MethodResponses:
+      - ResponseModels: {}
+        ResponseParameters:
+          method.response.header.Access-Control-Allow-Headers: true
+          method.response.header.Access-Control-Allow-Methods: true
+          method.response.header.Access-Control-Allow-Origin: true
+        StatusCode: '200'
+      RequestParameters:
+        method.request.header.Authorization: true
+      ResourceId:
+        Ref: {{resource}}
+      RestApiId:
+        Ref: {{api}}RestApi
+
+{{/each}}
+
+{{#each apiResources}}
+  {{name}}:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+      {{#each parents}}
+        {{this}}
+      {{/each}}
+      PathPart: '{{pathPart}}'
+      RestApiId:
+        Ref: {{api}}RestApi
+
+{{/each}}
+
+{{#each apis}}
+  {{name}}RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: {{../stackName}}-{{name}}
+{{/each}}
+{{/if}}
+
+  #################################################
+  # APIGateway config END
+  #################################################
+
+  #################################################
+  # Lambda config BEGIN
+  #################################################
+{{#each lambdas}}
+  {{name}}LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket: {{../system_bucket}}
+        S3Key: {{remote}}
+      FunctionName: {{../stackName}}-{{name}}
+      Environment:
+        Variables:
+          stackName: {{../stackName}}
+      {{# if envs}}
+        {{#each envs}}
+          {{@key}}: {{this}}
+        {{/each}}
+      {{/if}}
+      Handler: {{handler}}
+      MemorySize: {{memory}}
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: {{# if runtime}}{{runtime}}{{else}}nodejs8.10{{/if}}
+      Timeout: {{timeout}}
+      Tags:
+        - Key: StackName 
+          Value: {{../stackName}}
+      {{#each ../tags}}
+        - Key: {{@key}}
+          Value: {{this}}
+      {{/each}}
+
+{{# if apiGateway }}
+  {{name}}LambdaPermissionApiGateway:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - {{name}}LambdaFunction
+        - Arn
+      Principal: apigateway.amazonaws.com
+{{/if}}
+
+{{/each}}
+  #################################################
+  # Lambda config END
+  #################################################
+
+Outputs:
+
+  ApiAddress:
+    Value:
+      Fn::Join: ["", [ "https://", {"Ref": "stacRestApi"}, ".execute-api.", {"Fn::Sub": "${AWS::Region}"}, ".amazonaws.com/stage/"]]

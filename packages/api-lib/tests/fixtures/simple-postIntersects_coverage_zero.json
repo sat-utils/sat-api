@@ -1,0 +1,225 @@
+[
+    {
+        "scope": "http://localhost:9200",
+        "method": "POST",
+        "path": "/sat-api/_search?size=1&from=0",
+        "body": {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "geo_shape": {
+                                "data_geometry": {
+                                    "shape": {
+                                        "type": "polygon",
+                                        "coordinates": [
+                                            [
+                                                [
+                                                    -76.5032958984375,
+                                                    36.7520891569463
+                                                ],
+                                                [
+                                                    -76.5032958984375,
+                                                    37.081475648860525
+                                                ],
+                                                [
+                                                    -75.926513671875,
+                                                    37.081475648860525
+                                                ],
+                                                [
+                                                    -75.926513671875,
+                                                    36.7520891569463
+                                                ],
+                                                [
+                                                    -76.5032958984375,
+                                                    36.7520891569463
+                                                ]
+                                            ]
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort": [
+                {
+                    "date": {
+                        "order": "desc"
+                    }
+                }
+            ]
+        },
+        "status": 200,
+        "response": {
+            "took": 43,
+            "timed_out": false,
+            "_shards": {
+                "total": 5,
+                "successful": 5,
+                "failed": 0
+            },
+            "hits": {
+                "total": 237,
+                "max_score": null,
+                "hits": [
+                    {
+                        "_index": "sat-api",
+                        "_type": "landsat8",
+                        "_id": "LC80150342016104LGN00",
+                        "_score": null,
+                        "_source": {
+                            "scene_id": "LC80150342016104LGN00",
+                            "satellite_name": "landsat-8",
+                            "cloud_coverage": 0.08,
+                            "date": "2016-04-13",
+                            "thumbnail": "http://earthexplorer.usgs.gov/browse/landsat_8/2016/015/034/LC80150342016104LGN00.jpg",
+                            "data_geometry": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [
+                                            -76.00456,
+                                            38.12953
+                                        ],
+                                        [
+                                            -78.12872,
+                                            38.52837
+                                        ],
+                                        [
+                                            -78.61859,
+                                            36.80372
+                                        ],
+                                        [
+                                            -76.5427,
+                                            36.40616
+                                        ],
+                                        [
+                                            -76.00456,
+                                            38.12953
+                                        ]
+                                    ]
+                                ]
+                            },
+                            "sceneID": "LC80150342016104LGN00",
+                            "sensor": "OLI_TIRS",
+                            "acquisitionDate": "2016-04-13",
+                            "dateUpdated": "2016-04-13",
+                            "browseAvailable": "Y",
+                            "browseURL": "http://earthexplorer.usgs.gov/browse/landsat_8/2016/015/034/LC80150342016104LGN00.jpg",
+                            "path": 15,
+                            "row": 34,
+                            "upperLeftCornerLatitude": 38.52837,
+                            "upperLeftCornerLongitude": -78.12872,
+                            "upperRightCornerLatitude": 38.12953,
+                            "upperRightCornerLongitude": -76.00456,
+                            "lowerLeftCornerLatitude": 36.80372,
+                            "lowerLeftCornerLongitude": -78.61859,
+                            "lowerRightCornerLatitude": 36.40616,
+                            "lowerRightCornerLongitude": -76.5427,
+                            "sceneCenterLatitude": 37.4745,
+                            "sceneCenterLongitude": -77.32213,
+                            "cloudCover": 0,
+                            "cloudCoverFull": 0.08,
+                            "FULL_UL_QUAD_CCA": "",
+                            "FULL_UR_QUAD_CCA": "",
+                            "FULL_LL_QUAD_CCA": "",
+                            "FULL_LR_QUAD_CCA": "",
+                            "dayOrNight": "DAY",
+                            "flightPath": "",
+                            "sunElevation": 56.19542206,
+                            "sunAzimuth": 140.95195839,
+                            "receivingStation": "LGN",
+                            "sceneStartTime": "2016:104:15:46:10.8889710",
+                            "sceneStopTime": "2016:104:15:46:42.6589680",
+                            "lookAngle": "",
+                            "imageQuality1": 9,
+                            "imageQuality2": "",
+                            "gainBand1": "",
+                            "gainBand2": "",
+                            "gainBand3": "",
+                            "gainBand4": "",
+                            "gainBand5": "",
+                            "gainBand6H": "",
+                            "gainBand6L": "",
+                            "gainBand7": "",
+                            "gainBand8": "",
+                            "gainChangeBand1": "",
+                            "gainChangeBand2": "",
+                            "gainChangeBand3": "",
+                            "gainChangeBand4": "",
+                            "gainChangeBand5": "",
+                            "gainChangeBand6H": "",
+                            "gainChangeBand6L": "",
+                            "gainChangeBand7": "",
+                            "gainChangeBand8": "",
+                            "satelliteNumber": "",
+                            "DATA_TYPE_L1": "L1T",
+                            "cartURL": "http://earthexplorer.usgs.gov/order/process?dataset_name=LANDSAT_8&ordered=LC80150342016104LGN00",
+                            "DATE_ACQUIRED_GAP_FILL": "",
+                            "DATA_TYPE_L0RP": "",
+                            "DATUM": "",
+                            "ELEVATION_SOURCE": "",
+                            "ELLIPSOID": "",
+                            "EPHEMERIS_TYPE": "",
+                            "FALSE_EASTING": "",
+                            "FALSE_NORTHING": "",
+                            "GAP_FILL": "",
+                            "GROUND_CONTROL_POINTS_MODEL": 506,
+                            "GROUND_CONTROL_POINTS_VERIFY": "",
+                            "GEOMETRIC_RMSE_MODEL": "",
+                            "GEOMETRIC_RMSE_MODEL_X": 5.502,
+                            "GEOMETRIC_RMSE_MODEL_Y": 4.997,
+                            "GEOMETRIC_RMSE_VERIFY": "",
+                            "GRID_CELL_SIZE_PANCHROMATIC": "",
+                            "GRID_CELL_SIZE_REFLECTIVE": "",
+                            "GRID_CELL_SIZE_THERMAL": "",
+                            "MAP_PROJECTION_L1": "",
+                            "MAP_PROJECTION_L0RA": "",
+                            "ORIENTATION": "",
+                            "OUTPUT_FORMAT": "",
+                            "PANCHROMATIC_LINES": "",
+                            "PANCHROMATIC_SAMPLES": "",
+                            "L1_AVAILABLE": "",
+                            "REFLECTIVE_LINES": "",
+                            "REFLECTIVE_SAMPLES": "",
+                            "RESAMPLING_OPTION": "",
+                            "SCAN_GAP_INTERPOLATION": "",
+                            "THERMAL_LINES": "",
+                            "THERMAL_SAMPLES": "",
+                            "TRUE_SCALE_LAT": "",
+                            "UTM_ZONE": "",
+                            "VERTICAL_LON_FROM_POLE": "",
+                            "PRESENT_BAND_1": "",
+                            "PRESENT_BAND_2": "",
+                            "PRESENT_BAND_3": "",
+                            "PRESENT_BAND_4": "",
+                            "PRESENT_BAND_5": "",
+                            "PRESENT_BAND_6": "",
+                            "PRESENT_BAND_7": "",
+                            "PRESENT_BAND_8": "",
+                            "NADIR_OFFNADIR": "NADIR"
+                        },
+                        "sort": [
+                            1460505600000
+                        ]
+                    }
+                ]
+            }
+        },
+        "headers": {
+            "access-control-allow-origin": "*",
+            "content-type": "application/json; charset=UTF-8",
+            "server": "Jetty(8.1.12.v20130726)",
+            "content-length": "3362",
+            "connection": "keep-alive"
+        }
+    }
+]

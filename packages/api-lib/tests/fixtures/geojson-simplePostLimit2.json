@@ -1,0 +1,308 @@
+[
+    {
+        "scope": "http://localhost:9200",
+        "method": "POST",
+        "path": "/sat-api/_search?size=2&from=0",
+        "body": {
+            "query": {
+                "match_all": {}
+            },
+            "sort": [
+                {
+                    "date": {
+                        "order": "desc"
+                    }
+                }
+            ]
+        },
+        "status": 200,
+        "response": {
+            "took": 34,
+            "timed_out": false,
+            "_shards": {
+                "total": 5,
+                "successful": 5,
+                "failed": 0
+            },
+            "hits": {
+                "total": 987449,
+                "max_score": null,
+                "hits": [
+                    {
+                        "_index": "sat-api",
+                        "_type": "sentinel2",
+                        "_id": "S2A_tile_20160418_36UUA_0",
+                        "_score": null,
+                        "_source": {
+                            "scene_id": "S2A_tile_20160418_36UUA_0",
+                            "original_scene_id": "S2A_OPER_MSI_L1C_TL_SGS__20160418T131049_A004294_T36UUA_N02.01",
+                            "satellite_name": "Sentinel-2A",
+                            "cloud_coverage": 14.64,
+                            "date": "2016-04-18",
+                            "thumbnail": "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/preview.jp2",
+                            "tile_geometry": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [
+                                            30.178667516431105,
+                                            50.518100038043855
+                                        ],
+                                        [
+                                            31.72692441603744,
+                                            50.545333158158115
+                                        ],
+                                        [
+                                            31.752783043845767,
+                                            49.55803395193649
+                                        ],
+                                        [
+                                            30.235902710260245,
+                                            49.531731207348805
+                                        ],
+                                        [
+                                            30.178667516431105,
+                                            50.518100038043855
+                                        ]
+                                    ]
+                                ]
+                            },
+                            "data_coverage_percentage": 100,
+                            "cloudy_pixel_percentage": 14.64,
+                            "latitude_band": "U",
+                            "product_name": "S2A_OPER_PRD_MSIL1C_PDMC_20160418T171217_R007_V20160418T090432_20160418T090432",
+                            "tile_origin": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Point",
+                                "coordinates": [
+                                    30.178667516431105,
+                                    50.518100038043855
+                                ]
+                            },
+                            "utm_zone": 36,
+                            "product_path": "products/2016/4/18/S2A_OPER_PRD_MSIL1C_PDMC_20160418T171217_R007_V20160418T090432_20160418T090432",
+                            "timestamp": "2016-04-18T09:04:32.572Z",
+                            "path": "tiles/36/U/UA/2016/4/18/0",
+                            "grid_square": "UA",
+                            "spacecraft_name": "Sentinel-2A",
+                            "product_stop_time": "2016-04-18T09:04:32.572Z",
+                            "processing_level": "Level-1C",
+                            "product_type": "S2MSI1C",
+                            "processing_baseline": "02.01",
+                            "sensing_orbit_number": 7,
+                            "sensing_orbit_direction": "DESCENDING",
+                            "product_format": "SAFE",
+                            "product_cloud_coverage_assessment": 30.005226666666665,
+                            "product_meta_link": "http://sentinel-s2-l1c.s3.amazonaws.com/products/2016/4/18/S2A_OPER_PRD_MSIL1C_PDMC_20160418T171217_R007_V20160418T090432_20160418T090432/metadata.xml",
+                            "download_links": {
+                                "aws_s3": [
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B01.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B02.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B03.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B04.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B05.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B06.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B07.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B08.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B09.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B10.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B11.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B12.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/B8A.jp2"
+                                ]
+                            },
+                            "original_tile_meta": "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/36/U/UA/2016/4/18/0/tileInfo.json",
+                            "data_geometry": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [
+                                            30.178682140766004,
+                                            50.5180913973669
+                                        ],
+                                        [
+                                            31.726910547947295,
+                                            50.545324012898035
+                                        ],
+                                        [
+                                            31.752768991002718,
+                                            49.558042795542434
+                                        ],
+                                        [
+                                            30.235916006808427,
+                                            49.531740521647734
+                                        ],
+                                        [
+                                            30.178682140766004,
+                                            50.5180913973669
+                                        ]
+                                    ]
+                                ]
+                            }
+                        },
+                        "sort": [
+                            1460937600000
+                        ]
+                    },
+                    {
+                        "_index": "sat-api",
+                        "_type": "sentinel2",
+                        "_id": "S2A_tile_20160418_34PEC_0",
+                        "_score": null,
+                        "_source": {
+                            "scene_id": "S2A_tile_20160418_34PEC_0",
+                            "original_scene_id": "S2A_OPER_MSI_L1C_TL_SGS__20160418T131049_A004294_T34PEC_N02.01",
+                            "satellite_name": "Sentinel-2A",
+                            "cloud_coverage": 46.47,
+                            "date": "2016-04-18",
+                            "thumbnail": "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/preview.jp2",
+                            "tile_geometry": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [
+                                            20.99981280568242,
+                                            16.280833323080397
+                                        ],
+                                        [
+                                            22.027449895278483,
+                                            16.27833889675182
+                                        ],
+                                        [
+                                            22.022462286018357,
+                                            15.285841607250315
+                                        ],
+                                        [
+                                            20.999813714584004,
+                                            15.288176518161798
+                                        ],
+                                        [
+                                            20.99981280568242,
+                                            16.280833323080397
+                                        ]
+                                    ]
+                                ]
+                            },
+                            "data_coverage_percentage": 100,
+                            "cloudy_pixel_percentage": 46.47,
+                            "latitude_band": "P",
+                            "product_name": "S2A_OPER_PRD_MSIL1C_PDMC_20160418T181648_R007_V20160418T090432_20160418T090432",
+                            "tile_origin": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Point",
+                                "coordinates": [
+                                    20.99981280568242,
+                                    16.280833323080397
+                                ]
+                            },
+                            "utm_zone": 34,
+                            "product_path": "products/2016/4/18/S2A_OPER_PRD_MSIL1C_PDMC_20160418T181648_R007_V20160418T090432_20160418T090432",
+                            "timestamp": "2016-04-18T09:04:32.572Z",
+                            "path": "tiles/34/P/EC/2016/4/18/0",
+                            "grid_square": "EC",
+                            "spacecraft_name": "Sentinel-2A",
+                            "product_stop_time": "2016-04-18T09:04:32.572Z",
+                            "processing_level": "Level-1C",
+                            "product_type": "S2MSI1C",
+                            "processing_baseline": "02.01",
+                            "sensing_orbit_number": 7,
+                            "sensing_orbit_direction": "DESCENDING",
+                            "product_format": "SAFE",
+                            "product_cloud_coverage_assessment": 63.1541625,
+                            "product_meta_link": "http://sentinel-s2-l1c.s3.amazonaws.com/products/2016/4/18/S2A_OPER_PRD_MSIL1C_PDMC_20160418T181648_R007_V20160418T090432_20160418T090432/metadata.xml",
+                            "download_links": {
+                                "aws_s3": [
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B01.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B02.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B03.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B04.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B05.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B06.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B07.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B08.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B09.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B10.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B11.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B12.jp2",
+                                    "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/B8A.jp2"
+                                ]
+                            },
+                            "original_tile_meta": "http://sentinel-s2-l1c.s3.amazonaws.com/tiles/34/P/EC/2016/4/18/0/tileInfo.json",
+                            "data_geometry": {
+                                "crs": {
+                                    "type": "name",
+                                    "properties": {
+                                        "name": "urn:ogc:def:crs:EPSG:8.9:4326"
+                                    }
+                                },
+                                "type": "Polygon",
+                                "coordinates": [
+                                    [
+                                        [
+                                            20.999822165406446,
+                                            16.280824282914008
+                                        ],
+                                        [
+                                            22.027440490151065,
+                                            16.27832990347499
+                                        ],
+                                        [
+                                            22.02245301715955,
+                                            15.285850689334827
+                                        ],
+                                        [
+                                            20.999823028847214,
+                                            15.288185559167582
+                                        ],
+                                        [
+                                            20.999822165406446,
+                                            16.280824282914008
+                                        ]
+                                    ]
+                                ]
+                            }
+                        },
+                        "sort": [
+                            1460937600000
+                        ]
+                    }
+                ]
+            }
+        },
+        "headers": {
+            "access-control-allow-origin": "*",
+            "content-type": "application/json; charset=UTF-8",
+            "server": "Jetty(8.1.12.v20130726)",
+            "content-length": "6817",
+            "connection": "keep-alive"
+        }
+    }
+]
