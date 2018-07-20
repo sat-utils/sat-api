@@ -27,4 +27,16 @@ jobs:
       - run:
           name: Build Documentation
           command: |
-            yarn docs-build
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              yarn docs-build
+            fi
+      
+      - run:
+          name: Deploy example to aws
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              cd example
+              yarn
+              ./node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment dev --region us-east-1 --role arn:aws:iam::552819999234:role/sat-api-deployer-role-DeployerRole-JBBKUABAELDR
+            fi
+

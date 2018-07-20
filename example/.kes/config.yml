@@ -1,0 +1,22 @@
+default:
+  stackName: change-me
+  system_bucket: change-me
+
+  tags:
+    project: sat-api
+
+dev:
+  stackName: sat-api-v1-dev
+  system_bucket: sat-api 
+  es:
+    instanceCount: 2
+    instanceType: m3.medium.elasticsearch
+    volumeSize: 80
+
+prod:
+  stackName: sat-api-v1
+  system_bucket: sat-api 
+  es:
+    instanceCount: 2
+    instanceType: m3.medium.elasticsearch
+    volumeSize: 80

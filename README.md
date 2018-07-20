@@ -28,17 +28,6 @@ Access the documenation [here](docs) or on [gitbook](https://sat-utils.gitbook.i
 
     $ yarn docs-serve
 
-## Use Unreleased Version in Deployed Instances
-
-If you need to use the latest code on the master branch that is not released to npm yet, or if you need to do live development on an instance deployed to AWS (not recommended), you should follow these steps:
-
-- Clone this repo and install requirements ([follow](#local-installation))
-- Run: `yarn linkall` (this will link packages to your local npm).
-- In the deployment repository (e.g. [sat-api-deployment](https://github.com/sat-utils/sat-api-deployment#deploy-an-instance)) run the link command with the package name you are using:
-    - `yarn link @sat-utils/api`
-- Verify packages are linked: `ls -la node_modules/@sat-utils`
-    - This show an output similar to: `lrwxr-xr-x 1 user staff 29 Jul 11 14:19 api -> ../../../sat-api/packages/api`
-
 ## Deployment
 
 To create a new version for npm:
