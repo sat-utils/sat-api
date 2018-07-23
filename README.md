@@ -9,7 +9,7 @@ Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 im
 
 ## Documentation
 
-Access the documentation [here](docs) or on [gitbook](https://sat-utils.gitbook.io/sat-api/).
+The docuementation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs) or on [gitbook](https://sat-utils.gitbook.io/sat-api/).
 
 
 ## Development
