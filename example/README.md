@@ -36,9 +36,13 @@ name-of-my-deployment:
 
 Then run this command:
 
-     $ ./node_modules/.bin/kes cf deploy --region us-east-1 --profile <profile-name> --template node_modules/@sat-utils/api/template --deployment <name-of-mystack> --showOutputs
+     $ ./node_modules/.bin/kes cf deploy --region us-east-1 --profile <profile-name> --template node_modules/@sat-utils/api/template --deployment <name-of-deployment> --showOutputs
 
 The command will return the api endpoint that is created by the operation.
+
+Once the system is initialized, go to the API Gateway console and select the "sat-api-..." entry, click on the _Settings_ menu, and then click _Add Binary Media Type_ option and add `'*'` as the Binary media type.
+
+The Landsat and Sentinel ingestors are run as Step Functions every 12 hours (Landsat at 6:00 and 18:00, Sentinel at 0:00 and 12:00), as can be seen under the CloudWatch Rules console. They can be disabled from the console.
 
 ### Deploy Devseed's Dev stack
 
