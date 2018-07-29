@@ -13,7 +13,7 @@ https://www.npmjs.com/org/sat-utils
 
 * [Home](README.md)
 * [What is STAC?](stac.md)
-* [Deployment](../example/README.md)
+* [Deployment](deploy.md)
 * [API Docs](api.md)
 * [Manage Elasticsearch](manage.md)
 * [Changelog](https://github.com/sat-utils/sat-api/blob/sat-api-as-library/CHANGES.md)
