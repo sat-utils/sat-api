@@ -1,6 +1,6 @@
 {
   "name": "sat-api",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "One API to search public Satellites metadata",
   "main": "index.js",
   "repository": "https://github.com/sat-utils/sat-api",
