@@ -37,6 +37,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor several modules: metadata, landsat, sentinel
 - Refactor and improve splitting
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v0.0.2...HEAD
-[v0.0.2]: https://github.com/cumulus-nasa/cumulus/compare/v0.0.1...v0.0.2
+[Unreleased]: https://github.com/sat-utils/sat-api/compare/v0.0.2...HEAD
+[v0.0.2]: https://github.com/sat-utils/sat-api/compare/legacy-v2.0.0...v0.0.2
 [legacy-v2.0.0]: https://github.com/sat-utils/sat-api/tree/legacy
