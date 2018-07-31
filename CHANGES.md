@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.0.2]
+
 ### Added
 - Added support for [STAC specification](https://github.com/radiantearth/stac-spec/)
 - The following packages are released
@@ -25,19 +27,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - /geojson endpoint
 - /count endpoint
 
-
-
-## [v2.0.0] - 2017-06-14
+## [legacy-v2.0.0] - 2018-01-01
 
 - Moves all the metadata indexing logics to the same repo
 - Uses CloudFormation for full deployment
 - Includes a better ApiGateway support
-
-## [v1.0.0] - 2016-10-20
 - Use streams to read, transform, and write into elasticsearch
 - Use batches of lambdas to speed up processing
 - Refactor several modules: metadata, landsat, sentinel
 - Refactor and improve splitting
 
-[Unreleased]: https://github.com/cumulus-nasa/cumulus/compare/v2.0.0...HEAD
-[v2.0.0]: https://github.com/cumulus-nasa/cumulus/compare/v1.0.0...v2.0.0
+[Unreleased]: https://github.com/sat-utils/sat-api/compare/v0.0.2...HEAD
+[v0.0.2]: https://github.com/sat-utils/sat-api/compare/legacy-v2.0.0...v0.0.2
+[legacy-v2.0.0]: https://github.com/sat-utils/sat-api/tree/legacy
