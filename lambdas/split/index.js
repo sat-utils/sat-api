@@ -53,7 +53,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
   let lineLength = 0
   let stopSplitting = false
   let header
-  let reverse = false
+  let reverse = true
 
   switch (satellite) {
     case 'landsat':
@@ -62,7 +62,6 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
       break
     case 'sentinel':
       remoteCsv = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
-      reverse = true
       newStream = got.stream(remoteCsv).pipe(gunzip)
       break
   }
@@ -96,7 +95,7 @@ function split(satellite, arn, maxFiles, linesPerFile, maxLambdas, cb) {
       lineCounter = 0 // start counting the lines again
       if ((fileCounter) % 250 === 0 && fileCounter != 0) console.log(`uploaded ${fileCounter} files`)
       // sentinel csv is ordered from old to new so always have to go all the way back
-      if ((fileCounter >= maxFiles) && maxFiles != 0 && satellite != 'sentinel') {
+      if ((fileCounter >= maxFiles) && maxFiles != 0 && !reverse) {
         stopSplitting = true
       }
     }

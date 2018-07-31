@@ -139,7 +139,6 @@ function awsLinks(data) {
 
 function transform(data, encoding, next) {
   const numberFields = [
-    'cloudCoverFull',
     'path',
     'row',
     'upperLeftCornerLatitude',
@@ -192,7 +191,7 @@ function transform(data, encoding, next) {
       scene_id: data.sceneID,
       product_id: data.LANDSAT_PRODUCT_ID,
       satellite_name: 'landsat-8',
-      cloud_coverage: data.cloudCoverFull,
+      cloud_coverage: data.cloudCover,
       date: data.acquisitionDate,
       thumbnail: data.browseURL,
       data_geometry,
@@ -205,8 +204,6 @@ function transform(data, encoding, next) {
       aws_index: null,
       google_index: google.c1.index,
     };
-
-    delete data.cloudCoverFull
 
     awsLinks(data).then((info) => {
       //console.log('awslinks', info)
