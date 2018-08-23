@@ -40,7 +40,7 @@ module.exports.handler = function handler(event, context, cb) {
     bucket,
     key,
     arn,
-    maxFiles,
+    inMaxFiles: maxFiles,
     linesPerFile,
     maxLambdas,
     reverse,
