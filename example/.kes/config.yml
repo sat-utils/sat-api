@@ -6,7 +6,7 @@ default:
     project: sat-api
 
 dev:
-  stackName: sat-api-v1-dev
+  stackName: sat-api-dev
   system_bucket: sat-api 
   es:
     instanceCount: 2
@@ -14,7 +14,7 @@ dev:
     volumeSize: 80
 
 prod:
-  stackName: sat-api-v1
+  stackName: sat-api
   system_bucket: sat-api 
   es:
     instanceCount: 2
