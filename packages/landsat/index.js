@@ -318,9 +318,13 @@ function handler(event, context, cb) {
       esClient = client
       return satlib.es.putMapping(esClient, 'collections')
     })
-    .then(() => satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id'))
+    .then(() => {
+      satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id', (err) => {
+        if (err) console.log('Warning: ', err)
+      })
+    })
     .then(() => satlib.ingestcsv.update({
-      esClient,
+      client: esClient,
       bucket,
       key,
       transform: _transform,

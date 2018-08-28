@@ -253,7 +253,7 @@ function handler(event, context, cb) {
     })
     .then(() => satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id'))
     .then(() => satlib.ingestcsv.update({
-      esClient,
+      client: esClient,
       bucket,
       key,
       transform: _transform,
