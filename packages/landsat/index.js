@@ -136,8 +136,8 @@ function arrayIterate(values, fn) {
 
 function awsLinks(data) {
   // generates links for the data on AWS
-  const row = _.pad(data.row, 3, '0')
-  const _path = _.pad(data.path, 3, '0')
+  const row = _.padStart(data.row, 3, '0')
+  const _path = _.padStart(data.path, 3, '0')
   const sceneId = data.sceneID
   const productId = data.LANDSAT_PRODUCT_ID
 
@@ -171,7 +171,7 @@ function awsLinks(data) {
       // check that file exists
       fileExists(c1.index).then(() => resolve(c1))
         .catch((e) => {
-          const error = new Error(`${c1.index} not available: `)
+          const error = new Error(`${c1.index} not available: ${JSON.stringify(data)}`)
           reject(error, e)
         })
     }
@@ -334,7 +334,7 @@ function handler(event, context, cb) {
       arn,
       retries
     }))
-    .catch((e) => console.log('Error: ', e))
+    .catch((e) => console.log(e))
 }
 
 
