@@ -23,10 +23,11 @@ module.exports.handler = function handler(event, context, cb) {
   const arn = _.get(event, 'arn', '')
 
   let url
-  const reverse = true
+  let reverse = true
   switch (sat) {
   case 'landsat':
     url = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv'
+    reverse = false
     break
   case 'sentinel':
     url = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
