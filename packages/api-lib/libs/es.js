@@ -134,7 +134,7 @@ function streamToEs(stream, transform, client, index) {
   let nRecords = 0
   let nTransformed = 0
 
-  const toEs = through2({ objectMode: true, consume: true }, (data, encoding, next) => {
+  const toEs = through2({ objectMode: true, consume: true }, function(data, encoding, next) {
     const record = {
       index,
       type: 'doc',
