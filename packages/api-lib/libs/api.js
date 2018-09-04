@@ -35,16 +35,13 @@ function Search(event, esClient) {
 
   this.queries = queries(this.params)
 
-  console.log(`Queries: ${JSON.stringify(this.queries)}`)
 }
 
 // search for items using collection and items
-Search.prototype.search_items = (callback) => {
+Search.prototype.search_items = function (callback) {
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.features.map((c) => c.properties['c:id'])
-    console.log('matched collections', collections)
-    console.log('queries before', JSON.stringify(this.queries))
     let qs
     if (collections.length === 0) {
       qs = { bool: { must_not: { exists: { field: 'c:id' } } } }
@@ -62,7 +59,7 @@ Search.prototype.search_items = (callback) => {
 }
 
 
-Search.prototype.search_collections = (callback) => {
+Search.prototype.search_collections = function (callback) {
   // hacky way to get all collections
   const sz = this.size
   const frm = this.frm
@@ -92,7 +89,7 @@ Search.prototype.search_collections = (callback) => {
 }
 
 
-Search.prototype.search = (index, callback) => {
+Search.prototype.search = function(index, callback) {
   const self = this
 
   const searchParams = {
