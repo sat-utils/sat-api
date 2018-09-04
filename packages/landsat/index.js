@@ -98,7 +98,7 @@ const collection = {
 function fileExists(url) {
   const params = {
     Bucket: 'landsat-pds',
-    Key: url.slice(36)
+    Key: url.slice(37)
   }
   return new Promise(((resolve, reject) => {
     s3.headObject(params, (err) => {
@@ -171,6 +171,7 @@ function awsLinks(data) {
       // check that file exists
       fileExists(c1.index).then(() => resolve(c1))
         .catch((e) => {
+          console.log(`not avail: ${JSON.stringify(c1)}`)
           const error = new Error(`${c1.index} not available: ${JSON.stringify(data)}`)
           reject(error, e)
         })
@@ -180,7 +181,7 @@ function awsLinks(data) {
       let sid
       let newKey
       const rev = sceneId.slice(-2)
-      let prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
+      let prefix = `https://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       const links = _.range(rev, -1, -1).map((r) => `${prefix}${_.pad(r, 2, '0')}/index.html`)
 
       arrayIterate(links.reverse(), fileExists).then((value) => {
