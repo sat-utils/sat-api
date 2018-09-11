@@ -89,7 +89,7 @@ Search.prototype.search_collections = function (callback) {
 }
 
 
-Search.prototype.search = function(index, callback) {
+Search.prototype.search = function (index, callback) {
   const self = this
 
   const searchParams = {
