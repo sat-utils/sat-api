@@ -17,7 +17,7 @@ module.exports.handler = (event, context, cb) => {
   )
   let endpoint = `${event.headers['X-Forwarded-Proto']}://${host}`
   if ('stage' in event.requestContext) {
-    endpoint = `${event.headers.Endpoint}/${event.requestContext.stage}`
+    endpoint = `${endpoint}/${event.requestContext.stage}`
   }
 
   const payload = { query: {}, headers: event.headers, endpoint: endpoint }
