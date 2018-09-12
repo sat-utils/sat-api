@@ -6,7 +6,7 @@ default:
     project: sat-api
 
 dev:
-  stackName: sat-api-dev
+  stackName: sat-api-v1-dev
   system_bucket: sat-api 
   es:
     instanceCount: 2
