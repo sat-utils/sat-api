@@ -87,7 +87,7 @@ const geometryQuery = (field, geometry) => {
 
 
 const intersects = (inGeojson, queries) => {
-  let geojson
+  let geojson = inGeojson
   // if we receive an object, assume it's GeoJSON, if not, try and parse
   if (typeof geojson === 'string') {
     try {
