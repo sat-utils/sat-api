@@ -3,8 +3,6 @@
 const csv = require('fast-csv')
 const AWS = require('aws-sdk')
 const zlib = require('zlib')
-const pLimit = require('p-limit')
-const lodash = require('lodash')
 const es = require('./es')
 
 let esClient
@@ -156,7 +154,7 @@ function split({
         `${extra} extra (Files ${startFile}-${maxEndFile})`
       )
 
-      for (let i = 0; i < numLambdas; i++) {
+      for (let i = 0; i < numLambdas; i += 1) {
         endFile = (i < extra) ? (startFile + batchSize) : ((startFile + batchSize) - 1)
         invokeLambda(bucket, key, startFile, Math.min(endFile, maxEndFile), arn)
         startFile = endFile + 1

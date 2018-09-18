@@ -34,7 +34,6 @@ function Search(event, esClient) {
   this.client = esClient
 
   this.queries = queries(this.params)
-
 }
 
 // search for items using collection and items
