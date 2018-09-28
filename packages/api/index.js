@@ -11,13 +11,15 @@ module.exports.handler = (event, context, cb) => {
 
   // get payload
   const method = event.httpMethod
-  const host = (
-    'X-Forwarded-Host' in event.headers ?
-      event.headers['X-Forwarded-Host'] : event.headers.Host
-  )
-  let endpoint = `${event.headers['X-Forwarded-Proto']}://${host}`
-  if ('stage' in event.requestContext) {
-    endpoint = `${endpoint}/${event.requestContext.stage}`
+  let endpoint
+  if ('X-Forwarded-Host' in event.headers) {
+    endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`
+    if ('stage' in event.requestContext) {
+      endpoint = `${endpoint}/${event.requestContext.stage}`
+    }
+  }
+  else {
+    endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers.Host}`
   }
 
   const payload = { query: {}, headers: event.headers, endpoint: endpoint }
