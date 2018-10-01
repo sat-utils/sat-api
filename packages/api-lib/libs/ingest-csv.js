@@ -3,8 +3,6 @@
 const csv = require('fast-csv')
 const AWS = require('aws-sdk')
 const zlib = require('zlib')
-const pLimit = require('p-limit')
-const lodash = require('lodash')
 const es = require('./es')
 
 let esClient
@@ -34,10 +32,9 @@ function invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, retries) {
       else {
         console.log(`launched ${JSON.stringify(params)}`)
       }
-    }).promise()
+    })
   }
-
-  return Promise.resolve()
+  return 0
 }
 
 // split a CSV to multiple files and trigger lambdas
@@ -128,7 +125,6 @@ function split({
   newStream.on('error', (e) => cb(e))
 
   return newStream.on('end', () => {
-    const limit = pLimit(3) //set concurrent call to 3 at a time
     // write the last records
     if (lineCounter > 0) {
       fileCounter += 1
@@ -158,16 +154,13 @@ function split({
         `${extra} extra (Files ${startFile}-${maxEndFile})`
       )
 
-      const promises = lodash.range(numLambdas).map((i) => limit(() => {
-        endFile = (i < extra) ? startFile + batchSize : (startFile + batchSize) - 1
+      for (let i = 0; i < numLambdas; i += 1) {
+        endFile = (i < extra) ? (startFile + batchSize) : ((startFile + batchSize) - 1)
+        invokeLambda(bucket, key, startFile, Math.min(endFile, maxEndFile), arn)
         startFile = endFile + 1
-        return invokeLambda(bucket, key, startFile - 1, Math.min(endFile, maxEndFile), arn)
-      }))
-
-      return Promise.all(promises).then(() => cb()).catch(cb)
+      }
     }
     cb()
-    return Promise.resolve()
   })
 }
 

@@ -98,7 +98,7 @@ const collection = {
 function fileExists(url) {
   const params = {
     Bucket: 'landsat-pds',
-    Key: url.slice(36)
+    Key: url.slice(37)
   }
   return new Promise(((resolve, reject) => {
     s3.headObject(params, (err) => {
@@ -136,8 +136,8 @@ function arrayIterate(values, fn) {
 
 function awsLinks(data) {
   // generates links for the data on AWS
-  const row = _.pad(data.row, 3, '0')
-  const _path = _.pad(data.path, 3, '0')
+  const row = _.padStart(data.row, 3, '0')
+  const _path = _.padStart(data.path, 3, '0')
   const sceneId = data.sceneID
   const productId = data.LANDSAT_PRODUCT_ID
 
@@ -171,7 +171,8 @@ function awsLinks(data) {
       // check that file exists
       fileExists(c1.index).then(() => resolve(c1))
         .catch((e) => {
-          const error = new Error(`${c1.index} not available: `)
+          console.log(`not avail: ${JSON.stringify(c1)}`)
+          const error = new Error(`${c1.index} not available: ${JSON.stringify(data)}`)
           reject(error, e)
         })
     }
@@ -180,7 +181,7 @@ function awsLinks(data) {
       let sid
       let newKey
       const rev = sceneId.slice(-2)
-      let prefix = `http://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
+      let prefix = `https://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       const links = _.range(rev, -1, -1).map((r) => `${prefix}${_.pad(r, 2, '0')}/index.html`)
 
       arrayIterate(links.reverse(), fileExists).then((value) => {
@@ -318,9 +319,13 @@ function handler(event, context, cb) {
       esClient = client
       return satlib.es.putMapping(esClient, 'collections')
     })
-    .then(() => satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id'))
+    .then(() => {
+      satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id', (err) => {
+        if (err) console.log('Warning: ', err)
+      })
+    })
     .then(() => satlib.ingestcsv.update({
-      esClient,
+      client: esClient,
       bucket,
       key,
       transform: _transform,
@@ -330,7 +335,7 @@ function handler(event, context, cb) {
       arn,
       retries
     }))
-    .catch((e) => console.log('Error: ', e))
+    .catch((e) => console.log(e))
 }
 
 

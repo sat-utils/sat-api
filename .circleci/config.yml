@@ -35,8 +35,11 @@ jobs:
           name: Deploy example to aws
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              cd example
-              yarn
-              ./node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment dev --region us-east-1 --role arn:aws:iam::552819999234:role/sat-api-deployer-role-DeployerRole-JBBKUABAELDR
+              #cd example
+              #yarn
+              #./node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment dev --region us-east-1 --role arn:aws:iam::552819999234:role/sat-api-deployer-role-DeployerRole-JBBKUABAELDR
+              echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+              VERSION=$(jq --raw-output .version lerna.json)
+              node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
             fi
 

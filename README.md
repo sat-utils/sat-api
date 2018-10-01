@@ -34,7 +34,7 @@ Sat-api includes a number of NPM packages (in the packages/ directory) that are 
 
     $ yarn docs-serve
 
-On Linux, if you get the message "Error: watch *path*/book.json ENOSPC", issue the following command (require sudo access).
+On Linux, if you get the message "Error: watch *path*/book.json ENOSPC", issue the following command (requires sudo access).
 
     $ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 

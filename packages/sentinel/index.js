@@ -140,19 +140,6 @@ function getTileUrl(tilePath) {
 }
 
 
-function getSentinelInfo(url) {
-  /*return new Promise(function(resolve, reject) {
-    got(url, { json: true }).then(response => {
-      resolve(response)
-    }).catch(e => {
-      console.log(`error getting metadata: ${e}`)
-      resolve()
-    })
-  })*/
-  return got(url, { json: true })
-}
-
-
 function reproject(inputGeojson) {
   let geojson = clone(inputGeojson)
   const crs = geojson.crs.properties.name.replace(
@@ -191,22 +178,23 @@ function transform(data, encoding, next) {
   const parsedMgrs = parseMgrs(mgrs)
   const tilePath = getTilePath(dt, parsedMgrs)
   const tileBaseUrl = getTileUrl(tilePath)
+  const rodaBaseUrl = tileBaseUrl.replace('sentinel-s2-l1c.s3.amazonaws.com', 'roda.sentinel-hub.com/sentinel-s2-l1c')
   const bands = range(1, 13).map((i) => pad(i, 3, 'B0'))
   bands.push('B8A')
-  getSentinelInfo(`${tileBaseUrl}/tileInfo.json`).then((body) => {
-    const info = body
-    const sat = info.productName.slice(0, 3)
+  const tileInfo = `${rodaBaseUrl}/tileInfo.json`
+  got(tileInfo, { json: true }).then((info) => {
+    const sat = info.body.productName.slice(0, 3)
     const satname = `Sentinel-2${sat.slice(-1)}`
     let val
     const files = fromPairs(bands.map((b) => {
       val = { href: `${tileBaseUrl}/${b}.jp2`, 'eo:bands': [b] }
       return [b, val]
     }))
-    files.thumbnail = { href: `${tileBaseUrl}/preview.jpg` }
+    files.thumbnail = { href: `${rodaBaseUrl}/preview.jpg` }
     files.tki = { href: `${tileBaseUrl}/TKI.jp2`, description: 'True Color Image' }
-    files.metadata = { href: `${tileBaseUrl}/metadata.xml` }
+    files.metadata = { href: `${rodaBaseUrl}/metadata.xml` }
     // reproject to EPSG:4326
-    const geom = reproject(info.tileDataGeometry)
+    const geom = reproject(info.body.tileDataGeometry)
     const lons = geom.coordinates[0].map((pt) => pt[0])
     const lats = geom.coordinates[0].map((pt) => pt[1])
     const record = {
@@ -251,9 +239,13 @@ function handler(event, context, cb) {
       esClient = client
       return satlib.es.putMapping(esClient, 'collections')
     })
-    .then(() => satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id'))
+    .then(() => {
+      satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id', (err) => {
+        if (err) console.log('Warning: ', err)
+      })
+    })
     .then(() => satlib.ingestcsv.update({
-      esClient,
+      client: esClient,
       bucket,
       key,
       transform: _transform,

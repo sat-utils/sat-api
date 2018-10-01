@@ -15,7 +15,7 @@ function Search(event, esClient) {
     params = event.body
   }
 
-  this.headers = event.headers
+  this.endpoint = event.endpoint
 
   this.merge = false
   if (_.has(params, 'merge')) {
@@ -34,17 +34,13 @@ function Search(event, esClient) {
   this.client = esClient
 
   this.queries = queries(this.params)
-
-  console.log(`Queries: ${JSON.stringify(this.queries)}`)
 }
 
 // search for items using collection and items
-Search.prototype.search_items = (callback) => {
+Search.prototype.search_items = function (callback) {
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.features.map((c) => c.properties['c:id'])
-    console.log('matched collections', collections)
-    console.log('queries before', JSON.stringify(this.queries))
     let qs
     if (collections.length === 0) {
       qs = { bool: { must_not: { exists: { field: 'c:id' } } } }
@@ -62,7 +58,7 @@ Search.prototype.search_items = (callback) => {
 }
 
 
-Search.prototype.search_collections = (callback) => {
+Search.prototype.search_collections = function (callback) {
   // hacky way to get all collections
   const sz = this.size
   const frm = this.frm
@@ -92,7 +88,7 @@ Search.prototype.search_collections = (callback) => {
 }
 
 
-Search.prototype.search = (index, callback) => {
+Search.prototype.search = function (index, callback) {
   const self = this
 
   const searchParams = {
@@ -129,20 +125,15 @@ Search.prototype.search = (index, callback) => {
       props = _.omit(props, ['bbox', 'geometry', 'assets', 'links', 'eo:bands'])
       const links = body.hits.hits[i]._source.links || []
       // add self and collection links
-      const host = (
-        'X-Forwarded-Host' in self.headers ?
-          self.headers['X-Forwarded-Host'] : self.headers.Host
-      )
-      const apiUrl = `${self.headers['X-Forwarded-Proto']}://${host}`
       let prefix = '/search/stac'
       if (index === 'collections') {
         prefix = '/collections'
-        links.self = { rel: 'self', href: `${apiUrl}${prefix}?c:id=${props.collection}` }
+        links.self = { rel: 'self', href: `${self.endpoint}${prefix}?c:id=${props.collection}` }
       }
       else {
-        links.self = { rel: 'self', href: `${apiUrl}${prefix}?id=${props.id}` }
+        links.self = { rel: 'self', href: `${self.endpoint}${prefix}?id=${props.id}` }
         if (_.has(props, 'c:id')) {
-          links.collection = { href: `${apiUrl}/collections/${props['c:id']}/definition` }
+          links.collection = { href: `${self.endpoint}/collections/${props['c:id']}/definition` }
         }
       }
       return {

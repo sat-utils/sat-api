@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/api",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "The api lambda function for sat-api",
   "main": "index.js",
   "repository": {
@@ -20,11 +20,11 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.0.2",
-    "@sat-utils/ingest": "^0.0.2",
-    "@sat-utils/landsat": "^0.0.2",
-    "@sat-utils/manager": "^0.0.2",
-    "@sat-utils/sentinel": "^0.0.2",
+    "@sat-utils/api-lib": "^0.1.0",
+    "@sat-utils/ingest": "^0.1.0",
+    "@sat-utils/landsat": "^0.1.0",
+    "@sat-utils/manager": "^0.1.0",
+    "@sat-utils/sentinel": "^0.1.0",
     "lambda-proxy-utils": "^1.2.4",
     "lodash.get": "^4.4.2"
   },
