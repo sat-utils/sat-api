@@ -115,27 +115,27 @@ Search.prototype.search = function (index, callback) {
       features: []
     }
 
-    // get all collections
-    //var collections = body.hits.hits.map((c) => {
-    //  return c[i]._source.collection
-    //})
-
     response.features = _.range(body.hits.hits.length).map((i) => {
       let props = body.hits.hits[i]._source
-      props = _.omit(props, ['bbox', 'geometry', 'assets', 'links', 'eo:bands'])
+      props = _.omit(props, ['bbox', 'geometry', 'assets', 'links'])
       const links = body.hits.hits[i]._source.links || []
-      // add self and collection links
-      let prefix = '/search/stac'
+
+      // link to collection
+      var collink = (_.has(props, 'c:id')) ? `${self.endpoint}/stac/collections/${props['c:id']}/definition` : null
+
       if (index === 'collections') {
-        prefix = '/collections'
-        links.self = { rel: 'self', href: `${self.endpoint}${prefix}?c:id=${props.collection}` }
+        // self link
+        links.splice(0, 0, {rel: 'self', href:collink})
       }
       else {
-        links.self = { rel: 'self', href: `${self.endpoint}${prefix}?id=${props.id}` }
-        if (_.has(props, 'c:id')) {
-          links.collection = { href: `${self.endpoint}/collections/${props['c:id']}/definition` }
+        href = `${self.endpoint}/stac/search?id=${props.id}`
+        if (collink) {
+          links.splice(0, 0, {rel: 'parent', href:collink})
         }
+        // self link
+        links.splice(0, 0, {rel: 'self', href: href})
       }
+      
       return {
         type: 'Feature',
         properties: props,

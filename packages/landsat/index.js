@@ -12,13 +12,14 @@ const s3 = new AWS.S3()
 
 
 const collection = {
-  'c:id': 'landsat-8-l1',
-  'c:name': 'Landsat 8 L1',
-  'c:description': 'Landat 8 imagery radiometrically calibrated and orthorectified ' +
+  name: 'landsat-8-l1',
+  title: 'Landsat 8 L1',
+  description: 'Landat 8 imagery radiometrically calibrated and orthorectified ' +
                    'using gound points and Digital Elevation Model (DEM) data to ' +
                    'correct relief displacement.',
   provider: 'USGS',
   license: 'PDDL-1.0',
+  'c:id': 'landsat-8-l1',
   'eo:gsd': 30,
   'eo:platform': 'landsat-8',
   'eo:instrument': 'OLI_TIRS',
@@ -90,7 +91,8 @@ const collection = {
       center_wavelength: 12.0,
       full_width_half_max: 1.0
     }
-  }
+  },
+  links: []
 }
 
 
@@ -143,7 +145,7 @@ function awsLinks(data) {
 
   let files = ['ANG.txt', 'B1.TIF', 'B2.TIF', 'B3.TIF', 'B4.TIF', 'B5.TIF', 'B6.TIF',
     'B7.TIF', 'B8.TIF', 'B9.TIF', 'B10.TIF', 'B11.TIF', 'BQA.TIF', 'MTL.txt']
-  const _bands = Object.keys(collection['eo:bands'])
+  const _bands = Object.keys(collection.properties['eo:bands'])
 
   const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
   //const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
@@ -286,9 +288,9 @@ function transform(incomingData, encoding, next) {
         'eo:sun_elevation': data.sunElevation,
         'landsat:path': data.path,
         'landsat:row': data.row,
-        links: {
-          index: { href: info.index }
-        },
+        links: [
+          { rel: 'related', href: info.index }
+        ],
         assets: info.files
       }
       this.push(record)
@@ -320,7 +322,7 @@ function handler(event, context, cb) {
       return satlib.es.putMapping(esClient, 'collections')
     })
     .then(() => {
-      satlib.es.saveRecords(esClient, [collection], 'collections', 'c:id', (err) => {
+      satlib.es.saveRecords(esClient, [collection], 'collections', 'name', (err) => {
         if (err) console.log('Warning: ', err)
       })
     })

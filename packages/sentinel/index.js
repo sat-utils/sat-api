@@ -14,11 +14,12 @@ const get = require('lodash.get')
 const satlib = require('@sat-utils/api-lib')
 
 const collection = {
-  'c:id': 'sentinel-2-l1c',
-  'c:name': 'Sentinel 2 L1C',
-  'c:description': 'Sentinel-2a and Sentinel-2b imagery',
+  name: 'sentinel-2-l1c',
+  title: 'Sentinel 2 L1C',
+  description: 'Sentinel-2a and Sentinel-2b imagery',
   provider: 'ESA',
-  license: 'https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice',
+  license: 'proprietary',
+  'c:id': 'sentinel-2-l1c',
   'eo:gsd': 10,
   'eo:instrument': 'MSI',
   'eo:off_nadir': 0,
@@ -96,7 +97,10 @@ const collection = {
       center_wavelength: 2.22024,
       full_width_half_max: 0.242
     }
-  }
+  },
+  links: [
+    { rel: 'license', href: 'https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice' }
+  ]
 }
 
 
@@ -207,7 +211,7 @@ function transform(data, encoding, next) {
       'eo:cloud_cover': parseInt(data.CLOUD_COVER),
       'eo:epsg': parsedMgrs.epsg,
       assets: files,
-      links: {},
+      links: [],
       'sentinel:product_id': data.PRODUCT_ID
       //'sentinel:tile_geometry': reproject(info.tileGeometry),
       //'sentinel:tileOrigin': reproject(info.tileOrigin)
