@@ -45,6 +45,35 @@ module.exports.handler = (event, context, cb) => {
   const resources = event.path.split('/').filter((x) => x)
   console.log('resources', resources)
   let msg
+  if (resources[0] !== 'stac') {
+    msg = 'endpoint not defined'
+    console.log(msg, resources)
+    respond(null, msg)
+    return
+  }
+
+  // /stac
+  if (resources.length === 1) {
+    msg = 'STAC catalog (see endpoints /search and /collections)'
+    const catalog = {
+      name: 'sat-api',
+      description: 'A STAC API of public datasets',
+      links: [{ rel: 'self', href: `${endpoint}/stac` }]
+    }
+    satlib.es.client().then((esClient) => {
+      payload.query.limit = 100
+      const api = new satlib.api(payload, esClient)
+      api.search('collections', (err) => {
+        if (err) respond(err)
+        // loop through collections and add to links
+        catalog.links.push({ rel: 'dataset', hred: '' })
+      })
+    })
+    respond(null, catalog)
+  }
+  resources.splice(0, 1)
+
+  // STAC endpoints
   switch (resources[0]) {
   case 'api':
     msg = 'TODO - return API doc'
@@ -91,13 +120,12 @@ module.exports.handler = (event, context, cb) => {
     break
   case 'search':
     // items api
-    console.log('/search')
     satlib.es.client().then((esClient) => {
       const api = new satlib.api(payload, esClient)
       api.search_items(respond)
     })
     break
   default:
-    cb('Case not found')
+    cb('endpoint not defined')
   }
 }
