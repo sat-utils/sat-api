@@ -17,79 +17,105 @@ const collection = {
   description: 'Landat 8 imagery radiometrically calibrated and orthorectified ' +
                    'using gound points and Digital Elevation Model (DEM) data to ' +
                    'correct relief displacement.',
-  provider: 'USGS',
-  license: 'PDDL-1.0',
-  'c:id': 'landsat-8-l1',
-  'eo:gsd': 30,
-  'eo:platform': 'landsat-8',
-  'eo:instrument': 'OLI_TIRS',
-  'eo:off_nadir': 0,
-  'eo:bands': {
-    B1: {
-      common_name: 'coastal',
-      gsd: 30.0,
-      center_wavelength: 0.44,
-      full_width_half_max: 0.02
+  keywords: 'landsat',
+  version: '0.1.0',
+  extent: {
+    spatial: [-180, -90, 180, 90],
+    temporal: ['2013-06-01', null]
+  },
+  properties: {
+    provider: 'USGS',
+    license: 'PDDL-1.0',
+    'c:id': 'landsat-8-l1',
+    'eo:gsd': 30,
+    'eo:platform': 'landsat-8',
+    'eo:instrument': 'OLI_TIRS',
+    'eo:off_nadir': 0,
+    'eo:bands': {
+      B1: {
+        common_name: 'coastal',
+        gsd: 30.0,
+        center_wavelength: 0.44,
+        full_width_half_max: 0.02
+      },
+      B2: {
+        common_name: 'blue',
+        gsd: 30.0,
+        center_wavelength: 0.48,
+        full_width_half_max: 0.06
+      },
+      B3: {
+        common_name: 'green',
+        gsd: 30.0,
+        center_wavelength: 0.56,
+        full_width_half_max: 0.06
+      },
+      B4: {
+        common_name: 'red',
+        gsd: 30.0,
+        center_wavelength: 0.65,
+        full_width_half_max: 0.04
+      },
+      B5: {
+        common_name: 'nir',
+        gsd: 30.0,
+        center_wavelength: 0.86,
+        full_width_half_max: 0.03
+      },
+      B6: {
+        common_name: 'swir16',
+        gsd: 30.0,
+        center_wavelength: 1.6,
+        full_width_half_max: 0.08
+      },
+      B7: {
+        common_name: 'swir22',
+        gsd: 30.0,
+        center_wavelength: 2.2,
+        full_width_half_max: 0.2
+      },
+      B8: {
+        common_name: 'pan',
+        gsd: 15.0,
+        center_wavelength: 0.59,
+        full_width_half_max: 0.18
+      },
+      B9: {
+        common_name: 'cirrus',
+        gsd: 30.0,
+        center_wavelength: 1.37,
+        full_width_half_max: 0.02
+      },
+      B10: {
+        common_name: 'lwir11',
+        gsd: 100.0,
+        center_wavelength: 10.9,
+        full_width_half_max: 0.8
+      },
+      B11: {
+        common_name: 'lwir12',
+        gsd: 100.0,
+        center_wavelength: 12.0,
+        full_width_half_max: 1.0
+      }
     },
-    B2: {
-      common_name: 'blue',
-      gsd: 30.0,
-      center_wavelength: 0.48,
-      full_width_half_max: 0.06
-    },
-    B3: {
-      common_name: 'green',
-      gsd: 30.0,
-      center_wavelength: 0.56,
-      full_width_half_max: 0.06
-    },
-    B4: {
-      common_name: 'red',
-      gsd: 30.0,
-      center_wavelength: 0.65,
-      full_width_half_max: 0.04
-    },
-    B5: {
-      common_name: 'nir',
-      gsd: 30.0,
-      center_wavelength: 0.86,
-      full_width_half_max: 0.03
-    },
-    B6: {
-      common_name: 'swir16',
-      gsd: 30.0,
-      center_wavelength: 1.6,
-      full_width_half_max: 0.08
-    },
-    B7: {
-      common_name: 'swir22',
-      gsd: 30.0,
-      center_wavelength: 2.2,
-      full_width_half_max: 0.2
-    },
-    B8: {
-      common_name: 'pan',
-      gsd: 15.0,
-      center_wavelength: 0.59,
-      full_width_half_max: 0.18
-    },
-    B9: {
-      common_name: 'cirrus',
-      gsd: 30.0,
-      center_wavelength: 1.37,
-      full_width_half_max: 0.02
-    },
-    B10: {
-      common_name: 'lwir11',
-      gsd: 100.0,
-      center_wavelength: 10.9,
-      full_width_half_max: 0.8
-    },
-    B11: {
-      common_name: 'lwir12',
-      gsd: 100.0,
-      center_wavelength: 12.0,
-      full_width_half_max: 1.0
+    'assets': {
+      'index': {name: 'HTML index page', type: 'text/html'},
+      'ANG': {name: "Angle coefficients file", type: 'text/plain'},
+      'MTL': {name: 'original metadata file', type: 'text/plain'},
+      'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
+      'BQA': {name: "Band quality data", type: 'image/x.geotiff'},
+      'B1': {name: "Band 1 (coastal)", type: 'image/x.geotiff', 'eo:bands': ['B1']},
+      'B2': {name: "Band 2 (blue)", type: 'image/x.geotiff', 'eo:bands': ['B2']},
+      'B3': {name: "Band 3 (green)", type: 'image/x.geotiff', 'eo:bands': ['B3']},
+      'B4': {name: "Band 4 (red)", type: 'image/x.geotiff', 'eo:bands': ['B4']},
+      'B5': {name: "Band 5 (nir)", type: 'image/x.geotiff', 'eo:bands': ['B5']},
+      'B6': {name: "Band 6 (swir16)", type: 'image/x.geotiff', 'eo:bands': ['B6']},
+      'B7': {name: "Band 7 (swir22)", type: 'image/x.geotiff', 'eo:bands': ['B7']},
+      'B8': {name: "Band 8 (pan)", type: 'image/x.geotiff', 'eo:bands': ['B8']},
+      'B9': {name: "Band 9 (cirrus)", type: 'image/x.geotiff', 'eo:bands': ['B9']},
+      'B10': {name: "Band 10 (lwir)", type: 'image/x.geotiff', 'eo:bands': ['B10']},
+      'B11': {name: "Band 11 (lwir)", type: 'image/x.geotiff', 'eo:bands': ['B11']}
     }
   },
   links: []
@@ -154,15 +180,16 @@ function awsLinks(data) {
   const c1Files = _.fromPairs(files.map((b) => {
     key = b.slice(0, -4)
     val = { href: `${c1Base}/${productId}_${b}` }
-    if (_bands.includes(key)) {
-      val['eo:bands'] = [key]
-    }
+    //if (_bands.includes(key)) {
+    //  val['eo:bands'] = [key]
+    //}
     return [key, val]
   }))
   c1Files.thumbnail = { href: `${c1Base}/${productId}_thumb_large.jpg` }
+  c1Files.index = `${c1Base}/index.html`
 
   const c1 = {
-    index: `${c1Base}/index.html`,
+    index: c1Files.index,
     files: c1Files
   }
 
@@ -193,14 +220,15 @@ function awsLinks(data) {
         files = _.fromPairs(files.map((b) => {
           newKey = b.slice(0, -4)
           newVal = { href: `${prefix}/${sid}_${b}` }
-          if (_bands.includes(newKey)) {
-            newVal['eo:bands'] = [newKey]
-          }
+          //if (_bands.includes(newKey)) {
+          //  newVal['eo:bands'] = [newKey]
+          //}
           return [key, newVal]
         }))
         files.thumbnail = { href: `${prefix}/${sid}_thumb_large.jpg` }
+        files.index = `${prefix}/index.html`
         const pre = {
-          index: `${prefix}/index.html`,
+          index: files.index,
           files: files
         }
         resolve(pre)
@@ -272,7 +300,6 @@ function transform(incomingData, encoding, next) {
     awsLinks(data).then((info) => {
       const start = moment(data.sceneStartTime, 'YYYY:DDD:HH:mm:ss.SSSSS')
       const record = {
-        id: data.LANDSAT_PRODUCT_ID,
         bbox: [
           data.lowerLeftCornerLongitude,
           data.lowerLeftCornerLatitude,
@@ -280,18 +307,19 @@ function transform(incomingData, encoding, next) {
           data.upperRightCornerLatitude
         ],
         geometry: geometry,
-        'c:id': 'landsat-8-l1',
-        datetime: start.toISOString(),
-        // eo extension metadata
-        'eo:cloud_cover': parseInt(data.cloudCover),
-        'eo:sun_azimuth': data.sunAzimuth,
-        'eo:sun_elevation': data.sunElevation,
-        'landsat:path': data.path,
-        'landsat:row': data.row,
-        links: [
-          { rel: 'related', href: info.index }
-        ],
-        assets: info.files
+        properties: {
+          id: data.LANDSAT_PRODUCT_ID,
+          'c:id': 'landsat-8-l1',
+          datetime: start.toISOString(),
+          // eo extension metadata
+          'eo:cloud_cover': parseInt(data.cloudCover),
+          'eo:sun_azimuth': data.sunAzimuth,
+          'eo:sun_elevation': data.sunElevation,
+          'landsat:path': data.path,
+          'landsat:row': data.row,
+          assets: info.files
+        },
+        links: []
       }
       this.push(record)
       next()
