@@ -24,9 +24,14 @@ const collection = {
     temporal: ['2013-06-01', null]
   },
   properties: {
-    provider: 'USGS',
+    providers: [
+      {name: 'USGS', url: 'https://landsat.usgs.gov/'},
+      {name: 'Planet Labs', url: 'https://github.com/landsat-pds/landsat_ingestor'},
+      {name: 'AWS', url: 'https://landsatonaws.com/'},
+      {name: 'Development Seed', url:'https://developmentseed.org/'}
+    ],
     license: 'PDDL-1.0',
-    'eo:gsd': 30,
+    'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
     'eo:off_nadir': 0,
@@ -309,7 +314,7 @@ function transform(incomingData, encoding, next) {
         geometry: geometry,
         properties: {
           id: data.LANDSAT_PRODUCT_ID,
-          'cid': 'landsat-8-l1',
+          cid: 'landsat-8-l1',
           datetime: start.toISOString(),
           // eo extension metadata
           'eo:cloud_cover': parseInt(data.cloudCover),

@@ -121,22 +121,23 @@ Search.prototype.search = function (index, callback) {
       const links = body.hits.hits[i]._source.links || []
 
       // link to collection
-      var collink = (_.has(source.properties, 'cid')) ? 
-        `${self.endpoint}/stac/collections/${source.properties['cid']}` : null
+      var collink = `${self.endpoint}/stac/collections`
 
       if (index === 'collections') {
         // self link
         links.splice(0, 0, {rel: 'self', href: collink})
         // parent link
         links.push({rel: 'parent', href: `${self.endpoint}/stac`})
-        links.push({rel: 'child', href: `${collink}/items`})
+        links.push({rel: 'child', href: `${collink}/${source.name}/items`})
       } else {
         // Item
         response
         // self link
         links.splice(0, 0, {rel: 'self', href: `${self.endpoint}/stac/search?id=${source.properties.id}`})
         // parent link
-        if (collink) links.push({rel: 'parent', href: collink})
+        if (_.has(source.properties, 'cid')) {
+          links.push({rel: 'parent', href: `${collink}/${source.properties.cid}`})
+        }
         source['type'] = 'Feature'
       }
       links.push({rel: 'root', href: `${self.endpoint}/stac`})

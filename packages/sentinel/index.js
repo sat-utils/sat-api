@@ -18,7 +18,12 @@ const collection = {
   title: 'Sentinel 2 L1C',
   description: 'Sentinel-2a and Sentinel-2b imagery',
   properties: {
-    provider: 'ESA',
+    provider: [
+      {name: 'ESA', href: 'https://sentinel.esa.int/web/sentinel/home'},
+      {name: 'Sinergise', href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/'},
+      {name: 'AWS', href: 'https://aws.amazon.com/blogs/publicsector/complete-sentinel-2-archives-freely-available-to-users/'},
+      {name: 'Development Seed', url:'https://developmentseed.org/'}
+    ],
     license: 'proprietary',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
@@ -219,18 +224,19 @@ function transform(data, encoding, next) {
     const lons = geom.coordinates[0].map((pt) => pt[0])
     const lats = geom.coordinates[0].map((pt) => pt[1])
     const record = {
-      id: data.GRANULE_ID,
+      
       bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
       geometry: geom,
       properties: {
-        'cid': 'sentinel-2-l1c',
+        id: data.GRANULE_ID,
+        cid: 'sentinel-2-l1c',
         datetime: dt.toISOString(),
         'eo:platform': satname,
         'eo:cloud_cover': parseInt(data.CLOUD_COVER),
         'eo:epsg': parsedMgrs.epsg,
-        'sentinel:product_id': data.PRODUCT_ID
-        //'sentinel:tile_geometry': reproject(info.tileGeometry),
-        //'sentinel:tileOrigin': reproject(info.tileOrigin)
+        'sentinel:product_id': data.PRODUCT_ID,
+        'sentinel:tile_geometry': reproject(info.tileGeometry),
+        'sentinel:tile_origin': reproject(info.tileOrigin)
       },
       assets: files,
       links: []
