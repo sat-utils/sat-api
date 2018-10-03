@@ -26,97 +26,98 @@ const collection = {
   properties: {
     provider: 'USGS',
     license: 'PDDL-1.0',
-    'c:id': 'landsat-8-l1',
+    'cid': 'landsat-8-l1',
     'eo:gsd': 30,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
     'eo:off_nadir': 0,
-    'eo:bands': {
-      B1: {
+    'eo:bands': [
+      {
+        name: 'B1',
         common_name: 'coastal',
         gsd: 30.0,
         center_wavelength: 0.44,
         full_width_half_max: 0.02
-      },
-      B2: {
+      }, {
+        name: 'B2',
         common_name: 'blue',
         gsd: 30.0,
         center_wavelength: 0.48,
         full_width_half_max: 0.06
-      },
-      B3: {
+      }, {
+        name: 'B3',
         common_name: 'green',
         gsd: 30.0,
         center_wavelength: 0.56,
         full_width_half_max: 0.06
-      },
-      B4: {
+      }, {
+        name: 'B4',
         common_name: 'red',
         gsd: 30.0,
         center_wavelength: 0.65,
         full_width_half_max: 0.04
-      },
-      B5: {
+      }, {
+        name: 'B5',
         common_name: 'nir',
         gsd: 30.0,
         center_wavelength: 0.86,
         full_width_half_max: 0.03
-      },
-      B6: {
+      }, {
+        name: 'B6',
         common_name: 'swir16',
         gsd: 30.0,
         center_wavelength: 1.6,
         full_width_half_max: 0.08
-      },
-      B7: {
+      }, {
+        name: 'B7',
         common_name: 'swir22',
         gsd: 30.0,
         center_wavelength: 2.2,
         full_width_half_max: 0.2
-      },
-      B8: {
+      }, {
+        name: 'B8',
         common_name: 'pan',
         gsd: 15.0,
         center_wavelength: 0.59,
         full_width_half_max: 0.18
-      },
-      B9: {
+      }, {
+        name: 'B9',
         common_name: 'cirrus',
         gsd: 30.0,
         center_wavelength: 1.37,
         full_width_half_max: 0.02
-      },
-      B10: {
+      }, {
+        name: 'B10',
         common_name: 'lwir11',
         gsd: 100.0,
         center_wavelength: 10.9,
         full_width_half_max: 0.8
-      },
-      B11: {
+      }, {
+        name: 'B11',
         common_name: 'lwir12',
         gsd: 100.0,
         center_wavelength: 12.0,
         full_width_half_max: 1.0
       }
-    },
-    'assets': {
-      'index': {name: 'HTML index page', type: 'text/html'},
-      'ANG': {name: "Angle coefficients file", type: 'text/plain'},
-      'MTL': {name: 'original metadata file', type: 'text/plain'},
-      'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
-      'BQA': {name: "Band quality data", type: 'image/x.geotiff'},
-      'B1': {name: "Band 1 (coastal)", type: 'image/x.geotiff', 'eo:bands': ['B1']},
-      'B2': {name: "Band 2 (blue)", type: 'image/x.geotiff', 'eo:bands': ['B2']},
-      'B3': {name: "Band 3 (green)", type: 'image/x.geotiff', 'eo:bands': ['B3']},
-      'B4': {name: "Band 4 (red)", type: 'image/x.geotiff', 'eo:bands': ['B4']},
-      'B5': {name: "Band 5 (nir)", type: 'image/x.geotiff', 'eo:bands': ['B5']},
-      'B6': {name: "Band 6 (swir16)", type: 'image/x.geotiff', 'eo:bands': ['B6']},
-      'B7': {name: "Band 7 (swir22)", type: 'image/x.geotiff', 'eo:bands': ['B7']},
-      'B8': {name: "Band 8 (pan)", type: 'image/x.geotiff', 'eo:bands': ['B8']},
-      'B9': {name: "Band 9 (cirrus)", type: 'image/x.geotiff', 'eo:bands': ['B9']},
-      'B10': {name: "Band 10 (lwir)", type: 'image/x.geotiff', 'eo:bands': ['B10']},
-      'B11': {name: "Band 11 (lwir)", type: 'image/x.geotiff', 'eo:bands': ['B11']}
-    }
+    ]
+  },
+  'assets': {
+    'index': {name: 'HTML index page', type: 'text/html'},
+    'ANG': {name: "Angle coefficients file", type: 'text/plain'},
+    'MTL': {name: 'original metadata file', type: 'text/plain'},
+    'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
+    'BQA': {name: "Band quality data", type: 'image/x.geotiff'},
+    'B1': {name: "Band 1 (coastal)", type: 'image/x.geotiff', 'eo:bands': [0]},
+    'B2': {name: "Band 2 (blue)", type: 'image/x.geotiff', 'eo:bands': [1]},
+    'B3': {name: "Band 3 (green)", type: 'image/x.geotiff', 'eo:bands': [2]},
+    'B4': {name: "Band 4 (red)", type: 'image/x.geotiff', 'eo:bands': [3]},
+    'B5': {name: "Band 5 (nir)", type: 'image/x.geotiff', 'eo:bands': [4]},
+    'B6': {name: "Band 6 (swir16)", type: 'image/x.geotiff', 'eo:bands': [5]},
+    'B7': {name: "Band 7 (swir22)", type: 'image/x.geotiff', 'eo:bands': [6]},
+    'B8': {name: "Band 8 (pan)", type: 'image/x.geotiff', 'eo:bands': [7]},
+    'B9': {name: "Band 9 (cirrus)", type: 'image/x.geotiff', 'eo:bands': [8]},
+    'B10': {name: "Band 10 (lwir)", type: 'image/x.geotiff', 'eo:bands': [9]},
+    'B11': {name: "Band 11 (lwir)", type: 'image/x.geotiff', 'eo:bands': [10]}
   },
   links: []
 }
@@ -309,7 +310,7 @@ function transform(incomingData, encoding, next) {
         geometry: geometry,
         properties: {
           id: data.LANDSAT_PRODUCT_ID,
-          'c:id': 'landsat-8-l1',
+          'cid': 'landsat-8-l1',
           datetime: start.toISOString(),
           // eo extension metadata
           'eo:cloud_cover': parseInt(data.cloudCover),

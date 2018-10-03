@@ -40,13 +40,13 @@ function Search(event, esClient) {
 Search.prototype.search_items = function (callback) {
   // check collection first
   this.search_collections((err, resp) => {
-    const collections = resp.features.map((c) => c.properties['c:id'])
+    const collections = resp.collections.map((c) => c.properties['cid'])
     let qs
     if (collections.length === 0) {
-      qs = { bool: { must_not: { exists: { field: 'c:id' } } } }
+      qs = { bool: { must_not: { exists: { field: 'cid' } } } }
     }
     else {
-      qs = collections.map((c) => ({ match: { 'c:id': { query: c } } }))
+      qs = collections.map((c) => ({ match: { 'name': { query: c } } }))
       qs = { bool: { should: qs } }
     }
     if (!_.has(this.queries.query, 'match_all')) {
@@ -106,24 +106,23 @@ Search.prototype.search = function (index, callback) {
     const count = body.hits.total
 
     const response = {
-      type: 'FeatureCollection',
-      properties: {
+      //type: 'FeatureCollection',
+      results: {
         found: count,
         limit: self.size,
         page: self.page
-      },
-      features: []
+      }
     }
 
-    response.features = _.range(body.hits.hits.length).map((i) => {
+    const features = _.range(body.hits.hits.length).map((i) => {
       let source = body.hits.hits[i]._source
       let props = body.hits.hits[i]._source.properties
       //props = _.omit(props, ['bbox', 'geometry', 'assets', 'links'])
       const links = body.hits.hits[i]._source.links || []
 
       // link to collection
-      var collink = (_.has(source.properties, 'c:id')) ? 
-        `${self.endpoint}/stac/collections/${source.properties['c:id']}/definition` : null
+      var collink = (_.has(source.properties, 'cid')) ? 
+        `${self.endpoint}/stac/collections/${source.properties['cid']}/definition` : null
 
       if (index === 'collections') {
         // self link
@@ -133,6 +132,7 @@ Search.prototype.search = function (index, callback) {
         links.push({rel: 'child', href: collink.replace('definition', 'items')})
       } else {
         // Item
+        response
         // self link
         links.splice(0, 0, {rel: 'self', href: `${self.endpoint}/stac/search?id=${source.properties.id}`})
         // parent link
@@ -144,6 +144,15 @@ Search.prototype.search = function (index, callback) {
       source.links = links
       return source
     })
+
+    if (index === 'collections') {
+      // collections
+      response.collections = features
+    } else {
+      // item
+      response.type = 'FeatureCollection'
+      response.features = features
+    }
 
     return callback(null, response)
   }, (err) => {
