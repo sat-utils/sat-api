@@ -59,22 +59,21 @@ module.exports.handler = (event, context, cb) => {
       name: 'sat-api',
       description: 'A STAC API of public datasets',
       links: [
-        { rel: 'self', href: `${endpoint}/stac` },
-        { rel: 'child', href: `${endpoint}/stac/collections/landsat-8-l1`},
-        { rel: 'child', href: `${endpoint}/stac/collections/sentinel-2-l1c`}
+        { rel: 'self', href: `${endpoint}/stac` }
       ]
     }
-    respond(null, catalog)
-    /*satlib.es.client().then((esClient) => {
+    //respond(null, catalog)
+    satlib.es.client().then((esClient) => {
       payload.query.limit = 100
       const api = new satlib.api(payload, esClient)
-      api.search('collections', (err) => {
+      api.search('collections', (err, collections) => {
         if (err) respond(err)
         // loop through collections and add to links
         //catalog.links.push({ rel: 'dataset', href: '' })
+        for (col in collections) catalog.links.push({rel: 'child', href: col.name})
         respond(null, catalog)
       })
-    })*/
+    })
   }
   resources.splice(0, 1)
 
