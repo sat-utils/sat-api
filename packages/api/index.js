@@ -58,18 +58,23 @@ module.exports.handler = (event, context, cb) => {
     const catalog = {
       name: 'sat-api',
       description: 'A STAC API of public datasets',
-      links: [{ rel: 'self', href: `${endpoint}/stac` }]
+      links: [
+        { rel: 'self', href: `${endpoint}/stac` },
+        { rel: 'child', href: `${endpoint}/stac/collections/landsat-8-l1`},
+        { rel: 'child', href: `${endpoint}/stac/collections/sentinel-2-l1c`}
+      ]
     }
-    satlib.es.client().then((esClient) => {
+    respond(null, catalog)
+    /*satlib.es.client().then((esClient) => {
       payload.query.limit = 100
       const api = new satlib.api(payload, esClient)
       api.search('collections', (err) => {
         if (err) respond(err)
         // loop through collections and add to links
-        catalog.links.push({ rel: 'dataset', hred: '' })
+        //catalog.links.push({ rel: 'dataset', href: '' })
+        respond(null, catalog)
       })
-    })
-    respond(null, catalog)
+    })*/
   }
   resources.splice(0, 1)
 
@@ -80,44 +85,35 @@ module.exports.handler = (event, context, cb) => {
     console.log(msg, resources)
     respond(null, msg)
     break
+  // collections endpoint
   case 'collections':
     if (resources.length === 1) {
+      // all collections
       satlib.es.client().then((esClient) => {
         payload.query.limit = 100
         const api = new satlib.api(payload, esClient)
         api.search('collections', respond)
       })
-      break
-    }
-    else if (resources.length === 2) {
-      msg = 'endpoint not defined'
-      console.log(msg, resources)
-      respond(null, msg)
-      break
-    }
-    payload.query['c:id'] = resources[1]
-    switch (resources[2]) {
-    case 'items':
-      console.log('search items in this collection')
-      // this is a search across items in this collection
-      satlib.es.client().then((esClient) => {
-        const api = new satlib.api(payload, esClient)
-        api.search_items(respond)
-      })
-      break
-    case 'definition':
-      console.log('collection definition')
+    } else if (resources.length === 2) {
+      // specific collection
       satlib.es.client().then((esClient) => {
         const api = new satlib.api(payload, esClient)
         api.search('collections', respond)
       })
-      break
-    default:
+    } else if (resources[2] == 'items') {
+      console.log('search items in this collection')
+      // this is a search across items in this collection
+      satlib.es.client().then((esClient) => {
+        payload.query['c:id'] = resources[1]
+        const api = new satlib.api(payload, esClient)
+        api.search_items(respond)
+      })
+    } else {
       msg = 'endpoint not defined'
       console.log(msg, resources)
       respond(null, msg)
     }
-    break
+    break;
   case 'search':
     // items api
     satlib.es.client().then((esClient) => {

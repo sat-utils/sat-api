@@ -84,13 +84,18 @@ async function putMapping(client, index) {
               enabled: true
             },*/
             properties: {
-              datetime: { type: 'date' },
-              'eo:cloud_cover': { type: 'integer' },
-              'eo:gsd': { type: 'float' },
-              'eo:off_nadir': { type: 'float' },
-              'eo:azimuth': { type: 'float' },
-              'eo:sun_azimuth': { type: 'float' },
-              'eo:sun_elevation': { type: 'float' },
+              "properties": {
+                "type": "nested",
+                properties: {
+                  datetime: { type: 'date' },
+                  'eo:cloud_cover': { type: 'integer' },
+                  'eo:gsd': { type: 'float' },
+                  'eo:off_nadir': { type: 'float' },
+                  'eo:azimuth': { type: 'float' },
+                  'eo:sun_azimuth': { type: 'float' },
+                  'eo:sun_elevation': { type: 'float' }
+                }
+              },
               geometry: {
                 type: 'geo_shape',
                 tree: 'quadtree',
@@ -138,7 +143,7 @@ function streamToEs(stream, transform, client, index) {
     const record = {
       index,
       type: 'doc',
-      id: data.id,
+      id: data.properties.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {

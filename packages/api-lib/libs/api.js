@@ -116,35 +116,33 @@ Search.prototype.search = function (index, callback) {
     }
 
     response.features = _.range(body.hits.hits.length).map((i) => {
-      let props = body.hits.hits[i]._source
-      props = _.omit(props, ['bbox', 'geometry', 'assets', 'links'])
+      let source = body.hits.hits[i]._source
+      let props = body.hits.hits[i]._source.properties
+      //props = _.omit(props, ['bbox', 'geometry', 'assets', 'links'])
       const links = body.hits.hits[i]._source.links || []
 
       // link to collection
-      var collink = (_.has(props, 'c:id')) ? `${self.endpoint}/stac/collections/${props['c:id']}/definition` : null
+      var collink = (_.has(source.properties, 'c:id')) ? 
+        `${self.endpoint}/stac/collections/${source.properties['c:id']}/definition` : null
 
       if (index === 'collections') {
         // self link
-        links.splice(0, 0, {rel: 'self', href:collink})
-      }
-      else {
-        href = `${self.endpoint}/stac/search?id=${props.id}`
-        if (collink) {
-          links.splice(0, 0, {rel: 'parent', href:collink})
-        }
+        links.splice(0, 0, {rel: 'self', href: collink})
+        // parent link
+        links.push({rel: 'parent', href: `${self.endpoint}/stac`})
+        links.push({rel: 'child', href: collink.replace('definition', 'items')})
+      } else {
+        // Item
         // self link
-        links.splice(0, 0, {rel: 'self', href: href})
+        links.splice(0, 0, {rel: 'self', href: `${self.endpoint}/stac/search?id=${source.properties.id}`})
+        // parent link
+        if (collink) links.push({rel: 'parent', href: collink})
+        source['type'] = 'Feature'
       }
-      
-      return {
-        type: 'Feature',
-        properties: props,
-        bbox: body.hits.hits[i]._source.bbox,
-        geometry: body.hits.hits[i]._source.geometry,
-        assets: body.hits.hits[i]._source.assets,
-        links,
-        'eo:bands': body.hits.hits[i]._source['eo:bands']
-      }
+      links.push({rel: 'root', href: `${self.endpoint}/stac`})
+
+      source.links = links
+      return source
     })
 
     return callback(null, response)
