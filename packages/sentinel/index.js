@@ -20,7 +20,6 @@ const collection = {
   properties: {
     provider: 'ESA',
     license: 'proprietary',
-    'cid': 'sentinel-2-l1c',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
     'eo:off_nadir': 0,

@@ -26,7 +26,6 @@ const collection = {
   properties: {
     provider: 'USGS',
     license: 'PDDL-1.0',
-    'cid': 'landsat-8-l1',
     'eo:gsd': 30,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',

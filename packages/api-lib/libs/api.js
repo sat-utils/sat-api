@@ -122,14 +122,14 @@ Search.prototype.search = function (index, callback) {
 
       // link to collection
       var collink = (_.has(source.properties, 'cid')) ? 
-        `${self.endpoint}/stac/collections/${source.properties['cid']}/definition` : null
+        `${self.endpoint}/stac/collections/${source.properties['cid']}` : null
 
       if (index === 'collections') {
         // self link
         links.splice(0, 0, {rel: 'self', href: collink})
         // parent link
         links.push({rel: 'parent', href: `${self.endpoint}/stac`})
-        links.push({rel: 'child', href: collink.replace('definition', 'items')})
+        links.push({rel: 'child', href: `${collink}/items`})
       } else {
         // Item
         response
