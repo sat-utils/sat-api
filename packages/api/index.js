@@ -72,7 +72,6 @@ module.exports.handler = (event, context, cb) => {
       api.search('collections', (err, results) => {
         if (err) respond(err)
         for (let col of results.collections) {
-          console.log('col', col)
           catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${col.name}`})
         }
         respond(null, catalog)
@@ -102,7 +101,11 @@ module.exports.handler = (event, context, cb) => {
         satlib.es.client().then((esClient) => {
           const api = new satlib.api(payload, esClient)
           api.search('collections', (err, resp) => {
-            if (resp.collections.length === 0)
+            if (resp.collections.length === 1) {
+              resp = resp.collections[0]
+            } else {
+              resp = {}
+            }
             respond(err, resp)
           })
         })
