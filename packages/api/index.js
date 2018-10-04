@@ -71,10 +71,10 @@ module.exports.handler = (event, context, cb) => {
     //respond(null, catalog)
     satlib.es.client().then((esClient) => {
       const api = new satlib.api(esClient, query, endpoint, page, limit=100)
-      api.search('collections', (err, results) => {
+      api.search_collections((err, results) => {
         if (err) respond(err)
-        for (let col of results.collections) {
-          catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${col.name}`})
+        for (let c of results.collections) {
+          catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.name}`})
         }
         respond(null, catalog)
       })
