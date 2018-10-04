@@ -10,9 +10,11 @@ const pump = require('pump')
 let esClient
 
 /*
-This module looks for the ES_HOST environment variable which is the URL to the
-elasticsearch host
+This module is used for connecting to an Elasticsearch instance, writing records
+and managing the indexes. It looks for the ES_HOST environment variable which is 
+the URL to the elasticsearch host
 */
+
 // Connect to an Elasticsearch cluster
 async function connect() {
   let esConfig
@@ -53,6 +55,7 @@ async function connect() {
   return client
 }
 
+// get existing ES client or create a new one
 async function Client() {
   if (!esClient) {
     esClient = await connect()
