@@ -3,62 +3,64 @@
 const _ = require('lodash')
 const logger = require('./logger')
 const queries = require('./queries')
+const esb = require('elastic-builder');
 
-// Search class
-function Search(event, esClient) {
-  let params = {}
 
-  if (_.has(event, 'query') && !_.isEmpty(event.query)) {
-    params = event.query
-  }
-  else if (_.has(event, 'body') && !_.isEmpty(event.body)) {
-    params = event.body
-  }
-
-  this.endpoint = event.endpoint
-
-  this.merge = false
-  if (_.has(params, 'merge')) {
-    this.merge = params.merge
-    params = _.omit(params, ['merge'])
-  }
-
-  // get page number
-  this.page = parseInt((params.page) ? params.page : 1)
-
-  this.params = params
-  console.log('Search parameters:', params)
-
-  this.size = parseInt((params.limit) ? params.limit : 1)
-  this.frm = (this.page - 1) * this.size
+// Elasticsearch search class
+function API(esClient, params, endpoint, page=1, limit=100) {
   this.client = esClient
+  this.params = params
+  this.endpoint = endpoint
+  this.clink = `${self.endpoint}/stac/collections`
+  this.page = parseInt(page)
+  this.size = parseInt((limit) ? limit : 1)
+  this.frm = (this.page - 1) * this.size
+
+  console.log('Search parameters:', this.params)
 
   this.queries = queries(this.params)
 }
 
-// search for items using collection and items
-Search.prototype.search_items = function (callback) {
-  // check collection first
-  this.search_collections((err, resp) => {
-    const collections = resp.collections.map((c) => c.properties['cid'])
-    let qs
-    if (collections.length === 0) {
-      qs = { bool: { must_not: { exists: { field: 'cid' } } } }
+
+// general search of an index
+API.prototype.search = function (index, callback) {
+  const self = this
+
+  const searchParams = {
+    index: index,
+    body: this.queries,
+    size: this.size,
+    from: this.frm,
+    _source: this.fields
+  }
+
+  console.log('Searching: ', JSON.stringify(searchParams))
+
+  this.client.search(searchParams).then((body) => {
+    console.log(`Results: ${JSON.stringify(body)}`)
+    const count = body.hits.total
+
+    const response = {
+      //type: 'FeatureCollection',
+      properties: {
+        found: count,
+        limit: self.size,
+        page: self.page
+      }
     }
-    else {
-      qs = collections.map((c) => ({ match: { 'name': { query: c } } }))
-      qs = { bool: { should: qs } }
-    }
-    if (!_.has(this.queries.query, 'match_all')) {
-      this.queries.query.bool.must.push(qs)
-    }
-    console.log('queries after', JSON.stringify(this.queries))
-    return this.search('items', callback)
+
+    response.results = body.hits.hits.map((r) => (r._source))
+
+    return callback(null, response)
+  }, (err) => {
+    logger.error(err)
+    return callback(err)
   })
 }
 
 
-Search.prototype.search_collections = function (callback) {
+// Search collections
+API.prototype.search_collections = function (callback) {
   // hacky way to get all collections
   const sz = this.size
   const frm = this.frm
@@ -72,9 +74,9 @@ Search.prototype.search_collections = function (callback) {
     this.params = _.omit(this.params, 'intersects')
     // redo es queries excluding intersects
     this.queries = queries(this.params)
-    console.log('queries after excluding intersects', JSON.stringify(this.queries))
   }
-  this.search('collections', (err, resp) => {
+
+  this.search('collections', (err, results) => {
     // set sz back to provided parameter
     this.size = sz
     this.frm = frm
@@ -83,53 +85,42 @@ Search.prototype.search_collections = function (callback) {
       // redo es queries including intersects
       this.queries = queries(this.params)
     }
-    callback(err, resp)
+
+    results.forEach((a, i, arr) => {
+      // self link
+      arr[i].splice(0, 0, {rel: 'self', href: `${this.clink}/${a.name}`})
+      arr[i].push({rel: 'parent', href: `${this.endpoint}/stac`})
+      arr[i].push({rel: 'child', href: `${this.clink}/${a.name}/items`})
+      arr[i].push({rel: 'root', href: `${this.endpoint}/stac`})
+    })
+
+    results.collections = results.results
+
+    callback(err, results)
   })
 }
 
 
-Search.prototype.search = function (index, callback) {
-  const self = this
-
-  const searchParams = {
-    index: index,
-    body: this.queries,
-    size: this.size,
-    from: this.frm,
-    _source: this.fields
-  }
-
-  console.log('Search parameters: ', JSON.stringify(searchParams))
-
-  this.client.search(searchParams).then((body) => {
-    console.log(`body: ${JSON.stringify(body)}`)
-    const count = body.hits.total
-
-    const response = {
-      //type: 'FeatureCollection',
-      results: {
-        found: count,
-        limit: self.size,
-        page: self.page
-      }
+// Search items (searching both collections and items)
+API.prototype.search_items = function (callback) {
+  // check collection first
+  this.search_collections((err, resp) => {
+    const collections = resp.collections.map((c) => c.name)
+    let qs
+    if (collections.length === 0) {
+      qs = { bool: { must_not: { exists: { field: 'cid' } } } }
     }
+    else {
+      qs = collections.map((c) => ({match: { name: { query: c } } }))
+      qs = { bool: { should: qs } }
+    }
+    if (!_.has(this.queries.query, 'match_all')) {
+      this.queries.query.nested.query.bool.must.push(qs)
+    }
+    console.log('queries after', JSON.stringify(this.queries))
 
-    const features = _.range(body.hits.hits.length).map((i) => {
-      let source = body.hits.hits[i]._source
-      let props = body.hits.hits[i]._source.properties
-      //props = _.omit(props, ['bbox', 'geometry', 'assets', 'links'])
-      const links = body.hits.hits[i]._source.links || []
-
-      // link to collection
-      var collink = `${self.endpoint}/stac/collections`
-
-      if (index === 'collections') {
-        // self link
-        links.splice(0, 0, {rel: 'self', href: collink})
-        // parent link
-        links.push({rel: 'parent', href: `${self.endpoint}/stac`})
-        links.push({rel: 'child', href: `${collink}/${source.name}/items`})
-      } else {
+    /*
+    results.forEach((a, i, arr) => {
         // Item
         response
         // self link
@@ -139,28 +130,38 @@ Search.prototype.search = function (index, callback) {
           links.push({rel: 'parent', href: `${collink}/${source.properties.cid}`})
         }
         source['type'] = 'Feature'
-      }
-      links.push({rel: 'root', href: `${self.endpoint}/stac`})
+        links.push({rel: 'root', href: `${self.endpoint}/stac`})
 
-      source.links = links
-      return source
-    })
+        response.type = 'FeatureCollection'
+        response.features = features
 
-    if (index === 'collections') {
-      // collections
-      response.collections = features
-    } else {
-      // item
-      response.type = 'FeatureCollection'
-      response.features = features
-    }
+      */
 
-    return callback(null, response)
-  }, (err) => {
-    logger.error(err)
-    return callback(err)
+    return this.search('items', callback)
   })
 }
 
 
-module.exports = Search
+// Get a single collection by name
+API.prototype.get_collection = function (name, callback) {
+  const body = esb.requestBodySearch().query(
+    esb.boolQuery().filter(esb.termQuery('name', name))
+  )
+  this.queries = body.toJSON()
+  /*this.queries = {
+    query: {
+      bool: {
+        filter: [
+          {term: {name: name}}
+        ]
+      }
+    }
+  }*/
+  this.search('collections', (err, resp) => {
+    console.log('get_collection:', resp)
+    callback(err, resp)
+  })
+}
+
+
+module.exports = API
