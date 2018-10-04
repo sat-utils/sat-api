@@ -3,7 +3,7 @@
 const _ = require('lodash')
 const logger = require('./logger')
 const queries = require('./queries')
-const esb = require('elastic-builder');
+//const esb = require('elastic-builder');
 
 
 // Elasticsearch search class
@@ -11,7 +11,7 @@ function API(esClient, params, endpoint, page=1, limit=100) {
   this.client = esClient
   this.params = params
   this.endpoint = endpoint
-  this.clink = `${self.endpoint}/stac/collections`
+  this.clink = `${this.endpoint}/stac/collections`
   this.page = parseInt(page)
   this.size = parseInt((limit) ? limit : 1)
   this.frm = (this.page - 1) * this.size
@@ -24,8 +24,6 @@ function API(esClient, params, endpoint, page=1, limit=100) {
 
 // general search of an index
 API.prototype.search = function (index, callback) {
-  const self = this
-
   const searchParams = {
     index: index,
     body: this.queries,
@@ -37,19 +35,20 @@ API.prototype.search = function (index, callback) {
   console.log('Searching: ', JSON.stringify(searchParams))
 
   this.client.search(searchParams).then((body) => {
-    console.log(`Results: ${JSON.stringify(body)}`)
     const count = body.hits.total
 
     const response = {
       //type: 'FeatureCollection',
       properties: {
         found: count,
-        limit: self.size,
-        page: self.page
+        limit: this.size,
+        page: this.page
       }
     }
 
     response.results = body.hits.hits.map((r) => (r._source))
+
+    console.log(`Response: ${JSON.stringify(response)}`)
 
     return callback(null, response)
   }, (err) => {
@@ -76,7 +75,7 @@ API.prototype.search_collections = function (callback) {
     this.queries = queries(this.params)
   }
 
-  this.search('collections', (err, results) => {
+  this.search('collections', (err, resp) => {
     // set sz back to provided parameter
     this.size = sz
     this.frm = frm
@@ -86,17 +85,18 @@ API.prototype.search_collections = function (callback) {
       this.queries = queries(this.params)
     }
 
-    results.forEach((a, i, arr) => {
+    resp.results.forEach((a, i, arr) => {
       // self link
-      arr[i].splice(0, 0, {rel: 'self', href: `${this.clink}/${a.name}`})
-      arr[i].push({rel: 'parent', href: `${this.endpoint}/stac`})
-      arr[i].push({rel: 'child', href: `${this.clink}/${a.name}/items`})
-      arr[i].push({rel: 'root', href: `${this.endpoint}/stac`})
+      arr[i].links.splice(0, 0, {rel: 'self', href: `${this.clink}/${a.name}`})
+      arr[i].links.push({rel: 'parent', href: `${this.endpoint}/stac`})
+      arr[i].links.push({rel: 'child', href: `${this.clink}/${a.name}/items`})
+      arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
     })
 
-    results.collections = results.results
+    resp.collections = resp.results
+    delete resp.results
 
-    callback(err, results)
+    callback(err, resp)
   })
 }
 
@@ -119,35 +119,31 @@ API.prototype.search_items = function (callback) {
     }
     console.log('queries after', JSON.stringify(this.queries))
 
-    /*
-    results.forEach((a, i, arr) => {
-        // Item
-        response
+    this.search('items', (err, resp) => {
+      resp.results.forEach((a, i, arr) => {
         // self link
-        links.splice(0, 0, {rel: 'self', href: `${self.endpoint}/stac/search?id=${source.properties.id}`})
+        arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.properties.id}`})
         // parent link
-        if (_.has(source.properties, 'cid')) {
-          links.push({rel: 'parent', href: `${collink}/${source.properties.cid}`})
+        if (_.has(a.properties, 'cid')) {
+          arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.cid}`})
         }
-        source['type'] = 'Feature'
-        links.push({rel: 'root', href: `${self.endpoint}/stac`})
-
-        response.type = 'FeatureCollection'
-        response.features = features
-
-      */
-
-    return this.search('items', callback)
+        arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
+        arr[i]['type'] = 'Feature' 
+      })
+      resp.type = 'FeatureCollection'
+      resp.features = resp.results
+      delete resp.results
+    })
   })
 }
 
 
 // Get a single collection by name
 API.prototype.get_collection = function (name, callback) {
-  const body = esb.requestBodySearch().query(
-    esb.boolQuery().filter(esb.termQuery('name', name))
-  )
-  this.queries = body.toJSON()
+  //const body = esb.requestBodySearch().query(
+  //  esb.boolQuery().filter(esb.termQuery('name', name))
+  //)
+  //this.queries = body.toJSON()
   /*this.queries = {
     query: {
       bool: {
@@ -157,9 +153,15 @@ API.prototype.get_collection = function (name, callback) {
       }
     }
   }*/
-  this.search('collections', (err, resp) => {
-    console.log('get_collection:', resp)
-    callback(err, resp)
+  this.queries = {
+    query: {term: {name: name}}
+  }
+  this.search_collections((err, resp) => {
+    if (resp.collections.length === 1) {
+      callback(err, resp.collections[0])
+    } else {
+      callback(err, {})
+    }
   })
 }
 
