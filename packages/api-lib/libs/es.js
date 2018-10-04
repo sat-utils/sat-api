@@ -68,12 +68,8 @@ async function Client() {
 }
 
 
-async function listIndices(client, index) {
-  return client.indices.get({ index })
-}
-
-
 async function putMapping(client, index) {
+  // TODO - different mappings for collection and item
   // make sure the index doesn't exist
   const exist = await client.indices.exists({ index })
   if (!exist) {
@@ -87,10 +83,12 @@ async function putMapping(client, index) {
               enabled: true
             },*/
             properties: {
+              "name": {type: 'keyword'},
               "properties": {
                 "type": "nested",
                 properties: {
-                  datetime: { type: 'date' },
+                  'id': { type: 'keyword' },
+                  'datetime': { type: 'date' },
                   'eo:cloud_cover': { type: 'integer' },
                   'eo:gsd': { type: 'float' },
                   'eo:off_nadir': { type: 'float' },

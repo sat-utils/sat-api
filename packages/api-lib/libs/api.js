@@ -4,6 +4,7 @@ const _ = require('lodash')
 const logger = require('./logger')
 const queries = require('./queries')
 //const esb = require('elastic-builder');
+const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 
 
 // Elasticsearch search class
@@ -15,6 +16,34 @@ function API(esClient, params, endpoint, page=1, limit=100) {
   this.page = parseInt(page)
   this.size = parseInt((limit) ? limit : 1)
   this.frm = (this.page - 1) * this.size
+
+  // process GeoJSON if provided
+  if (this.params.intersects) {
+    let geojson = params.intersects
+    // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
+    if (typeof geojson === 'string') {
+      try {
+        geojson = JSON.parse(inGeojson)
+      }
+      catch (e) {
+        throw geojsonError
+      }
+    }
+    if (gjv.valid(geojson)) {
+      if (geojson.type === 'FeatureCollection') {
+        throw geojsonError
+      } else if (geojson.type !== 'Feature') {
+          geojson = {
+            type: 'Feature',
+            properties: {},
+            geometry: geojson
+          }
+      } else {
+        throw geojsonError
+      }
+    }
+    this.params.intersects = geojson
+  }
 
   console.log('Search parameters:', this.params)
 
