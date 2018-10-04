@@ -23,14 +23,14 @@ const collection = {
     spatial: [-180, -90, 180, 90],
     temporal: ['2013-06-01', null]
   },
+  providers: [
+    {name: 'USGS', url: 'https://landsat.usgs.gov/'},
+    {name: 'Planet Labs', url: 'https://github.com/landsat-pds/landsat_ingestor'},
+    {name: 'AWS', url: 'https://landsatonaws.com/'},
+    {name: 'Development Seed', url:'https://developmentseed.org/'}
+  ],
+  license: 'PDDL-1.0',
   properties: {
-    providers: [
-      {name: 'USGS', url: 'https://landsat.usgs.gov/'},
-      {name: 'Planet Labs', url: 'https://github.com/landsat-pds/landsat_ingestor'},
-      {name: 'AWS', url: 'https://landsatonaws.com/'},
-      {name: 'Development Seed', url:'https://developmentseed.org/'}
-    ],
-    license: 'PDDL-1.0',
     'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
@@ -106,22 +106,22 @@ const collection = {
     ]
   },
   'assets': {
-    'index': {name: 'HTML index page', type: 'text/html'},
+    'index': {type: 'text/html', name: 'HTML index page'},
+    'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
+    'B1': {type: 'image/x.geotiff', 'eo:bands': [0], name: "Band 1 (coastal)"},
+    'B2': {type: 'image/x.geotiff', 'eo:bands': [1], name: "Band 2 (blue)"},
+    'B3': {type: 'image/x.geotiff', 'eo:bands': [2], name: "Band 3 (green)"},
+    'B4': {type: 'image/x.geotiff', 'eo:bands': [3], name: "Band 4 (red)"},
+    'B5': {type: 'image/x.geotiff', 'eo:bands': [4], name: "Band 5 (nir)"},
+    'B6': {type: 'image/x.geotiff', 'eo:bands': [5], name: "Band 6 (swir16)"},
+    'B7': {type: 'image/x.geotiff', 'eo:bands': [6], name: "Band 7 (swir22)"},
+    'B8': {type: 'image/x.geotiff', 'eo:bands': [7], name: "Band 8 (pan)"},
+    'B9': {type: 'image/x.geotiff', 'eo:bands': [8], name: "Band 9 (cirrus)"},
+    'B10': {type: 'image/x.geotiff', 'eo:bands': [9], name: "Band 10 (lwir)"},
+    'B11': {type: 'image/x.geotiff', 'eo:bands': [10], name: "Band 11 (lwir)"},
     'ANG': {name: "Angle coefficients file", type: 'text/plain'},
     'MTL': {name: 'original metadata file', type: 'text/plain'},
-    'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
-    'BQA': {name: "Band quality data", type: 'image/x.geotiff'},
-    'B1': {name: "Band 1 (coastal)", type: 'image/x.geotiff', 'eo:bands': [0]},
-    'B2': {name: "Band 2 (blue)", type: 'image/x.geotiff', 'eo:bands': [1]},
-    'B3': {name: "Band 3 (green)", type: 'image/x.geotiff', 'eo:bands': [2]},
-    'B4': {name: "Band 4 (red)", type: 'image/x.geotiff', 'eo:bands': [3]},
-    'B5': {name: "Band 5 (nir)", type: 'image/x.geotiff', 'eo:bands': [4]},
-    'B6': {name: "Band 6 (swir16)", type: 'image/x.geotiff', 'eo:bands': [5]},
-    'B7': {name: "Band 7 (swir22)", type: 'image/x.geotiff', 'eo:bands': [6]},
-    'B8': {name: "Band 8 (pan)", type: 'image/x.geotiff', 'eo:bands': [7]},
-    'B9': {name: "Band 9 (cirrus)", type: 'image/x.geotiff', 'eo:bands': [8]},
-    'B10': {name: "Band 10 (lwir)", type: 'image/x.geotiff', 'eo:bands': [9]},
-    'B11': {name: "Band 11 (lwir)", type: 'image/x.geotiff', 'eo:bands': [10]}
+    'BQA': {name: "Band quality data", type: 'image/x.geotiff'}
   },
   links: []
 }
