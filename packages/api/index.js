@@ -47,13 +47,16 @@ module.exports.handler = (event, context, cb) => {
 
   // get payload
   const method = event.httpMethod
-  const payload = { query: {}, headers: event.headers, endpoint: endpoint }
+  let query = {}
   if (method === 'POST' && event.body) {
-    payload.query = JSON.parse(event.body)
+    query = JSON.parse(event.body)
   }
   else if (method === 'GET' && event.queryStringParameters) {
-    payload.query = event.queryStringParameters
+    query = event.queryStringParameters
   }
+  // default page and limit
+  var page = query.page || 1
+  var limit = query.limit || 100
 
   // /stac
   if (resources.length === 1) {
@@ -67,8 +70,7 @@ module.exports.handler = (event, context, cb) => {
     }
     //respond(null, catalog)
     satlib.es.client().then((esClient) => {
-      payload.query.limit = 100
-      const api = new satlib.api(payload, esClient)
+      const api = new satlib.api(esClient, query, endpoint, page, limit=100)
       api.search('collections', (err, results) => {
         if (err) respond(err)
         for (let col of results.collections) {
@@ -92,20 +94,14 @@ module.exports.handler = (event, context, cb) => {
       if (resources.length === 1) {
         // all collections
         satlib.es.client().then((esClient) => {
-          payload.query.limit = 100
-          const api = new satlib.api(payload, esClient)
-          api.search('collections', respond)
+          const api = new satlib.api(esClient, query, endpoint, page, limit)
+          api.search_collections(respond)
         })
       } else if (resources.length === 2) {
         // specific collection
         satlib.es.client().then((esClient) => {
-          const api = new satlib.api(payload, esClient)
-          api.search('collections', (err, resp) => {
-            if (resp.collections.length === 1) {
-              resp = resp.collections[0]
-            } else {
-              resp = {}
-            }
+          const api = new satlib.api(esClient, query, endpoint, page, limit)
+          api.get_collection(resources[1], (err, resp) => {
             respond(err, resp)
           })
         })
@@ -113,8 +109,8 @@ module.exports.handler = (event, context, cb) => {
         console.log('search items in this collection')
         // this is a search across items in this collection
         satlib.es.client().then((esClient) => {
-          payload.query['cid'] = resources[1]
-          const api = new satlib.api(payload, esClient)
+          query['cid'] = resources[1]
+          const api = new satlib.api(esClient, query, endpoint, page, limit)
           api.search_items(respond)
         })
       } else {
@@ -126,7 +122,7 @@ module.exports.handler = (event, context, cb) => {
     case 'search':
       // items api
       satlib.es.client().then((esClient) => {
-        const api = new satlib.api(payload, esClient)
+        const api = new satlib.api(esClient, query, endpoint, page, limit)
         api.search_items(respond)
       })
       break
