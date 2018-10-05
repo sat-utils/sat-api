@@ -1,79 +1,70 @@
 'use strict'
 
-
-const termQuery = (field, value) => {
-  let query = {
-    term: {field: value}
+// Create an term query
+const termQuery = (field, value, properties=True) => {
+  // the default is to search the properties of a record
+  if (properties) {
+    field = 'properties.' + field
   }
-
-  return {
+  let query = {
     bool: {
       should: [
-        query,
-        // match if field is not present at all
+        { term: { [field]: value } },
         { bool: { must_not: { exists: { field: field } } } }
       ]
     }
   }
-
-  //return { bool: query }
-}
-
-const rangeQuery = (field, frm, to) => {
-  let query = {
-    range: {}
+  if (properties) {
+    query = { nested: { path: 'properties', query: query } }
   }
-
-  query.range[field] = {
-    gte: frm,
-    lte: to
-  }
-
-  query = {
-    bool: {
-      should: [
-        query,
-        { bool: { must_not: { exists: { field: field } } } }
-      ]
-    }
-  }
-
   return query
 }
 
+
+// Create a range query
+const rangeQuery = (field, frm, to, properties=True) => {
+  if (properties) {
+    field = 'properties.' + field
+  }
+  let query = {
+    bool: {
+      should: [
+        { range: { [field]: { gte: frm, lte: to } } },
+        { bool: { must_not: { exists: { field: field } } } }
+      ]
+    } 
+  }
+  if (properties) {
+    query = { nested: { path: 'properties', query: query } }
+  }
+  return query
+}
+
+
+// Create a geometry query
 const geometryQuery = (field, geometry) => {
   const _geometry = Object.assign({}, geometry)
-
-  const query = {
-    geo_shape: {}
-  }
-
   // TODO - support other geometry types
   if (_geometry.type === 'Polygon') {
     _geometry.type = _geometry.type.toLowerCase()
   }
-
-  query.geo_shape[field] = {
-    shape: _geometry
+  let query = {
+    geo_shape: { [field]: { shape: _geometry } }
   }
-
   return query
 }
 
 
 module.exports = (params) => {
-  const response = {
+  let response = {
     query: { match_all: {} }
-    //sort: [
-    //  {start: {order: 'desc'}}
-    //]
   }
-  let queries = []
-
   // no filters, return everything
   if (params.length === 0) {
     return response
   }
+
+  let queries = []
 
   // intersects search
   if (params.intersects) {
@@ -81,36 +72,19 @@ module.exports = (params) => {
     delete params.intersects
   }
 
+  // create range and term queries
   let range
-  let query
-
   for (var key in params) {
     range = params[key].split('/')
     if (range.length > 1) {
-      query = rangeQuery(key, range[0], range[1])
-    }
-    else {
-      query = termQuery(key, params[key])
-    }
-    queries.push(query)
-  })
-
-
-  response.query = {
-    nested: {
-      path: 'properties',
-      query: {
-        bool: {
-          must: queries
-        }
-      }
+      queries.push(rangeQuery(key, range[0], range[1]))
+    } else {
+      queries.push(termQuery(key, params[key]))
     }
   }
 
   response.query = {
-    bool: {
-      must: queries
-    }
+    bool: { must: queries }
   }
 
   return response
