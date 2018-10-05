@@ -1,14 +1,11 @@
 'use strict'
 
 const _ = require('lodash')
-const logger = require('./logger')
 const queries = require('./queries')
-const es = require('./es')
-//const esb = require('elastic-builder');
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 
 
-function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
+function STAC(path, endpoint, query, backend, page=1, limit=100, , respond=()=>{}) {
 
   // split and remove empty strings
   const resources = path.split('/').filter((x) => x)
@@ -34,15 +31,13 @@ function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
         { rel: 'self', href: `${endpoint}/stac` }
       ]
     }
-    es.client().then((esClient) => {
-      const api = new API(esClient, query, endpoint, page, limit=100)
-      api.search_collections((err, results) => {
-        if (err) respond(err)
-        for (let c of results.collections) {
-          catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.name}`})
-        }
-        respond(null, catalog)
-      })
+    const api = new API(backend, query, endpoint, page, limit=100)
+    api.search_collections((err, results) => {
+      if (err) respond(err)
+      for (let c of results.collections) {
+        catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.name}`})
+      }
+      respond(null, catalog)
     })
   } else {
     // drop the /stac prefix
@@ -58,27 +53,19 @@ function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
     case 'collections':
       if (resources.length === 1) {
         // all collections
-        es.client().then((esClient) => {
-          const api = new API(esClient, query, endpoint, page, limit)
-          api.search_collections(respond)
-        })
+        const api = new API(backend, query, endpoint, page, limit)
+        api.search_collections(respond)
       } else if (resources.length === 2) {
         // specific collection
         console.log('get_collection')
-        es.client().then((esClient) => {
-          const api = new API(esClient, query, endpoint, page, limit)
-          api.get_collection(resources[1], (err, resp) => {
-            respond(err, resp)
-          })
-        })
+        const api = new API(backend, query, endpoint, page, limit)
+        api.get_collection(resources[1], respond)
       } else if (resources[2] == 'items') {
         console.log('search items in this collection')
         // this is a search across items in this collection
-        es.client().then((esClient) => {
-          query['cid'] = resources[1]
-          const api = new API(esClient, query, endpoint, page, limit)
-          api.search_items(respond)
-        })
+        query['cid'] = resources[1]
+        const api = new API(backend, query, endpoint, page, limit)
+        api.search_items(respond)
       } else {
         msg = 'endpoint not defined'
         console.log(msg, resources)
@@ -87,10 +74,8 @@ function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
       break;
     case 'search':
       // items api
-      es.client().then((esClient) => {
-        const api = new API(esClient, query, endpoint, page, limit)
-        api.search_items(respond)
-      })
+      const api = new API(backend, query, endpoint, page, limit)
+      api.search_items(respond)
       break
     default:
       respond(null, 'endpoint not defined')
@@ -101,8 +86,8 @@ function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
 
 
 // Elasticsearch search class
-function API(esClient, params, endpoint, page=1, limit=100) {
-  this.client = esClient
+function API(client, params, endpoint, page=1, limit=100) {
+  this.client = client
   this.params = params
   this.endpoint = endpoint
   this.clink = `${this.endpoint}/stac/collections`
@@ -141,42 +126,6 @@ function API(esClient, params, endpoint, page=1, limit=100) {
 }
 
 
-// general search of an index
-API.prototype.search = function (index, callback) {
-  const searchParams = {
-    index: index,
-    body: this.queries || queries(this.params),
-    size: this.size,
-    from: this.frm,
-    _source: this.fields
-  }
-
-  console.log('Searching: ', JSON.stringify(searchParams))
-
-  this.client.search(searchParams).then((body) => {
-    const count = body.hits.total
-
-    const response = {
-      properties: {
-        found: count,
-        limit: this.size,
-        page: this.page
-      }
-    }
-
-    response.results = body.hits.hits.map((r) => (r._source))
-
-    console.log(`Response: ${JSON.stringify(response)}`)
-
-    return callback(null, response)
-  }, (err) => {
-    logger.error(err)
-    return callback(err)
-  })
-}
-
-
-
 // Search collections
 API.prototype.search_collections = function (callback) {
   // hacky way to get all collections
@@ -192,7 +141,7 @@ API.prototype.search_collections = function (callback) {
     this.params = _.omit(this.params, 'intersects')
   }
 
-  this.search('collections', (err, resp) => {
+  this.client.search('collections', (err, resp) => {
     // set sz back to provided parameter
     this.size = sz
     this.frm = frm
@@ -237,7 +186,7 @@ API.prototype.search_items = function (callback) {
     }
     console.log('queries after', JSON.stringify(this.queries))
 
-    this.search('items', (err, resp) => {
+    this.client.search('items', (err, resp) => {
       resp.results.forEach((a, i, arr) => {
         // self link
         arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.properties.id}`})

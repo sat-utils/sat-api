@@ -6,6 +6,7 @@ const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
 const pump = require('pump')
+const queries = require('./queries')
 
 let esClient
 
@@ -56,7 +57,7 @@ async function connect() {
 }
 
 // get existing ES client or create a new one
-async function Client() {
+async function esClient() {
   if (!esClient) {
     esClient = await connect()
     console.log('connected to elasticsearch')
@@ -134,6 +135,46 @@ async function reindex(client, source, dest) {
 async function deleteIndex(client, index) {
   return client.indices.delete({ index })
 }
+
+
+// general search of an index
+function search(params, index, page, size, callback) {
+  const searchParams = {
+    index: index,
+    body: queries(params),
+    size: size,
+    from: (page - 1) * size
+    //_source: this.fields
+  }
+
+  console.log('Searching: ', JSON.stringify(searchParams))
+
+  // connect to ES then search
+  esClient().then((client) => {
+    client.search(searchParams).then((body) => {
+      const count = body.hits.total
+
+      const response = {
+        properties: {
+          found: count,
+          limit: this.size,
+          page: this.page
+        }
+      }
+
+      response.results = body.hits.hits.map((r) => (r._source))
+
+      console.log(`Response: ${JSON.stringify(response)}`)
+
+      return callback(null, response)
+    }, (err) => {
+      logger.error(err)
+      return callback(err)
+    })
+  })
+}
+
+
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
@@ -228,9 +269,12 @@ async function saveRecords(client, records, index, idfield, callback) {
 }
 
 
-module.exports.client = Client
+module.exports.client = esClient
+module.exports.search = search
+module.exports.streamToEs = streamToEs
+module.exports.saveRecords = saveRecords
+
+// management functions
 module.exports.reindex = reindex
 module.exports.putMapping = putMapping
 module.exports.deleteIndex = deleteIndex
-module.exports.streamToEs = streamToEs
-module.exports.saveRecords = saveRecords
