@@ -120,7 +120,6 @@ function API(backend, params, endpoint) {
     }
     this.params.intersects = geojson
   }
-  console.log('Search parameters:', this.params)
 }
 
 
@@ -174,38 +173,37 @@ API.prototype.get_collection = function (name, callback) {
 
 
 // Search items (searching both collections and items)
-API.prototype.search_items = function (callback, page=1, limit=100) {
+API.prototype.search_items = function (page=1, limit=1, callback) {
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.collections.map((c) => c.name)
-    let qs
-    if (collections.length === 0) {
-      qs = { bool: { must_not: { exists: { field: 'cid' } } } }
-    }
-    else {
-      qs = collections.map((c) => ({match: { name: { query: c } } }))
-      qs = { bool: { should: qs } }
-    }
-    if (!_.has(this.queries.query, 'match_all')) {
-      this.queries.query.nested.query.bool.must.push(qs)
-    }
-    console.log('queries after', JSON.stringify(this.queries))
+    if (collections.lenth === 0) {
+      let resp = {
+        type: 'FeatureCollection',
+        properties: { found: 0, limit: limit, page: page },
+        features: []
+      }
+      callback(null, resp)
+    } else {
+      this.params['cid'] = collections.join(',')
 
-    this.backend.search('items', (err, resp) => {
-      resp.results.forEach((a, i, arr) => {
-        // self link
-        arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.properties.id}`})
-        // parent link
-        if (_.has(a.properties, 'cid')) {
-          arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.cid}`})
-        }
-        arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
-        arr[i]['type'] = 'Feature' 
+      this.backend.search(this.params, 'items', page, limit, (err, resp) => {
+        resp.results.forEach((a, i, arr) => {
+          // self link
+          arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.properties.id}`})
+          // parent link
+          if (_.has(a.properties, 'cid')) {
+            arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.cid}`})
+          }
+          arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
+          arr[i]['type'] = 'Feature' 
+        })
+        resp.type = 'FeatureCollection'
+        resp.features = resp.results
+        delete resp.results
+        callback(null, resp)
       })
-      resp.type = 'FeatureCollection'
-      resp.features = resp.results
-      delete resp.results
-    })
+    }
   })
 }
 
