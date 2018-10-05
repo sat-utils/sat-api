@@ -11,9 +11,9 @@ const logger = require('./logger')
 let _esClient
 
 /*
-This module is used for connecting to an Elasticsearch instance, writing records
-and managing the indexes. It looks for the ES_HOST environment variable which is 
-the URL to the elasticsearch host
+This module is used for connecting to an Elasticsearch instance, writing records,
+searching records, and managing the indexes. It looks for the ES_HOST environment
+variable which is the URL to the elasticsearch host
 */
 
 
@@ -75,6 +75,26 @@ async function connect() {
 async function prep(index) {
   // TODO - different mappings for collection and item
   // make sure the index doesn't exist
+  let props = {
+    "type": "nested",
+    properties: {
+      'id': { type: 'keyword' },
+      'cid': { type: 'keyword' },
+      'datetime': { type: 'date' },
+      'eo:cloud_cover': { type: 'integer' },
+      'eo:gsd': { type: 'float' },
+      'eo:constellation': { type: 'keyword' },
+      'eo:platform': { type: 'keyword' },
+      'eo:instrument': { type: 'keyword' },
+      'eo:epsg': { type: 'integer' },
+      'eo:off_nadir': { type: 'float' },
+      'eo:azimuth': { type: 'float' },
+      'eo:sun_azimuth': { type: 'float' },
+      'eo:sun_elevation': { type: 'float' }
+    }
+  }
+
+
   esClient().then((client) => {
     client.indices.exists({ index}).then((exist) => {
       if (!exist) {
@@ -89,19 +109,7 @@ async function prep(index) {
                 },*/
                 properties: {
                   "name": {type: 'keyword'},
-                  "properties": {
-                    "type": "nested",
-                    properties: {
-                      'id': { type: 'keyword' },
-                      'datetime': { type: 'date' },
-                      'eo:cloud_cover': { type: 'integer' },
-                      'eo:gsd': { type: 'float' },
-                      'eo:off_nadir': { type: 'float' },
-                      'eo:azimuth': { type: 'float' },
-                      'eo:sun_azimuth': { type: 'float' },
-                      'eo:sun_elevation': { type: 'float' }
-                    }
-                  },
+                  "properties": props,
                   geometry: {
                     type: 'geo_shape',
                     tree: 'quadtree',
@@ -208,24 +216,28 @@ async function saveRecords(client, records, index, idfield, callback) {
 }
 
 
-
 // Reindex elasticsearch documents
 async function reindex(client, source, dest) {
-  return client.reindex({
-    body: {
-      source: {
-        index: source
-      },
-      dest: {
-        index: dest
+  esClient().then((client) => {
+    client.reindex({
+      body: {
+        source: {
+          index: source
+        },
+        dest: {
+          index: dest
+        }
       }
-    }
+    })
   })
 }
 
+
 // Delete STAC index
 async function deleteIndex(client, index) {
-  return client.indices.delete({ index })
+  esClient().then((client) => {
+    client.indices.delete({ index })
+  })
 }
 
 // general search of an index
@@ -249,8 +261,8 @@ function search(params, index, page, limit, callback) {
       const response = {
         properties: {
           found: count,
-          limit: this.limit,
-          page: this.page
+          limit: limit,
+          page: page
         }
       }
 
@@ -307,12 +319,13 @@ const termQuery = (field, value) => {
   if (field !== 'id' && field !== 'name') {
     field = 'properties.' + field
   }
+  const vals = value.split(',').filter((x) => x)
+  const terms = vals.map((v) => ({ term: { [field]: v}}))
+  // also return if the field is absent entirely
+  terms.push({ bool: { must_not: { exists: { field: field } } } })
   let query = {
     bool: {
-      should: [
-        { term: { [field]: value } },
-        { bool: { must_not: { exists: { field: field } } } }
-      ]
+      should: terms
     }
   }
   if (field !== 'id' && field !== 'name') {
