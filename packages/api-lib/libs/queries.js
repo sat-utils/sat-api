@@ -1,7 +1,7 @@
 'use strict'
 
 // Create an term query
-const termQuery = (field, value, properties=True) => {
+const termQuery = (field, value, properties=true) => {
   // the default is to search the properties of a record
   if (properties) {
     field = 'properties.' + field
@@ -22,7 +22,7 @@ const termQuery = (field, value, properties=True) => {
 
 
 // Create a range query
-const rangeQuery = (field, frm, to, properties=True) => {
+const rangeQuery = (field, frm, to, properties=true) => {
   if (properties) {
     field = 'properties.' + field
   }

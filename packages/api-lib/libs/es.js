@@ -8,7 +8,7 @@ const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
 const pump = require('pump')
 const queries = require('./queries')
 
-let esClient
+let _esClient
 
 /*
 This module is used for connecting to an Elasticsearch instance, writing records
@@ -58,14 +58,14 @@ async function connect() {
 
 // get existing ES client or create a new one
 async function esClient() {
-  if (!esClient) {
-    esClient = await connect()
+  if (!_esClient) {
+    _esClient = await connect()
     console.log('connected to elasticsearch')
   }
   else {
     console.log('using existing elasticsearch connection')
   }
-  return esClient
+  return _esClient
 }
 
 

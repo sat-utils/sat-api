@@ -5,7 +5,7 @@ const queries = require('./queries')
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 
 
-function STAC(path, endpoint, query, backend, page=1, limit=100, , respond=()=>{}) {
+function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{}) {
 
   // split and remove empty strings
   const resources = path.split('/').filter((x) => x)
@@ -27,6 +27,8 @@ function STAC(path, endpoint, query, backend, page=1, limit=100, , respond=()=>{
     const catalog = {
       name: 'sat-api',
       description: 'A STAC API of public datasets',
+      'satapi:version': '1.0.0b1',
+      stac_version: '0.6.0',
       links: [
         { rel: 'self', href: `${endpoint}/stac` }
       ]
