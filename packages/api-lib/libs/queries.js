@@ -41,34 +41,21 @@ const rangeQuery = (field, frm, to, properties=true) => {
 }
 
 
-// Create a geometry query
-const geometryQuery = (field, geometry) => {
-  const _geometry = Object.assign({}, geometry)
-  // TODO - support other geometry types
-  if (_geometry.type === 'Polygon') {
-    _geometry.type = _geometry.type.toLowerCase()
-  }
-  let query = {
-    geo_shape: { [field]: { shape: _geometry } }
-  }
-  return query
-}
-
-
-module.exports = (params) => {
-  let response = {
-    query: { match_all: {} }
-  }
+function build_query(params) {
   // no filters, return everything
   if (params.length === 0) {
-    return response
+    return {
+      query: { match_all: {} }
+    }
   }
 
   let queries = []
 
   // intersects search
   if (params.intersects) {
-    queries.push(geometryQuery('geometry', params.intersects.geometry))
+    queries.push({ 
+      geo_shape: { [field]: { shape: params.intersects.geometry } } 
+    })
     delete params.intersects
   }
 
@@ -83,9 +70,10 @@ module.exports = (params) => {
     }
   }
 
-  response.query = {
+  return {
     bool: { must: queries }
   }
-
-  return response
 }
+
+
+module.exports = build_query

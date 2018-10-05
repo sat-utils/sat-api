@@ -6,7 +6,7 @@ const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
 const pump = require('pump')
-const queries = require('./queries')
+const logger = require('./logger')
 
 let _esClient
 
@@ -15,6 +15,20 @@ This module is used for connecting to an Elasticsearch instance, writing records
 and managing the indexes. It looks for the ES_HOST environment variable which is 
 the URL to the elasticsearch host
 */
+
+
+// get existing ES client or create a new one
+async function esClient() {
+  if (!_esClient) {
+    _esClient = await connect()
+    console.log('connected to elasticsearch')
+  }
+  else {
+    console.log('using existing elasticsearch connection')
+  }
+  return _esClient
+}
+
 
 // Connect to an Elasticsearch cluster
 async function connect() {
@@ -54,18 +68,6 @@ async function connect() {
     }
   }))
   return client
-}
-
-// get existing ES client or create a new one
-async function esClient() {
-  if (!_esClient) {
-    _esClient = await connect()
-    console.log('connected to elasticsearch')
-  }
-  else {
-    console.log('using existing elasticsearch connection')
-  }
-  return _esClient
 }
 
 
@@ -136,14 +138,13 @@ async function deleteIndex(client, index) {
   return client.indices.delete({ index })
 }
 
-
 // general search of an index
-function search(params, index, page, size, callback) {
+function search(params, index, page, limit, callback) {
   const searchParams = {
     index: index,
-    body: queries(params),
-    size: size,
-    from: (page - 1) * size
+    body: build_query(params),
+    size: limit,
+    from: (page - 1) * limit
     //_source: this.fields
   }
 
@@ -157,7 +158,7 @@ function search(params, index, page, size, callback) {
       const response = {
         properties: {
           found: count,
-          limit: this.size,
+          limit: this.limit,
           page: this.page
         }
       }
@@ -174,7 +175,80 @@ function search(params, index, page, size, callback) {
   })
 }
 
+function build_query(params) {
+  // no filters, return everything
+  if (params.length === 0) {
+    return {
+      query: { match_all: {} }
+    }
+  }
 
+  let queries = []
+
+  // intersects search
+  if (params.intersects) {
+    queries.push({ 
+      geo_shape: { [field]: { shape: params.intersects.geometry } } 
+    })
+    delete params.intersects
+  }
+
+  // create range and term queries
+  let range
+  for (var key in params) {
+    range = params[key].split('/')
+    if (range.length > 1) {
+      queries.push(rangeQuery(key, range[0], range[1]))
+    } else {
+      queries.push(termQuery(key, params[key]))
+    }
+  }
+
+  return {
+    bool: { must: queries }
+  }
+}
+
+
+// Create an term query
+const termQuery = (field, value, properties=true) => {
+  // the default is to search the properties of a record
+  if (properties) {
+    field = 'properties.' + field
+  }
+  let query = {
+    bool: {
+      should: [
+        { term: { [field]: value } },
+        { bool: { must_not: { exists: { field: field } } } }
+      ]
+    }
+  }
+  if (properties) {
+    query = { nested: { path: 'properties', query: query } }
+  }
+  return query
+}
+
+
+// Create a range query
+const rangeQuery = (field, frm, to, properties=true) => {
+  if (properties) {
+    field = 'properties.' + field
+  }
+  let query = {
+    bool: {
+      should: [
+        { range: { [field]: { gte: frm, lte: to } } },
+        { bool: { must_not: { exists: { field: field } } } }
+      ]
+    } 
+  }
+  if (properties) {
+    query = { nested: { path: 'properties', query: query } }
+  }
+  return query
+}
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
@@ -217,12 +291,8 @@ function streamToEs(stream, transform, client, index) {
     })
 
     // count records
-    stream.on('data', () => {
-      nRecords += 1
-    })
-    toEs.on('data', () => {
-      nTransformed += 1
-    })
+    stream.on('data', () => { nRecords += 1 })
+    toEs.on('data', () => { nTransformed += 1 })
   })
 }
 
@@ -268,8 +338,6 @@ async function saveRecords(client, records, index, idfield, callback) {
   })
 }
 
-
-module.exports.client = esClient
 module.exports.search = search
 module.exports.streamToEs = streamToEs
 module.exports.saveRecords = saveRecords
