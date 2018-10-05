@@ -3,8 +3,101 @@
 const _ = require('lodash')
 const logger = require('./logger')
 const queries = require('./queries')
+const es = require('./es')
 //const esb = require('elastic-builder');
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+
+
+function STAC(path, endpoint, query, page=1, limit=100, respond=()=>{}) {
+
+  // split and remove empty strings
+  const resources = path.split('/').filter((x) => x)
+  console.log('resources', resources)
+
+  // make sure this is a STAC endpoint
+  if (resources[0] !== 'stac') {
+    let msg = 'endpoint not defined (use /stac)'
+    console.log(msg, resources)
+    respond(null, msg)
+    return
+  }
+
+  let msg
+
+  // /stac
+  if (resources.length === 1) {
+    msg = 'STAC catalog (see endpoints /search and /collections)'
+    const catalog = {
+      name: 'sat-api',
+      description: 'A STAC API of public datasets',
+      links: [
+        { rel: 'self', href: `${endpoint}/stac` }
+      ]
+    }
+    es.client().then((esClient) => {
+      const api = new API(esClient, query, endpoint, page, limit=100)
+      api.search_collections((err, results) => {
+        if (err) respond(err)
+        for (let c of results.collections) {
+          catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.name}`})
+        }
+        respond(null, catalog)
+      })
+    })
+  } else {
+    // drop the /stac prefix
+    resources.splice(0, 1)
+    // STAC endpoints
+    switch (resources[0]) {
+    case 'api':
+      msg = 'TODO - return API doc'
+      console.log(msg, resources)
+      respond(null, msg)
+      break
+    // collections endpoint
+    case 'collections':
+      if (resources.length === 1) {
+        // all collections
+        es.client().then((esClient) => {
+          const api = new API(esClient, query, endpoint, page, limit)
+          api.search_collections(respond)
+        })
+      } else if (resources.length === 2) {
+        // specific collection
+        console.log('get_collection')
+        es.client().then((esClient) => {
+          const api = new API(esClient, query, endpoint, page, limit)
+          api.get_collection(resources[1], (err, resp) => {
+            respond(err, resp)
+          })
+        })
+      } else if (resources[2] == 'items') {
+        console.log('search items in this collection')
+        // this is a search across items in this collection
+        es.client().then((esClient) => {
+          query['cid'] = resources[1]
+          const api = new API(esClient, query, endpoint, page, limit)
+          api.search_items(respond)
+        })
+      } else {
+        msg = 'endpoint not defined'
+        console.log(msg, resources)
+        respond(null, msg)
+      }
+      break;
+    case 'search':
+      // items api
+      es.client().then((esClient) => {
+        const api = new API(esClient, query, endpoint, page, limit)
+        api.search_items(respond)
+      })
+      break
+    default:
+      respond(null, 'endpoint not defined')
+    }
+  }
+
+}
 
 
 // Elasticsearch search class
@@ -44,10 +137,7 @@ function API(esClient, params, endpoint, page=1, limit=100) {
     }
     this.params.intersects = geojson
   }
-
   console.log('Search parameters:', this.params)
-
-  this.queries = queries(this.params)
 }
 
 
@@ -55,7 +145,7 @@ function API(esClient, params, endpoint, page=1, limit=100) {
 API.prototype.search = function (index, callback) {
   const searchParams = {
     index: index,
-    body: this.queries,
+    body: this.queries || queries(this.params),
     size: this.size,
     from: this.frm,
     _source: this.fields
@@ -67,7 +157,6 @@ API.prototype.search = function (index, callback) {
     const count = body.hits.total
 
     const response = {
-      //type: 'FeatureCollection',
       properties: {
         found: count,
         limit: this.size,
@@ -87,6 +176,7 @@ API.prototype.search = function (index, callback) {
 }
 
 
+
 // Search collections
 API.prototype.search_collections = function (callback) {
   // hacky way to get all collections
@@ -100,8 +190,6 @@ API.prototype.search_collections = function (callback) {
   if (_.has(this.params, 'intersects')) {
     geom = this.params.intersects
     this.params = _.omit(this.params, 'intersects')
-    // redo es queries excluding intersects
-    this.queries = queries(this.params)
   }
 
   this.search('collections', (err, resp) => {
@@ -110,16 +198,17 @@ API.prototype.search_collections = function (callback) {
     this.frm = frm
     if (geom) {
       this.params.intersects = geom
-      // redo es queries including intersects
-      this.queries = queries(this.params)
     }
 
     resp.results.forEach((a, i, arr) => {
       // self link
       arr[i].links.splice(0, 0, {rel: 'self', href: `${this.clink}/${a.name}`})
+      // parent catalog
       arr[i].links.push({rel: 'parent', href: `${this.endpoint}/stac`})
-      arr[i].links.push({rel: 'child', href: `${this.clink}/${a.name}/items`})
+      // root catalog
       arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
+      // child items
+      arr[i].links.push({rel: 'child', href: `${this.clink}/${a.name}/items`})
     })
 
     resp.collections = resp.results
@@ -169,19 +258,6 @@ API.prototype.search_items = function (callback) {
 
 // Get a single collection by name
 API.prototype.get_collection = function (name, callback) {
-  //const body = esb.requestBodySearch().query(
-  //  esb.boolQuery().filter(esb.termQuery('name', name))
-  //)
-  //this.queries = body.toJSON()
-  /*this.queries = {
-    query: {
-      bool: {
-        filter: [
-          {term: {name: name}}
-        ]
-      }
-    }
-  }*/
   this.queries = {
     query: {term: {name: name}}
   }
@@ -195,4 +271,4 @@ API.prototype.get_collection = function (name, callback) {
 }
 
 
-module.exports = API
+module.exports = STAC

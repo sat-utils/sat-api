@@ -68,6 +68,7 @@ async function Client() {
 }
 
 
+// Create STAC mappings
 async function putMapping(client, index) {
   // TODO - different mappings for collection and item
   // make sure the index doesn't exist
@@ -115,6 +116,7 @@ async function putMapping(client, index) {
 }
 
 
+// Reindex elasticsearch documents
 async function reindex(client, source, dest) {
   return client.reindex({
     body: {
@@ -128,14 +130,14 @@ async function reindex(client, source, dest) {
   })
 }
 
-
+// Delete STAC index
 async function deleteIndex(client, index) {
   return client.indices.delete({ index })
 }
 
 
+// Given an input stream and a transform, write records to an elasticsearch instance
 function streamToEs(stream, transform, client, index) {
-  // Given an input stream and a transform, write records to an elasticsearch instance
 
   let nRecords = 0
   let nTransformed = 0
@@ -168,7 +170,7 @@ function streamToEs(stream, transform, client, index) {
         reject(nTransformed)
       }
       else {
-        console.log(`Finished: ${nRecords} csv records, ${nTransformed} transformed, `)
+        console.log(`Finished: ${nRecords} records, ${nTransformed} transformed, `)
         resolve(nTransformed)
       }
     })
@@ -184,6 +186,7 @@ function streamToEs(stream, transform, client, index) {
 }
 
 
+// Save records in elasticsearch
 async function saveRecords(client, records, index, idfield, callback) {
   const body = []
 
@@ -227,7 +230,6 @@ async function saveRecords(client, records, index, idfield, callback) {
 
 module.exports.client = Client
 module.exports.reindex = reindex
-module.exports.listIndices = listIndices
 module.exports.putMapping = putMapping
 module.exports.deleteIndex = deleteIndex
 module.exports.streamToEs = streamToEs
