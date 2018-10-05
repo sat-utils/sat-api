@@ -6,14 +6,8 @@ module.exports.handler = function hander(event, context, cb) {
   let esClient
   return satlib.es.client().then((client) => {
     esClient = client
-    if (event.action === 'putMapping') {
-      return satlib.es.putMapping(esClient, event.index)
-    }
-    else if (event.action === 'deleteIndex') {
+    if (event.action === 'deleteIndex') {
       return satlib.es.deleteIndex(esClient, event.index)
-    }
-    else if (event.action === 'listIndices') {
-      return satlib.es.listIndices(esClient, event.index)
     }
     else if (event.action === 'reindex') {
       return satlib.es.reindex(esClient, event.source, event.dest)
