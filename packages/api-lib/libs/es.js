@@ -216,30 +216,6 @@ async function saveRecords(client, records, index, idfield, callback) {
 }
 
 
-// Reindex elasticsearch documents
-async function reindex(client, source, dest) {
-  esClient().then((client) => {
-    client.reindex({
-      body: {
-        source: {
-          index: source
-        },
-        dest: {
-          index: dest
-        }
-      }
-    })
-  })
-}
-
-
-// Delete STAC index
-async function deleteIndex(client, index) {
-  esClient().then((client) => {
-    client.indices.delete({ index })
-  })
-}
-
 // general search of an index
 function search(params, index, page, limit, callback) {
   console.log('Search parameters: ', JSON.stringify(params))
@@ -277,6 +253,7 @@ function search(params, index, page, limit, callback) {
     })
   })
 }
+
 
 function build_query(params) {
   // no filters, return everything
@@ -356,7 +333,3 @@ module.exports.search = search
 module.exports.prep = prep
 module.exports.streamToEs = streamToEs
 module.exports.saveRecords = saveRecords
-
-// management functions
-module.exports.reindex = reindex
-module.exports.deleteIndex = deleteIndex

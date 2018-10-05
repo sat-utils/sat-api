@@ -42,16 +42,6 @@ default:
       envs:
         bucket: '{{system_bucket}}'
         prefix: '{{stackName}}'
-    manager:
-      source: 'node_modules/@sat-utils/manager/dist/'
-      handler: index.handler
-      timeout: 300
-      memory: 192
-      envs:
-        ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        ES_ARN: "!GetAtt {{es.name}}Domain.DomainArn"
-        ROLE_ARN: "!GetAtt LambdaRole.Arn"
-        BUCKET: "{{system_bucket}}"
     api:
       source: 'node_modules/@sat-utils/api/dist/'
       handler: index.handler
