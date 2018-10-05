@@ -1,7 +1,6 @@
 'use strict'
 
 const _ = require('lodash')
-const queries = require('./queries')
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 
 
@@ -58,8 +57,8 @@ function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{})
         const api = new API(backend, query, endpoint)
         api.search_collections(respond)
       } else if (resources.length === 2) {
+        console.log('get collection')
         // specific collection
-        console.log('get_collection')
         const api = new API(backend, query, endpoint)
         api.get_collection(resources[1], respond)
       } else if (resources[2] == 'items') {
@@ -127,23 +126,15 @@ function API(backend, params, endpoint) {
 
 // Search collections
 API.prototype.search_collections = function (callback) {
-  // hacky way to get all collections
-  const sz = this.size
-  const frm = this.frm
-  // to ensure all collections get returned
-  this.size = 100
-  this.frm = 0
-  // really hacky way to remove geometry from search of collections...temporary
+  // hacky way to remove geometry from search of collections...temporary
   let geom
   if (_.has(this.params, 'intersects')) {
     geom = this.params.intersects
     this.params = _.omit(this.params, 'intersects')
   }
 
-  this.backend.search('collections', (err, resp) => {
-    // set sz back to provided parameter
-    this.size = sz
-    this.frm = frm
+  this.backend.search(this.params, 'collections', 1, 100, (err, resp) => {
+    // set geometry back
     if (geom) {
       this.params.intersects = geom
     }
@@ -163,6 +154,21 @@ API.prototype.search_collections = function (callback) {
     delete resp.results
 
     callback(err, resp)
+  })
+}
+
+
+// Get a single collection by name
+API.prototype.get_collection = function (name, callback) {
+  let params = this.params
+  this.params = {'name': name}
+  this.search_collections((err, resp) => {
+    this.params = params
+    if (resp.collections.length === 1) {
+      callback(err, resp.collections[0])
+    } else {
+      callback(err, {})
+    }
   })
 }
 
@@ -204,19 +210,7 @@ API.prototype.search_items = function (callback, page=1, limit=100) {
 }
 
 
-// Get a single collection by name
-API.prototype.get_collection = function (name, callback) {
-  this.queries = {
-    query: {term: {name: name}}
-  }
-  this.search_collections((err, resp) => {
-    if (resp.collections.length === 1) {
-      callback(err, resp.collections[0])
-    } else {
-      callback(err, {})
-    }
-  })
-}
+
 
 
 module.exports = STAC

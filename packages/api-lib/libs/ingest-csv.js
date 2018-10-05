@@ -218,7 +218,7 @@ async function update({
   retries = 0
 }) {
   esClient = client
-  return es.putMapping(client, index)
+  return es.prep(index)
     .then(() => processFiles(bucket, key, transform, cb, currentFileNum, lastFileNum, arn, retries))
     .catch(cb)
 }

@@ -72,182 +72,51 @@ async function connect() {
 
 
 // Create STAC mappings
-async function putMapping(client, index) {
+async function prep(index) {
   // TODO - different mappings for collection and item
   // make sure the index doesn't exist
-  const exist = await client.indices.exists({ index })
-  if (!exist) {
-    console.log(`Creating index: ${index}`)
-    return client.indices.create({
-      index,
-      body: {
-        mappings: {
-          doc: {
-            /*'_all': {
-              enabled: true
-            },*/
-            properties: {
-              "name": {type: 'keyword'},
-              "properties": {
-                "type": "nested",
+  esClient().then((client) => {
+    client.indices.exists({ index}).then((exist) => {
+      if (!exist) {
+        console.log(`Creating index: ${index}`)
+        return client.indices.create({
+          index,
+          body: {
+            mappings: {
+              doc: {
+                /*'_all': {
+                  enabled: true
+                },*/
                 properties: {
-                  'id': { type: 'keyword' },
-                  'datetime': { type: 'date' },
-                  'eo:cloud_cover': { type: 'integer' },
-                  'eo:gsd': { type: 'float' },
-                  'eo:off_nadir': { type: 'float' },
-                  'eo:azimuth': { type: 'float' },
-                  'eo:sun_azimuth': { type: 'float' },
-                  'eo:sun_elevation': { type: 'float' }
+                  "name": {type: 'keyword'},
+                  "properties": {
+                    "type": "nested",
+                    properties: {
+                      'id': { type: 'keyword' },
+                      'datetime': { type: 'date' },
+                      'eo:cloud_cover': { type: 'integer' },
+                      'eo:gsd': { type: 'float' },
+                      'eo:off_nadir': { type: 'float' },
+                      'eo:azimuth': { type: 'float' },
+                      'eo:sun_azimuth': { type: 'float' },
+                      'eo:sun_elevation': { type: 'float' }
+                    }
+                  },
+                  geometry: {
+                    type: 'geo_shape',
+                    tree: 'quadtree',
+                    precision: '5mi'
+                  }
                 }
-              },
-              geometry: {
-                type: 'geo_shape',
-                tree: 'quadtree',
-                precision: '5mi'
               }
             }
           }
-        }
+        }).catch((err) => {
+          console.log('Error creating index, already created: ', err)
+        })
       }
-    }).catch((err) => {
-      console.log('Error creating index, already created: ', err)
-    })
-  }
-
-  return Promise.resolve()
-}
-
-
-// Reindex elasticsearch documents
-async function reindex(client, source, dest) {
-  return client.reindex({
-    body: {
-      source: {
-        index: source
-      },
-      dest: {
-        index: dest
-      }
-    }
-  })
-}
-
-// Delete STAC index
-async function deleteIndex(client, index) {
-  return client.indices.delete({ index })
-}
-
-// general search of an index
-function search(params, index, page, limit, callback) {
-  const searchParams = {
-    index: index,
-    body: build_query(params),
-    size: limit,
-    from: (page - 1) * limit
-    //_source: this.fields
-  }
-
-  console.log('Searching: ', JSON.stringify(searchParams))
-
-  // connect to ES then search
-  esClient().then((client) => {
-    client.search(searchParams).then((body) => {
-      const count = body.hits.total
-
-      const response = {
-        properties: {
-          found: count,
-          limit: this.limit,
-          page: this.page
-        }
-      }
-
-      response.results = body.hits.hits.map((r) => (r._source))
-
-      console.log(`Response: ${JSON.stringify(response)}`)
-
-      return callback(null, response)
-    }, (err) => {
-      logger.error(err)
-      return callback(err)
     })
   })
-}
-
-function build_query(params) {
-  // no filters, return everything
-  if (params.length === 0) {
-    return {
-      query: { match_all: {} }
-    }
-  }
-
-  let queries = []
-
-  // intersects search
-  if (params.intersects) {
-    queries.push({ 
-      geo_shape: { [field]: { shape: params.intersects.geometry } } 
-    })
-    delete params.intersects
-  }
-
-  // create range and term queries
-  let range
-  for (var key in params) {
-    range = params[key].split('/')
-    if (range.length > 1) {
-      queries.push(rangeQuery(key, range[0], range[1]))
-    } else {
-      queries.push(termQuery(key, params[key]))
-    }
-  }
-
-  return {
-    bool: { must: queries }
-  }
-}
-
-
-// Create an term query
-const termQuery = (field, value, properties=true) => {
-  // the default is to search the properties of a record
-  if (properties) {
-    field = 'properties.' + field
-  }
-  let query = {
-    bool: {
-      should: [
-        { term: { [field]: value } },
-        { bool: { must_not: { exists: { field: field } } } }
-      ]
-    }
-  }
-  if (properties) {
-    query = { nested: { path: 'properties', query: query } }
-  }
-  return query
-}
-
-
-// Create a range query
-const rangeQuery = (field, frm, to, properties=true) => {
-  if (properties) {
-    field = 'properties.' + field
-  }
-  let query = {
-    bool: {
-      should: [
-        { range: { [field]: { gte: frm, lte: to } } },
-        { bool: { must_not: { exists: { field: field } } } }
-      ]
-    } 
-  }
-  if (properties) {
-    query = { nested: { path: 'properties', query: query } }
-  }
-  return query
 }
 
 
@@ -338,11 +207,143 @@ async function saveRecords(client, records, index, idfield, callback) {
   })
 }
 
+
+
+// Reindex elasticsearch documents
+async function reindex(client, source, dest) {
+  return client.reindex({
+    body: {
+      source: {
+        index: source
+      },
+      dest: {
+        index: dest
+      }
+    }
+  })
+}
+
+// Delete STAC index
+async function deleteIndex(client, index) {
+  return client.indices.delete({ index })
+}
+
+// general search of an index
+function search(params, index, page, limit, callback) {
+  console.log('Search parameters: ', JSON.stringify(params))
+  const searchParams = {
+    index: index,
+    body: build_query(params),
+    size: limit,
+    from: (page - 1) * limit
+    //_source: this.fields
+  }
+
+  console.log('Search query (es): ', JSON.stringify(searchParams))
+
+  // connect to ES then search
+  esClient().then((client) => {
+    client.search(searchParams).then((body) => {
+      const count = body.hits.total
+
+      const response = {
+        properties: {
+          found: count,
+          limit: this.limit,
+          page: this.page
+        }
+      }
+
+      response.results = body.hits.hits.map((r) => (r._source))
+
+      console.log(`Search response: ${JSON.stringify(response)}`)
+
+      return callback(null, response)
+    }, (err) => {
+      logger.error(err)
+      return callback(err)
+    })
+  })
+}
+
+function build_query(params) {
+  // no filters, return everything
+  if (Object.keys(params).length === 0) {
+    return {
+      query: { match_all: {} }
+    }
+  }
+
+  let queries = []
+
+  // intersects search
+  if (params.intersects) {
+    queries.push({ 
+      geo_shape: { [field]: { shape: params.intersects.geometry } } 
+    })
+    delete params.intersects
+  }
+
+  // create range and term queries
+  let range
+  for (var key in params) {
+    range = params[key].split('/')
+    if (range.length > 1) {
+      queries.push(rangeQuery(key, range[0], range[1]))
+    } else {
+      queries.push(termQuery(key, params[key]))
+    }
+  }
+
+  return {
+    query: { bool: { must: queries } }
+  }
+}
+
+
+// Create a term query
+const termQuery = (field, value) => {
+  // the default is to search the properties of a record
+  if (field !== 'id' && field !== 'name') {
+    field = 'properties.' + field
+  }
+  let query = {
+    bool: {
+      should: [
+        { term: { [field]: value } },
+        { bool: { must_not: { exists: { field: field } } } }
+      ]
+    }
+  }
+  if (field !== 'id' && field !== 'name') {
+    query = { nested: { path: 'properties', query: query } }
+  }
+  return query
+}
+
+
+// Create a range query
+const rangeQuery = (field, frm, to) => {
+  // range queries will always be on properties
+  field = 'properties.' + field
+  let query = {
+    bool: {
+      should: [
+        { range: { [field]: { gte: frm, lte: to } } },
+        { bool: { must_not: { exists: { field: field } } } }
+      ]
+    }
+  }
+  query = { nested: { path: 'properties', query: query } }
+  return query
+}
+
+
 module.exports.search = search
+module.exports.prep = prep
 module.exports.streamToEs = streamToEs
 module.exports.saveRecords = saveRecords
 
 // management functions
 module.exports.reindex = reindex
-module.exports.putMapping = putMapping
 module.exports.deleteIndex = deleteIndex
