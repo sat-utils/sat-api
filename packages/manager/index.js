@@ -12,6 +12,7 @@ module.exports.handler = function hander(event, context, cb) {
     else if (event.action === 'reindex') {
       return satlib.es.reindex(esClient, event.source, event.dest)
     }
+    /* WIP code for making copy of es instance
     else if (event.action === 'createRepo') {
       const settings = {
         bucket: process.env.BUCKET,
@@ -38,6 +39,7 @@ module.exports.handler = function hander(event, context, cb) {
         }
       }).then(console.log)
     }
+    */
 
     return cb('No supported action was found')
   })
