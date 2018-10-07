@@ -198,7 +198,7 @@ function reproject(inputGeojson) {
 }
 
 
-function transform(data, encoding, next) {
+function _transform(data, encoding, next) {
   const dt = moment(data.SENSING_TIME)
   const mgrs = data.MGRS_TILE
   const parsedMgrs = parseMgrs(mgrs)
@@ -224,11 +224,10 @@ function transform(data, encoding, next) {
     const lons = geom.coordinates[0].map((pt) => pt[0])
     const lats = geom.coordinates[0].map((pt) => pt[1])
     const record = {
-      
+      id: data.GRANULE_ID,
       bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
       geometry: geom,
       properties: {
-        id: data.GRANULE_ID,
         cid: 'sentinel-2-l1c',
         datetime: dt.toISOString(),
         'eo:platform': satname,
@@ -240,7 +239,6 @@ function transform(data, encoding, next) {
       },
       assets: files,
       links: []
-
     }
     this.push(record)
     next()
@@ -260,32 +258,20 @@ function handler(event, context, cb) {
   const lastFileNum = get(event, 'lastFileNum', 0)
   const arn = get(event, 'arn', null)
   const retries = get(event, 'retries', 0)
-  const _transform = through2({ objectMode: true }, transform)
+  const transform = through2({ objectMode: true }, _transform)
 
   // add collection
-  let esClient
-  return satlib.es.client()
-    .then((client) => {
-      esClient = client
-      return satlib.es.putMapping(esClient, 'collections')
-    })
+  satlib.es.saveCollection(collection)
     .then(() => {
-      satlib.es.saveRecords(esClient, [collection], 'collections', 'cid', (err) => {
-        if (err) console.log('Warning: ', err)
-      })
+      // ensure mapping exists
+      satlib.es.prepare('items').then(() => {
+        // add items from files
+        satlib.ingestcsv.processFiles(
+          { bucket, key,  transform, cb, currentFileNum, lastFileNum, arn, retries }
+        )
     })
-    .then(() => satlib.ingestcsv.update({
-      client: esClient,
-      bucket,
-      key,
-      transform: _transform,
-      cb,
-      currentFileNum,
-      lastFileNum,
-      arn,
-      retries
-    }))
-    .catch((e) => console.log('Error: ', e))
+  })
+  .catch((e) => console.log(e))
 }
 
 module.exports.handler = handler

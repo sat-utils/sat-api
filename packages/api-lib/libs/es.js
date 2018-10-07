@@ -5,6 +5,7 @@ const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
+const readableStream = require('readable-stream')
 const pump = require('pump')
 const logger = require('./logger')
 
@@ -72,9 +73,10 @@ async function connect() {
 
 
 // Create STAC mappings
-async function prep(index) {
+async function prepare(index) {
   // TODO - different mappings for collection and item
   // make sure the index doesn't exist
+  console.log(`Preparing ${index}`)
   let props = {
     "type": "nested",
     properties: {
@@ -93,7 +95,6 @@ async function prep(index) {
       'eo:sun_elevation': { type: 'float' }
     }
   }
-
 
   esClient().then((client) => {
     client.indices.exists({ index}).then((exist) => {
@@ -129,16 +130,17 @@ async function prep(index) {
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-function streamToEs(stream, transform, client, index) {
+function stream(stream, transform, index, idfield='id') {
 
   let nRecords = 0
   let nTransformed = 0
+  let nSaved = 0
 
   const toEs = through2({ objectMode: true, consume: true }, function (data, encoding, next) {
     const record = {
       index,
       type: 'doc',
-      id: data.properties.id,
+      id: data[idfield],
       action: 'update',
       _retry_on_conflict: 3,
       body: {
@@ -150,69 +152,31 @@ function streamToEs(stream, transform, client, index) {
     next()
   })
 
-  const esStream = new ElasticsearchWritableStream(client, {
-    highWaterMark: 100,
-    flushTimeout: 1000
-  })
-
-  return new Promise((resolve, reject) => {
-    pump(stream, transform, toEs, esStream, (err) => {
-      if (err) {
-        console.log('error:', err)
-        reject(nTransformed)
-      }
-      else {
-        console.log(`Finished: ${nRecords} records, ${nTransformed} transformed, `)
-        resolve(nTransformed)
-      }
+  esClient().then((client) => {
+    const esStream = new ElasticsearchWritableStream(client, {
+      highWaterMark: 100,
+      flushTimeout: 1000
     })
 
-    // count records
-    stream.on('data', () => { nRecords += 1 })
-    toEs.on('data', () => { nTransformed += 1 })
-  })
-}
-
-
-// Save records in elasticsearch
-async function saveRecords(client, records, index, idfield, callback) {
-  const body = []
-
-  records.forEach((r) => {
-    body.push({
-      update: {
-        _index: index, _type: 'doc', _id: r[idfield], _retry_on_conflict: 3
-      }
+    return new Promise((resolve, reject) => {
+      pump(stream, transform, toEs, esStream, (err) => {
+        if (err) {
+          console.log('error:', err)
+          reject(nTransformed)
+        }
+        else {
+          console.log(`Saving ${index} records: ${nRecords} in, ${nTransformed} transformed.`)
+          resolve(nTransformed)
+        }
+      })
+      // count records
+      stream.on('data', () => { nRecords += 1 })
+      toEs.on('data', () => { nTransformed += 1 })
+      // this doesn't seem to work
+      //esStream.on('data', () => { nSaved += 1 })
     })
-    body.push({ doc: r, doc_as_upsert: true })
   })
-
-  let updated = 0
-  let errors = 0
-
-  return client.bulk({ body }, (err, resp) => {
-    if (err) {
-      console.log(err)
-    }
-    else {
-      if (resp.errors) {
-        resp.items.forEach((r) => {
-          if (r.update.status === 400) {
-            console.log(r.update.error.reason)
-            errors += 1
-          }
-          else {
-            updated += 1
-          }
-        })
-      }
-      else {
-        updated = resp.items.length
-      }
-      //added = added + resp.items.length
-      callback(null, updated, errors)
-    }
-  })
+  .catch((e) => console.log(e))
 }
 
 
@@ -329,7 +293,22 @@ const rangeQuery = (field, frm, to) => {
 }
 
 
+async function saveCollection(collection) {
+  function iStream(x, enc, next) { this.push(x); next() }
+  const iTransform = through2({ objectMode: true, consume: true }, iStream)
+
+  prepare('collections').then(() => {
+    var inStream = new readableStream.Readable({ objectMode: true })
+    inStream.push(collection)
+    inStream.push(null)
+    
+    stream(inStream, iTransform, 'collections', 'name')  
+  })
+}
+
+
+module.exports.prepare = prepare
+module.exports.stream = stream
 module.exports.search = search
-module.exports.prep = prep
-module.exports.streamToEs = streamToEs
-module.exports.saveRecords = saveRecords
+
+module.exports.saveCollection = saveCollection

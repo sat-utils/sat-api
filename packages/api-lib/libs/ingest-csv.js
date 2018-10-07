@@ -5,7 +5,6 @@ const AWS = require('aws-sdk')
 const zlib = require('zlib')
 const es = require('./es')
 
-let esClient
 const got = require('got')
 const stream = require('stream')
 
@@ -170,11 +169,11 @@ function processFile(bucket, key, transform) {
   console.log(`Processing s3://${bucket}/${key}`)
   const csvStream = csv.parse({ headers: true, objectMode: true })
   s3.getObject({ Bucket: bucket, Key: key }).createReadStream().pipe(csvStream)
-  return es.streamToEs(csvStream, transform, esClient, index)
+  return es.stream(csvStream, transform, index)
 }
 
 // Process 1 or more CSV files by processing one at a time, then invoking the next
-function processFiles(
+function processFiles({
   bucket,
   key,
   transform,
@@ -183,12 +182,10 @@ function processFiles(
   lastFileNum = 0,
   arn = null,
   retries = 0
-) {
+}) {
   const maxRetries = 5
-
   const nextFileNum = (currentFileNum < lastFileNum) ? currentFileNum + 1 : null
-
-  return processFile(bucket, `${key}${currentFileNum}.csv`, transform)
+  return processFile( bucket, `${key}${currentFileNum}.csv`, transform)
     .then(() => {
       invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, 0)
       cb()
@@ -206,25 +203,8 @@ function processFiles(
     })
 }
 
-async function update({
-  client,
-  bucket,
-  key,
-  transform,
-  cb = null,
-  currentFileNum = 0,
-  lastFileNum = 0,
-  arn = null,
-  retries = 0
-}) {
-  esClient = client
-  return es.prep(index)
-    .then(() => processFiles(bucket, key, transform, cb, currentFileNum, lastFileNum, arn, retries))
-    .catch(cb)
-}
-
 
 module.exports = {
-  update: update,
-  split: split
+  split: split,
+  processFiles: processFiles
 }

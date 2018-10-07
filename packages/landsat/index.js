@@ -246,7 +246,7 @@ function awsLinks(data) {
 }
 
 
-function transform(incomingData, encoding, next) {
+function _transform(incomingData, encoding, next) {
   const data = incomingData
   // concert numeric fields to numbers
   const numberFields = [
@@ -305,6 +305,7 @@ function transform(incomingData, encoding, next) {
     awsLinks(data).then((info) => {
       const start = moment(data.sceneStartTime, 'YYYY:DDD:HH:mm:ss.SSSSS')
       const record = {
+        id: data.LANDSAT_PRODUCT_ID,
         bbox: [
           data.lowerLeftCornerLongitude,
           data.lowerLeftCornerLatitude,
@@ -313,7 +314,6 @@ function transform(incomingData, encoding, next) {
         ],
         geometry: geometry,
         properties: {
-          id: data.LANDSAT_PRODUCT_ID,
           cid: 'landsat-8-l1',
           datetime: start.toISOString(),
           // eo extension metadata
@@ -321,9 +321,9 @@ function transform(incomingData, encoding, next) {
           'eo:sun_azimuth': data.sunAzimuth,
           'eo:sun_elevation': data.sunElevation,
           'landsat:path': data.path,
-          'landsat:row': data.row,
-          assets: info.files
+          'landsat:row': data.row
         },
+        assets: info.files,
         links: []
       }
       this.push(record)
@@ -339,7 +339,7 @@ function transform(incomingData, encoding, next) {
 function handler(event, context, cb) {
   console.log(JSON.stringify(event))
   // create stream from transform function
-  const _transform = through2({ objectMode: true, consume: true }, transform)
+  const transform = through2({ objectMode: true, consume: true }, _transform)
   const bucket = _.get(event, 'bucket')
   const key = _.get(event, 'key')
   const currentFileNum = _.get(event, 'currentFileNum', 0)
@@ -348,29 +348,17 @@ function handler(event, context, cb) {
   const retries = _.get(event, 'retries', 0)
 
   // add collection
-  let esClient
-  return satlib.es.client()
-    .then((client) => {
-      esClient = client
-      return satlib.es.putMapping(esClient, 'collections')
-    })
+  satlib.es.saveCollection(collection)
     .then(() => {
-      satlib.es.saveRecords(esClient, [collection], 'collections', 'name', (err) => {
-        if (err) console.log('Warning: ', err)
-      })
+      // ensure mapping exists
+      satlib.es.prepare('items').then(() => {
+        // add items from files
+        satlib.ingestcsv.processFiles(
+          { bucket, key,  transform, cb, currentFileNum, lastFileNum, arn, retries }
+        )
     })
-    .then(() => satlib.ingestcsv.update({
-      client: esClient,
-      bucket,
-      key,
-      transform: _transform,
-      cb,
-      currentFileNum,
-      lastFileNum,
-      arn,
-      retries
-    }))
-    .catch((e) => console.log(e))
+  })
+  .catch((e) => console.log(e))
 }
 
 
