@@ -75,12 +75,9 @@ async function connect() {
 // Create STAC mappings
 async function prepare(index) {
   // TODO - different mappings for collection and item
-  // make sure the index doesn't exist
-  console.log(`Preparing ${index}`)
   let props = {
     "type": "nested",
     properties: {
-      'id': { type: 'keyword' },
       'cid': { type: 'keyword' },
       'datetime': { type: 'date' },
       'eo:cloud_cover': { type: 'integer' },
@@ -96,12 +93,11 @@ async function prepare(index) {
     }
   }
 
-  esClient().then((client) => {
-    client.indices.exists({ index}).then((exist) => {
+  return esClient().then((client) => {
+    return client.indices.exists({ index }).then((exist) => {
       if (!exist) {
-        console.log(`Creating index: ${index}`)
-        return client.indices.create({
-          index,
+        let payload = {
+          index: index,
           body: {
             mappings: {
               doc: {
@@ -109,7 +105,7 @@ async function prepare(index) {
                   enabled: true
                 },*/
                 properties: {
-                  "name": {type: 'keyword'},
+                  "id": {type: 'keyword'},
                   "properties": props,
                   geometry: {
                     type: 'geo_shape',
@@ -120,9 +116,12 @@ async function prepare(index) {
               }
             }
           }
-        }).catch((err) => {
-          console.log('Error creating index, already created: ', err)
-        })
+        }
+        return client.indices.create(payload)
+          .then((resp) => {
+            console.log(`Created index: ${JSON.stringify(payload)}`)
+          })
+          .catch((err) => { console.log('Error creating index, already created: ', err) })
       }
     })
   })
@@ -130,7 +129,7 @@ async function prepare(index) {
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-function stream(stream, transform, index, idfield='id') {
+async function stream(stream, transform, index) {
 
   let nRecords = 0
   let nTransformed = 0
@@ -140,7 +139,7 @@ function stream(stream, transform, index, idfield='id') {
     const record = {
       index,
       type: 'doc',
-      id: data[idfield],
+      id: data['id'],
       action: 'update',
       _retry_on_conflict: 3,
       body: {
@@ -152,7 +151,7 @@ function stream(stream, transform, index, idfield='id') {
     next()
   })
 
-  esClient().then((client) => {
+  return esClient().then((client) => {
     const esStream = new ElasticsearchWritableStream(client, {
       highWaterMark: 100,
       flushTimeout: 1000
@@ -162,18 +161,18 @@ function stream(stream, transform, index, idfield='id') {
       pump(stream, transform, toEs, esStream, (err) => {
         if (err) {
           console.log('error:', err)
-          reject(nTransformed)
+          reject(err)
         }
         else {
-          console.log(`Saving ${index} records: ${nRecords} in, ${nTransformed} transformed.`)
+          console.log(`Saving ${index} records: ${nRecords} in, ${nTransformed} saved.`)
           resolve(nTransformed)
         }
       })
-      // count records
-      stream.on('data', () => { nRecords += 1 })
-      toEs.on('data', () => { nTransformed += 1 })
-      // this doesn't seem to work
-      //esStream.on('data', () => { nSaved += 1 })
+        // count records
+        stream.on('data', () => { nRecords += 1 })
+        toEs.on('data', () => { nTransformed += 1 })
+        // this doesn't seem to work
+        //esStream.on('data', () => { nSaved += 1 })
     })
   })
   .catch((e) => console.log(e))
@@ -248,16 +247,19 @@ function build_query(params) {
     }
   }
 
-  return {
-    query: { bool: { must: queries } }
+  if (queries.length === 1) {
+    return { query: queries[0] }
+  } else {
+    return { query: { bool: { must: queries } } }
   }
+
 }
 
 
 // Create a term query
 const termQuery = (field, value) => {
   // the default is to search the properties of a record
-  if (field !== 'id' && field !== 'name') {
+  if (field !== 'id') {
     field = 'properties.' + field
   }
   const vals = value.split(',').filter((x) => x)
@@ -269,7 +271,7 @@ const termQuery = (field, value) => {
       should: terms
     }
   }
-  if (field !== 'id' && field !== 'name') {
+  if (field !== 'id') {
     query = { nested: { path: 'properties', query: query } }
   }
   return query
@@ -297,12 +299,13 @@ async function saveCollection(collection) {
   function iStream(x, enc, next) { this.push(x); next() }
   const iTransform = through2({ objectMode: true, consume: true }, iStream)
 
-  prepare('collections').then(() => {
+  // ensure collections mapping in ES
+  return prepare('collections').then(() => {
+    // create input stream from collection record
     var inStream = new readableStream.Readable({ objectMode: true })
     inStream.push(collection)
     inStream.push(null)
-    
-    stream(inStream, iTransform, 'collections', 'name')  
+    return stream(inStream, iTransform, 'collections')
   })
 }
 
