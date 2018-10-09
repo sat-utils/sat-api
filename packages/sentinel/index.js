@@ -14,29 +14,34 @@ const get = require('lodash.get')
 const satlib = require('@sat-utils/api-lib')
 
 const collection = {
-  name: 'sentinel-2-l1c',
+  id: 'sentinel-2-l1c',
   title: 'Sentinel 2 L1C',
   description: 'Sentinel-2a and Sentinel-2b imagery',
+  version: '0.1.0',
+  extent: {
+    spatial: [-180, -90, 180, 90],
+    temporal: ['2013-06-01', null]
+  },
+  provider: [
+    {name: 'ESA', href: 'https://sentinel.esa.int/web/sentinel/home'},
+    {name: 'Sinergise', href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/'},
+    {name: 'AWS', href: 'https://aws.amazon.com/blogs/publicsector/complete-sentinel-2-archives-freely-available-to-users/'},
+    {name: 'Development Seed', url:'https://developmentseed.org/'}
+  ],
+  license: 'proprietary',
   properties: {
-    provider: [
-      {name: 'ESA', href: 'https://sentinel.esa.int/web/sentinel/home'},
-      {name: 'Sinergise', href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/'},
-      {name: 'AWS', href: 'https://aws.amazon.com/blogs/publicsector/complete-sentinel-2-archives-freely-available-to-users/'},
-      {name: 'Development Seed', url:'https://developmentseed.org/'}
-    ],
-    license: 'proprietary',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
     'eo:off_nadir': 0,
     'eo:bands': [
       {
-        name: 'B01',
+        id: 'B01',
         common_name: 'coastal',
         gsd: 60.0,
         center_wavelength: 0.4439,
         full_width_half_max: 0.027
       }, {
-        name: 'B02',
+        id: 'B02',
         common_name: 'blue',
         gsd: 10.0,
         center_wavelength: 0.4966,
@@ -48,56 +53,56 @@ const collection = {
         center_wavelength: 0.56,
         full_width_half_max: 0.045
       }, {
-        name: 'B04',
+        id: 'B04',
         common_name: 'red',
         gsd: 10.0,
         center_wavelength: 0.6645,
         full_width_half_max: 0.038
       }, {
-        name: 'B05',
+        id: 'B05',
         gsd: 20.0,
         center_wavelength: 0.7039,
         full_width_half_max: 0.019
       }, {
-        name: 'B06',
+        id: 'B06',
         gsd: 20.0,
         center_wavelength: 0.7402,
         full_width_half_max: 0.018
       }, {
-        name: 'B07',
+        id: 'B07',
         gsd: 20.0,
         center_wavelength: 0.7825,
         full_width_half_max: 0.028
       }, {
-        name: 'B08',
+        id: 'B08',
         common_name: 'nir',
         gsd: 10.0,
         center_wavelength: 0.8351,
         full_width_half_max: 0.145
       }, {
-        name: 'B8A',
+        id: 'B8A',
         gsd: 20.0,
         center_wavelength: 0.8648,
         full_width_half_max: 0.033
       }, {
-        name: 'B09',
+        id: 'B09',
         gsd: 60.0,
         center_wavelength: 0.945,
         full_width_half_max: 0.026
       }, {
-        name: 'B10',
+        id: 'B10',
         common_name: 'cirrus',
         gsd: 60.0,
         center_wavelength: 1.3735,
         full_width_half_max: 0.075
       }, {
-        name: 'B11',
+        id: 'B11',
         common_name: 'swir16',
         gsd: 20.0,
         center_wavelength: 1.6137,
         full_width_half_max: 0.143
       }, {
-        name: 'B12',
+        id: 'B12',
         common_name: 'swir22',
         gsd: 20.0,
         center_wavelength: 2.22024,
@@ -106,19 +111,19 @@ const collection = {
     ]
   },
   'assets': {
-    'B01': {type: 'image/x.jp2', 'eo:bands': [0], name: 'Band 1 (coastal)'},
-    'B02': {type: 'image/x.jp2', 'eo:bands': [1], name: 'Band 2 (blue)'},
-    'B03': {type: 'image/x.jp2', 'eo:bands': [2], name: 'Band 3 (green)'},
-    'B04': {type: 'image/x.jp2', 'eo:bands': [3], name: 'Band 4 (red)'},
-    'B05': {type: 'image/x.jp2', 'eo:bands': [4], name: 'Band 5'},
-    'B06': {type: 'image/x.jp2', 'eo:bands': [5], name: 'Band 6'},
-    'B07': {type: 'image/x.jp2', 'eo:bands': [6], name: 'Band 7'},
-    'B08': {type: 'image/x.jp2', 'eo:bands': [7], name: 'Band 8 (nir)'},
-    'B8A': {type: 'image/x.jp2', 'eo:bands': [8], name: 'Band 8A'},
-    'B09': {type: 'image/x.jp2', 'eo:bands': [9], name: 'Band 9'},
-    'B10': {type: 'image/x.jp2', 'eo:bands': [10], name: 'Band 10 (cirrus)'},
-    'B11': {type: 'image/x.jp2', 'eo:bands': [11], name: 'Band 11 (swir16)'},
-    'B12': {type: 'image/x.jp2', 'eo:bands': [12], name: 'Band 12 (swir22)'}
+    'B01': {type: 'image/jp2', 'eo:bands': [0], name: 'Band 1 (coastal)'},
+    'B02': {type: 'image/jp2', 'eo:bands': [1], name: 'Band 2 (blue)'},
+    'B03': {type: 'image/jp2', 'eo:bands': [2], name: 'Band 3 (green)'},
+    'B04': {type: 'image/jp2', 'eo:bands': [3], name: 'Band 4 (red)'},
+    'B05': {type: 'image/jp2', 'eo:bands': [4], name: 'Band 5'},
+    'B06': {type: 'image/jp2', 'eo:bands': [5], name: 'Band 6'},
+    'B07': {type: 'image/jp2', 'eo:bands': [6], name: 'Band 7'},
+    'B08': {type: 'image/jp2', 'eo:bands': [7], name: 'Band 8 (nir)'},
+    'B8A': {type: 'image/jp2', 'eo:bands': [8], name: 'Band 8A'},
+    'B09': {type: 'image/jp2', 'eo:bands': [9], name: 'Band 9'},
+    'B10': {type: 'image/jp2', 'eo:bands': [10], name: 'Band 10 (cirrus)'},
+    'B11': {type: 'image/jp2', 'eo:bands': [11], name: 'Band 11 (swir16)'},
+    'B12': {type: 'image/jp2', 'eo:bands': [12], name: 'Band 12 (swir22)'}
   },
   links: [
     { rel: 'license', href: 'https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice' }
@@ -213,7 +218,7 @@ function _transform(data, encoding, next) {
     const satname = `Sentinel-2${sat.slice(-1)}`
     let val
     const files = fromPairs(bands.map((b, i) => {
-      val = { href: `${tileBaseUrl}/${b}.jp2`, 'eo:bands': [i] }
+      val = { href: `${tileBaseUrl}/${b}.jp2`}
       return [b, val]
     }))
     files.thumbnail = { href: `${rodaBaseUrl}/preview.jpg` }
