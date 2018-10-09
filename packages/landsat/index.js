@@ -106,22 +106,22 @@ const collection = {
     ]
   },
   'assets': {
-    'index': {type: 'text/html', name: 'HTML index page'},
-    'thumbnail': {name: 'Thumbnail image', type: 'image/jpeg'},
-    'B1': {type: 'image/x.geotiff', 'eo:bands': [0], name: "Band 1 (coastal)"},
-    'B2': {type: 'image/x.geotiff', 'eo:bands': [1], name: "Band 2 (blue)"},
-    'B3': {type: 'image/x.geotiff', 'eo:bands': [2], name: "Band 3 (green)"},
-    'B4': {type: 'image/x.geotiff', 'eo:bands': [3], name: "Band 4 (red)"},
-    'B5': {type: 'image/x.geotiff', 'eo:bands': [4], name: "Band 5 (nir)"},
-    'B6': {type: 'image/x.geotiff', 'eo:bands': [5], name: "Band 6 (swir16)"},
-    'B7': {type: 'image/x.geotiff', 'eo:bands': [6], name: "Band 7 (swir22)"},
-    'B8': {type: 'image/x.geotiff', 'eo:bands': [7], name: "Band 8 (pan)"},
-    'B9': {type: 'image/x.geotiff', 'eo:bands': [8], name: "Band 9 (cirrus)"},
-    'B10': {type: 'image/x.geotiff', 'eo:bands': [9], name: "Band 10 (lwir)"},
-    'B11': {type: 'image/x.geotiff', 'eo:bands': [10], name: "Band 11 (lwir)"},
-    'ANG': {name: "Angle coefficients file", type: 'text/plain'},
-    'MTL': {name: 'original metadata file', type: 'text/plain'},
-    'BQA': {name: "Band quality data", type: 'image/x.geotiff'}
+    'index': {type: 'text/html', title: 'HTML index page'},
+    'thumbnail': {title: 'Thumbnail image', type: 'image/jpeg'},
+    'B1': {type: 'image/x.geotiff', 'eo:bands': [0], title: "Band 1 (coastal)"},
+    'B2': {type: 'image/x.geotiff', 'eo:bands': [1], title: "Band 2 (blue)"},
+    'B3': {type: 'image/x.geotiff', 'eo:bands': [2], title: "Band 3 (green)"},
+    'B4': {type: 'image/x.geotiff', 'eo:bands': [3], title: "Band 4 (red)"},
+    'B5': {type: 'image/x.geotiff', 'eo:bands': [4], title: "Band 5 (nir)"},
+    'B6': {type: 'image/x.geotiff', 'eo:bands': [5], title: "Band 6 (swir16)"},
+    'B7': {type: 'image/x.geotiff', 'eo:bands': [6], title: "Band 7 (swir22)"},
+    'B8': {type: 'image/x.geotiff', 'eo:bands': [7], title: "Band 8 (pan)"},
+    'B9': {type: 'image/x.geotiff', 'eo:bands': [8], title: "Band 9 (cirrus)"},
+    'B10': {type: 'image/x.geotiff', 'eo:bands': [9], title: "Band 10 (lwir)"},
+    'B11': {type: 'image/x.geotiff', 'eo:bands': [10], title: "Band 11 (lwir)"},
+    'ANG': {title: "Angle coefficients file", type: 'text/plain'},
+    'MTL': {title: 'original metadata file', type: 'text/plain'},
+    'BQA': {title: "Band quality data", type: 'image/x.geotiff'}
   },
   links: []
 }
