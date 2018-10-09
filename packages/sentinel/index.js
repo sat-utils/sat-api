@@ -241,8 +241,8 @@ function _transform(data, encoding, next) {
         'eo:cloud_cover': parseInt(data.CLOUD_COVER),
         'eo:epsg': parsedMgrs.epsg,
         'sentinel:product_id': data.PRODUCT_ID,
-        'sentinel:tile_geometry': reproject(info.tileGeometry),
-        'sentinel:tile_origin': reproject(info.tileOrigin)
+        'sentinel:tile_geometry': reproject(info.body.tileGeometry),
+        'sentinel:tile_origin': reproject(info.body.tileOrigin)
       },
       assets: _.merge({}, files, collection.assets),
       links: []
