@@ -12,7 +12,7 @@ const s3 = new AWS.S3()
 
 
 const collection = {
-  name: 'landsat-8-l1',
+  id: 'landsat-8-l1',
   title: 'Landsat 8 L1',
   description: 'Landat 8 imagery radiometrically calibrated and orthorectified ' +
                    'using gound points and Digital Elevation Model (DEM) data to ' +
@@ -37,67 +37,67 @@ const collection = {
     'eo:off_nadir': 0,
     'eo:bands': [
       {
-        name: 'B1',
+        id: 'B1',
         common_name: 'coastal',
         gsd: 30.0,
         center_wavelength: 0.44,
         full_width_half_max: 0.02
       }, {
-        name: 'B2',
+        id: 'B2',
         common_name: 'blue',
         gsd: 30.0,
         center_wavelength: 0.48,
         full_width_half_max: 0.06
       }, {
-        name: 'B3',
+        id: 'B3',
         common_name: 'green',
         gsd: 30.0,
         center_wavelength: 0.56,
         full_width_half_max: 0.06
       }, {
-        name: 'B4',
+        id: 'B4',
         common_name: 'red',
         gsd: 30.0,
         center_wavelength: 0.65,
         full_width_half_max: 0.04
       }, {
-        name: 'B5',
+        id: 'B5',
         common_name: 'nir',
         gsd: 30.0,
         center_wavelength: 0.86,
         full_width_half_max: 0.03
       }, {
-        name: 'B6',
+        id: 'B6',
         common_name: 'swir16',
         gsd: 30.0,
         center_wavelength: 1.6,
         full_width_half_max: 0.08
       }, {
-        name: 'B7',
+        id: 'B7',
         common_name: 'swir22',
         gsd: 30.0,
         center_wavelength: 2.2,
         full_width_half_max: 0.2
       }, {
-        name: 'B8',
+        id: 'B8',
         common_name: 'pan',
         gsd: 15.0,
         center_wavelength: 0.59,
         full_width_half_max: 0.18
       }, {
-        name: 'B9',
+        id: 'B9',
         common_name: 'cirrus',
         gsd: 30.0,
         center_wavelength: 1.37,
         full_width_half_max: 0.02
       }, {
-        name: 'B10',
+        id: 'B10',
         common_name: 'lwir11',
         gsd: 100.0,
         center_wavelength: 10.9,
         full_width_half_max: 0.8
       }, {
-        name: 'B11',
+        id: 'B11',
         common_name: 'lwir12',
         gsd: 100.0,
         center_wavelength: 12.0,
@@ -354,11 +354,11 @@ function handler(event, context, cb) {
       satlib.es.prepare('items').then(() => {
         // add items from files
         satlib.ingestcsv.processFiles(
-          { bucket, key,  transform, cb, currentFileNum, lastFileNum, arn, retries }
+          { bucket, key,  transform, currentFileNum, lastFileNum, arn, retries }
         )
+      })
     })
-  })
-  .catch((e) => console.log(e))
+    .catch((e) => console.log(e))
 }
 
 
