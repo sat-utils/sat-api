@@ -3,6 +3,8 @@
 const _ = require('lodash')
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 
+const stac_version = '0.6.0'
+
 
 function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{}) {
 

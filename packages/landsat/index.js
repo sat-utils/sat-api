@@ -19,6 +19,7 @@ const collection = {
                    'correct relief displacement.',
   keywords: 'landsat',
   version: '0.1.0',
+  stac_version: satlib.api.stac_version,
   extent: {
     spatial: [-180, -90, 180, 90],
     temporal: ['2013-06-01', null]
@@ -323,7 +324,7 @@ function _transform(incomingData, encoding, next) {
           'landsat:path': data.path,
           'landsat:row': data.row
         },
-        assets: info.files,
+        assets: _.merge({}, info.files, collection.assets),
         links: []
       }
       this.push(record)

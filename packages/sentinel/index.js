@@ -5,6 +5,7 @@ const proj4 = require('proj4')
 const epsg = require('epsg')
 const kinks = require('turf-kinks')
 const range = require('lodash.range')
+const _ = require('lodash')
 const pad = require('lodash.padstart')
 const moment = require('moment')
 const through2 = require('through2')
@@ -18,6 +19,7 @@ const collection = {
   title: 'Sentinel 2 L1C',
   description: 'Sentinel-2a and Sentinel-2b imagery',
   version: '0.1.0',
+  stac_version: satlib.api.stac_version,
   extent: {
     spatial: [-180, -90, 180, 90],
     temporal: ['2013-06-01', null]
@@ -242,7 +244,7 @@ function _transform(data, encoding, next) {
         'sentinel:tile_geometry': reproject(info.tileGeometry),
         'sentinel:tile_origin': reproject(info.tileOrigin)
       },
-      assets: files,
+      assets: _.merge({}, files, collection.assets),
       links: []
     }
     this.push(record)
