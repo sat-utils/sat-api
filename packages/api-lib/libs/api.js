@@ -36,7 +36,7 @@ function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{})
     api.search_collections((err, results) => {
       if (err) respond(err)
       for (let c of results.collections) {
-        catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.name}`})
+        catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.id}`})
       }
       respond(null, catalog)
     })
@@ -140,13 +140,13 @@ API.prototype.search_collections = function (callback) {
 
     resp.results.forEach((a, i, arr) => {
       // self link
-      arr[i].links.splice(0, 0, {rel: 'self', href: `${this.clink}/${a.name}`})
+      arr[i].links.splice(0, 0, {rel: 'self', href: `${this.clink}/${a.id}`})
       // parent catalog
       arr[i].links.push({rel: 'parent', href: `${this.endpoint}/stac`})
       // root catalog
       arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
       // child items
-      arr[i].links.push({rel: 'child', href: `${this.clink}/${a.name}/items`})
+      arr[i].links.push({rel: 'child', href: `${this.clink}/${a.id}/items`})
     })
 
     resp.collections = resp.results
@@ -158,9 +158,9 @@ API.prototype.search_collections = function (callback) {
 
 
 // Get a single collection by name
-API.prototype.get_collection = function (name, callback) {
+API.prototype.get_collection = function (cid, callback) {
   let params = this.params
-  this.params = {'name': name}
+  this.params = {'id': cid}
   this.search_collections((err, resp) => {
     this.params = params
     if (resp.collections.length === 1) {
@@ -176,7 +176,7 @@ API.prototype.get_collection = function (name, callback) {
 API.prototype.search_items = function (page=1, limit=1, callback) {
   // check collection first
   this.search_collections((err, resp) => {
-    const collections = resp.collections.map((c) => c.name)
+    const collections = resp.collections.map((c) => c.id)
     if (collections.lenth === 0) {
       let resp = {
         type: 'FeatureCollection',
@@ -190,7 +190,7 @@ API.prototype.search_items = function (page=1, limit=1, callback) {
       this.backend.search(this.params, 'items', page, limit, (err, resp) => {
         resp.results.forEach((a, i, arr) => {
           // self link
-          arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.properties.id}`})
+          arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.id}`})
           // parent link
           if (_.has(a.properties, 'cid')) {
             arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.cid}`})
