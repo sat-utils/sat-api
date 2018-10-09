@@ -163,21 +163,12 @@ function split({
   })
 }
 
-// Process single CSV file
-function processFile(bucket, key, transform) {
-  // get the csv file s3://${bucket}/${key}
-  console.log(`Processing s3://${bucket}/${key}`)
-  const csvStream = csv.parse({ headers: true, objectMode: true })
-  s3.getObject({ Bucket: bucket, Key: key }).createReadStream().pipe(csvStream)
-  return es.stream(csvStream, transform, index)
-}
 
 // Process 1 or more CSV files by processing one at a time, then invoking the next
 function processFiles({
   bucket,
   key,
   transform,
-  cb,
   currentFileNum = 0,
   lastFileNum = 0,
   arn = null,
@@ -185,10 +176,17 @@ function processFiles({
 }) {
   const maxRetries = 5
   const nextFileNum = (currentFileNum < lastFileNum) ? currentFileNum + 1 : null
-  return processFile( bucket, `${key}${currentFileNum}.csv`, transform)
+
+  // CSV stream from file
+  const csvStream = csv.parse({ headers: true, objectMode: true })
+  key = `${key}${currentFileNum}.csv`
+  s3.getObject({ Bucket: bucket, Key: key }).createReadStream().pipe(csvStream)
+
+  console.log(`Processing s3://${bucket}/${key}`)
+
+  return es.stream(csvStream, transform, index)
     .then(() => {
       invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, 0)
-      cb()
     }).catch(() => {
       // if CSV failed, try it again
       if (retries < maxRetries) {
@@ -199,7 +197,6 @@ function processFiles({
         console.log(`error: maxRetries hit in file ${currentFileNum}`)
         invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, 0)
       }
-      cb()
     })
 }
 
