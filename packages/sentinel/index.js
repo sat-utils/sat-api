@@ -32,6 +32,7 @@ const collection = {
   ],
   license: 'proprietary',
   properties: {
+    'cid': 'sentinel-2-l1c',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
     'eo:off_nadir': 0,
@@ -240,9 +241,9 @@ function _transform(data, encoding, next) {
         'eo:platform': satname,
         'eo:cloud_cover': parseInt(data.CLOUD_COVER),
         'eo:epsg': parsedMgrs.epsg,
-        'sentinel:product_id': data.PRODUCT_ID,
-        'sentinel:tile_geometry': reproject(info.body.tileGeometry),
-        'sentinel:tile_origin': reproject(info.body.tileOrigin)
+        'sentinel:product_id': data.PRODUCT_ID
+        //'sentinel:tile_geometry': reproject(info.body.tileGeometry),
+        //'sentinel:tile_origin': reproject(info.body.tileOrigin)
       },
       assets: _.merge({}, files, collection.assets),
       links: []

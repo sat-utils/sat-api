@@ -32,6 +32,7 @@ const collection = {
   ],
   license: 'PDDL-1.0',
   properties: {
+    'cid': 'landsat-8-l1',
     'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
