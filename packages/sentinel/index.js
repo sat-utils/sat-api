@@ -32,7 +32,7 @@ const collection = {
   ],
   license: 'proprietary',
   properties: {
-    'cid': 'sentinel-2-l1c',
+    'collection': 'sentinel-2-l1c',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
     'eo:off_nadir': 0,
@@ -236,7 +236,7 @@ function _transform(data, encoding, next) {
       bbox: [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)],
       geometry: geom,
       properties: {
-        cid: 'sentinel-2-l1c',
+        collection: 'sentinel-2-l1c',
         datetime: dt.toISOString(),
         'eo:platform': satname,
         'eo:cloud_cover': parseInt(data.CLOUD_COVER),

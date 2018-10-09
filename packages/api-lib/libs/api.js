@@ -66,7 +66,7 @@ function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{})
       } else if (resources[2] == 'items') {
         console.log('search items in this collection')
         // this is a search across items in this collection
-        query['cid'] = resources[1]
+        query['collection'] = resources[1]
         const api = new API(backend, query, endpoint)
         api.search_items(page, limit, respond)
       } else {
@@ -160,9 +160,9 @@ API.prototype.search_collections = function (callback) {
 
 
 // Get a single collection by name
-API.prototype.get_collection = function (cid, callback) {
+API.prototype.get_collection = function (collection, callback) {
   let params = this.params
-  this.params = {'id': cid}
+  this.params = {'id': collection}
   this.search_collections((err, resp) => {
     this.params = params
     if (resp.collections.length === 1) {
@@ -187,15 +187,15 @@ API.prototype.search_items = function (page=1, limit=1, callback) {
       }
       callback(null, resp)
     } else {
-      this.params['cid'] = collections.join(',')
+      this.params['collection'] = collections.join(',')
 
       this.backend.search(this.params, 'items', page, limit, (err, resp) => {
         resp.results.forEach((a, i, arr) => {
           // self link
           arr[i].links.splice(0, 0, {rel: 'self', href: `${this.endpoint}/stac/search?id=${a.id}`})
           // parent link
-          if (_.has(a.properties, 'cid')) {
-            arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.cid}`})
+          if (_.has(a.properties, 'collection')) {
+            arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.collection}`})
           }
           arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
           arr[i]['type'] = 'Feature' 

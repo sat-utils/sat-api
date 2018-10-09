@@ -78,7 +78,7 @@ async function prepare(index) {
   let props = {
     "type": "nested",
     properties: {
-      'cid': { type: 'keyword' },
+      'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
       'eo:cloud_cover': { type: 'integer' },
       'eo:gsd': { type: 'float' },

@@ -32,7 +32,7 @@ const collection = {
   ],
   license: 'PDDL-1.0',
   properties: {
-    'cid': 'landsat-8-l1',
+    'collection': 'landsat-8-l1',
     'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
@@ -316,7 +316,7 @@ function _transform(incomingData, encoding, next) {
         ],
         geometry: geometry,
         properties: {
-          cid: 'landsat-8-l1',
+          collection: 'landsat-8-l1',
           datetime: start.toISOString(),
           // eo extension metadata
           'eo:cloud_cover': parseInt(data.cloudCover),
