@@ -36,6 +36,7 @@ const collection = {
     'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
+    'eo:constellation': 'landsat',
     'eo:off_nadir': 0,
     'eo:bands': [
       {

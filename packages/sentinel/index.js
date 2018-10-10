@@ -35,6 +35,7 @@ const collection = {
     'collection': 'sentinel-2-l1c',
     'eo:gsd': 10,
     'eo:instrument': 'MSI',
+    'eo:constellation': 'sentinel-2',
     'eo:off_nadir': 0,
     'eo:bands': [
       {
