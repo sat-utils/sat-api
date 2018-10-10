@@ -25,10 +25,10 @@ const collection = {
     temporal: ['2013-06-01', null]
   },
   providers: [
-    {name: 'USGS', url: 'https://landsat.usgs.gov/'},
-    {name: 'Planet Labs', url: 'https://github.com/landsat-pds/landsat_ingestor'},
-    {name: 'AWS', url: 'https://landsatonaws.com/'},
-    {name: 'Development Seed', url:'https://developmentseed.org/'}
+    {name: 'USGS', url: 'https://landsat.usgs.gov/', type: "producer"},
+    {name: 'Planet Labs', url: 'https://github.com/landsat-pds/landsat_ingestor', type: "processor"},
+    {name: 'AWS', url: 'https://landsatonaws.com/', type: "host"},
+    {name: 'Development Seed', url:'https://developmentseed.org/', type: "processor"}
   ],
   license: 'PDDL-1.0',
   properties: {
