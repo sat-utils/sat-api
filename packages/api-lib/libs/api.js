@@ -209,8 +209,5 @@ API.prototype.search_items = function (page=1, limit=1, callback) {
   })
 }
 
-
-
-
-
-module.exports = STAC
+module.exports.stac_version = stac_version
+module.exports.STAC = STAC
