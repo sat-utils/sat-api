@@ -1,13 +1,12 @@
 default:
   stackName: change-me
-  system_bucket: change-me
+  system_bucket: sat-api-us-east-1
 
   tags:
     project: sat-api
 
 dev:
-  stackName: sat-api-v1-dev
-  system_bucket: sat-api 
+  stackName: sat-api-dev
   es:
     instanceCount: 2
     instanceType: m3.medium.elasticsearch
@@ -15,7 +14,6 @@ dev:
 
 prod:
   stackName: sat-api
-  system_bucket: sat-api 
   es:
     instanceCount: 2
     instanceType: m3.medium.elasticsearch
