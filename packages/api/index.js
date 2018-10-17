@@ -41,10 +41,7 @@ module.exports.handler = (event, context, cb) => {
   else if (method === 'GET' && event.queryStringParameters) {
     query = event.queryStringParameters
   }
-  // default page and limit
-  var page = query.page || 1
-  var limit = query.limit || 1
 
-  satlib.api.STAC(event.path, endpoint, query, satlib.es, page, limit, respond)
+  satlib.api.STAC(event.path, endpoint, query, satlib.es, respond)
   
 }
