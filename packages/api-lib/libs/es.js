@@ -196,16 +196,17 @@ function search(params, index, page, limit, callback) {
   esClient().then((client) => {
     client.search(searchParams).then((body) => {
       const count = body.hits.total
+      const results = body.hits.hits.map((r) => (r._source))
 
       const response = {
-        properties: {
+        meta: {
           found: count,
+          returned: results.length,
           limit: limit,
           page: page
-        }
+        },
+        results: results
       }
-
-      response.results = body.hits.hits.map((r) => (r._source))
 
       console.log(`Search response: ${JSON.stringify(response)}`)
 
