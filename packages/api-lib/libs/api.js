@@ -26,7 +26,7 @@ function STAC(path, endpoint, query, backend, page=1, limit=100, respond=()=>{})
   if (resources.length === 1) {
     msg = 'STAC catalog (see endpoints /search and /collections)'
     const catalog = {
-      name: 'sat-api',
+      id: 'sat-api',
       description: 'A STAC API of public datasets',
       'satapi:version': '1.0.0b1',
       stac_version: '0.6.0',
