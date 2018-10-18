@@ -18,6 +18,7 @@ const collection = {
   id: 'sentinel-2-l1c',
   title: 'Sentinel 2 L1C',
   description: 'Sentinel-2a and Sentinel-2b imagery',
+  keywords: ['sentinel', 'earth observation', 'esa'],
   version: '0.1.0',
   stac_version: satlib.api.stac_version,
   extent: {

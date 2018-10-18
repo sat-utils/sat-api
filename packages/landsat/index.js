@@ -17,7 +17,7 @@ const collection = {
   description: 'Landat 8 imagery radiometrically calibrated and orthorectified ' +
                    'using gound points and Digital Elevation Model (DEM) data to ' +
                    'correct relief displacement.',
-  keywords: 'landsat',
+  keywords: ['landsat', 'earth observation', 'usgs'],
   version: '0.1.0',
   stac_version: satlib.api.stac_version,
   extent: {
