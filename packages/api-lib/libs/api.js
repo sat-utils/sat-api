@@ -9,10 +9,11 @@ const stac_version = '0.6.0-rc2'
 
 function STAC(path, endpoint, query, backend, respond = () => {}) {
   // default page and limit
-  const page = parseInt(query.page) || 1
-  const limit = parseInt(query.limit) || 1
-  delete query.page
-  delete query.limit
+  const _query = Object.assign({}, query)
+  const page = parseInt(_query.page) || 1
+  const limit = parseInt(_query.limit) || 1
+  delete _query.page
+  delete _query.limit
 
   console.log(`Query page=${page}, limit=${limit}`)
 
@@ -42,12 +43,12 @@ function STAC(path, endpoint, query, backend, respond = () => {}) {
         { rel: 'self', href: `${endpoint}/stac` }
       ]
     }
-    const api = new API(backend, query, endpoint)
+    const api = new API(backend, _query, endpoint)
     api.search_collections((err, results) => {
       if (err) respond(err)
-      for (let c of results.collections) {
-        catalog.links.push({rel: 'child', href: `${endpoint}/stac/collections/${c.id}`})
-      }
+      results.collections.forEach((c) => {
+        catalog.links.push({ rel: 'child', href: `${endpoint}/stac/collections/${c.id}` })
+      })
       respond(null, catalog)
     })
   } else {
@@ -64,31 +65,31 @@ function STAC(path, endpoint, query, backend, respond = () => {}) {
     case 'collections':
       if (resources.length === 1) {
         // all collections
-        const api = new API(backend, query, endpoint)
+        const api = new API(backend, _query, endpoint)
         api.search_collections(respond)
       } else if (resources.length === 2) {
         // specific collection
-        const api = new API(backend, query, endpoint)
+        const api = new API(backend, _query, endpoint)
         api.get_collection(resources[1], respond)
       } else if (resources[2] == 'items') {
         console.log('search items in this collection')
         // this is a search across items in this collection
-        query['collection'] = resources[1]
-        const api = new API(backend, query, endpoint)
+        _query.collection = resources[1]
+        const api = new API(backend, _query, endpoint)
         api.search_items(page, limit, respond)
-      } else if (resources[2] == 'item' && resources.length == 4) {
+      } else if (resources[2] === 'item' && resources.length === 4) {
         // Get specific item in collection
-        const api = new API(backend, query, endpoint)
+        const api = new API(backend, _query, endpoint)
         api.get_item(resources[3], respond)
       } else {
         msg = 'endpoint not defined'
         console.log(msg, resources)
         respond(null, msg)
       }
-      break;
+      break
     case 'search':
       // items api
-      const api = new API(backend, query, endpoint)
+      const api = new API(backend, _query, endpoint)
       api.search_items(page, limit, respond)
       break
     default:
