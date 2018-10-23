@@ -2,15 +2,15 @@
 
 const _ = require('lodash')
 const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+const gjv = require('geojson-validation')
 
 const stac_version = '0.6.0-rc2'
 
 
-function STAC(path, endpoint, query, backend, respond=()=>{}) {
-
+function STAC(path, endpoint, query, backend, respond = () => {}) {
   // default page and limit
-  var page = parseInt(query.page) || 1
-  var limit = parseInt(query.limit) || 1
+  const page = parseInt(query.page) || 1
+  const limit = parseInt(query.limit) || 1
   delete query.page
   delete query.limit
 
@@ -22,7 +22,7 @@ function STAC(path, endpoint, query, backend, respond=()=>{}) {
 
   // make sure this is a STAC endpoint
   if (resources[0] !== 'stac') {
-    let msg = 'endpoint not defined (use /stac)'
+    const msg = 'endpoint not defined (use /stac)'
     console.log(msg, resources)
     respond(null, msg)
     return
@@ -112,7 +112,7 @@ function API(backend, params, endpoint) {
     // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
     if (typeof geojson === 'string') {
       try {
-        geojson = JSON.parse(inGeojson)
+        geojson = JSON.parse(geojson)
       }
       catch (e) {
         throw geojsonError
@@ -122,11 +122,11 @@ function API(backend, params, endpoint) {
       if (geojson.type === 'FeatureCollection') {
         throw geojsonError
       } else if (geojson.type !== 'Feature') {
-          geojson = {
-            type: 'Feature',
-            properties: {},
-            geometry: geojson
-          }
+        geojson = {
+          type: 'Feature',
+          properties: {},
+          geometry: geojson
+        }
       } else {
         throw geojsonError
       }
@@ -153,13 +153,13 @@ API.prototype.search_collections = function (callback) {
 
     resp.results.forEach((a, i, arr) => {
       // self link
-      arr[i].links.splice(0, 0, {rel: 'self', href: `${this.clink}/${a.id}`})
+      arr[i].links.splice(0, 0, { rel: 'self', href: `${this.clink}/${a.id}` })
       // parent catalog
-      arr[i].links.push({rel: 'parent', href: `${this.endpoint}/stac`})
+      arr[i].links.push({ rel: 'parent', href: `${this.endpoint}/stac` })
       // root catalog
-      arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
+      arr[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
       // child items
-      arr[i].links.push({rel: 'items', href: `${this.clink}/${a.id}/items`})
+      arr[i].links.push({ rel: 'items', href: `${this.clink}/${a.id}/items` })
     })
 
     resp.collections = resp.results
@@ -172,8 +172,8 @@ API.prototype.search_collections = function (callback) {
 
 // Get a single collection by name
 API.prototype.get_collection = function (collection, callback) {
-  let params = this.params
-  this.params = {'id': collection}
+  const params = this.params
+  this.params = { 'id': collection }
   this.search_collections((err, resp) => {
     this.params = params
     if (resp.collections.length === 1) {
@@ -186,45 +186,46 @@ API.prototype.get_collection = function (collection, callback) {
 
 
 // Search items (searching both collections and items)
-API.prototype.search_items = function (page=1, limit=1, callback) {
+API.prototype.search_items = function (page = 1, limit = 1, callback) {
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.collections.map((c) => c.id)
     if (collections.length === 0) {
-      let resp = {
+      const _resp = {
         type: 'FeatureCollection',
         meta: { found: 0, returned: 0, limit: limit, page: page },
         features: []
       }
-      callback(null, resp)
+      callback(null, _resp)
     } else {
       // shallow copy of this.params
-      var params = { ...this.params }
-      this.params['collection'] = collections.join(',')
+      const params = { ...this.params }
+      this.params.collection = collections.join(',')
 
-      this.backend.search(this.params, 'items', page, limit, (err, resp) => {
-        resp.results.forEach((a, i, arr) => {
+      this.backend.search(this.params, 'items', page, limit, (err, response) => {
+        response.results.forEach((a, i, arr) => {
           // self link
           arr[i].links.splice(0, 0, {
             rel: 'self',
             href: `${this.clink}/${a.properties.collection}/item/${a.id}`
           })
           // parent link
-          arr[i].links.push({rel: 'parent', href: `${this.clink}/${a.properties.collection}`})
-          arr[i].links.push({rel: 'collection', href: `${this.clink}/${a.properties.collection}`})
-          arr[i].links.push({rel: 'root', href: `${this.endpoint}/stac`})
-          arr[i]['type'] = 'Feature' 
+          arr[i].links.push({ rel: 'parent', href: `${this.clink}/${a.properties.collection}` })
+          arr[i].links.push({ rel: 'collection', href: `${this.clink}/${a.properties.collection}` })
+          arr[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
+          arr[i]['type'] = 'Feature'
         })
-        resp.type = 'FeatureCollection',
-        resp.features = resp.results
-        delete resp.results
+        response.type = 'FeatureCollection'
+        response.features = response.results
+        delete response.results
         // add next link if not last page
-        if ((page * limit) < resp.meta.found) {
+        if ((page * limit) < response.meta.found) {
           params.page = page + 1
           params.limit = limit
-          resp.links = [{
-              rel: 'next', title: 'Next page of results', 
-              href: `${this.endpoint}/stac/search?` + dictToURI(params)
+          response.links = [{
+            rel: 'next',
+            title: 'Next page of results', 
+            href: `${this.endpoint}/stac/search?` + dictToURI(params)
           }]
         }
         callback(null, resp)
@@ -234,20 +235,20 @@ API.prototype.search_items = function (page=1, limit=1, callback) {
 }
 
 
-API.prototype.get_item = function(id, callback) {
-  this.backend.search({id}, 'items', 1, 1, (err, resp) => {
+API.prototype.get_item = function (id, callback) {
+  this.backend.search({ id }, 'items', 1, 1, (err, resp) => {
     if (resp.results.length === 1) {
-        var item = resp.results[0]
-        // self link
-        item.links.splice(0, 0, {
-          rel: 'self',
-          href: `${this.clink}/${item.properties.collection}/item/${item.id}`
-        })
-        // parent link
-        item.links.push({rel: 'parent', href: `${this.clink}/${item.properties.collection}`})
-        item.links.push({rel: 'collection', href: `${this.clink}/${item.properties.collection}`})
-        item.links.push({rel: 'root', href: `${this.endpoint}/stac`})
-        item['type'] = 'Feature'
+      const item = resp.results[0]
+      // self link
+      item.links.splice(0, 0, {
+        rel: 'self',
+        href: `${this.clink}/${item.properties.collection}/item/${item.id}`
+      })
+      // parent link
+      item.links.push({ rel: 'parent', href: `${this.clink}/${item.properties.collection}` })
+      item.links.push({ rel: 'collection', href: `${this.clink}/${item.properties.collection}` })
+      item.links.push({ rel: 'root', href: `${this.endpoint}/stac` })
+      item.type = 'Feature'
       callback(err, item)
     } else {
       callback(err, {})
@@ -258,11 +259,11 @@ API.prototype.get_item = function(id, callback) {
 
 // h/t https://medium.com/@mattccrampton/convert-a-javascript-dictionary-to-get-url-parameters-b77da8c78ec8
 function dictToURI(dict) {
-  var str = [];
+  let str = []
   for(var p in dict){
      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(dict[p]));
   }
-  return str.join("&");
+  return str.join("&")
 }
 
 

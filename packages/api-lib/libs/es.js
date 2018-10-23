@@ -75,8 +75,8 @@ async function connect() {
 // Create STAC mappings
 async function prepare(index) {
   // TODO - different mappings for collection and item
-  let props = {
-    "type": "nested",
+  const props = {
+    'type': 'nested',
     properties: {
       'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
@@ -96,7 +96,7 @@ async function prepare(index) {
   return esClient().then((client) => {
     return client.indices.exists({ index }).then((exist) => {
       if (!exist) {
-        let payload = {
+        const payload = {
           index: index,
           body: {
             mappings: {
@@ -105,8 +105,8 @@ async function prepare(index) {
                   enabled: true
                 },*/
                 properties: {
-                  "id": {type: 'keyword'},
-                  "properties": props,
+                  'id': { type: 'keyword' },
+                  'properties': props,
                   geometry: {
                     type: 'geo_shape',
                     tree: 'quadtree',
@@ -118,10 +118,12 @@ async function prepare(index) {
           }
         }
         return client.indices.create(payload)
-          .then((resp) => {
+          .then(() => {
             console.log(`Created index: ${JSON.stringify(payload)}`)
           })
-          .catch((err) => { console.log('Error creating index, already created: ', err) })
+          .catch((err) => { 
+            console.log('Error creating index, already created: ', err)
+          })
       }
     })
   })
@@ -129,7 +131,7 @@ async function prepare(index) {
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-async function stream(stream, transform, index) {
+async function _stream(stream, transform, index) {
 
   let nRecords = 0
   let nTransformed = 0
@@ -139,7 +141,7 @@ async function stream(stream, transform, index) {
     const record = {
       index,
       type: 'doc',
-      id: data['id'],
+      id: data.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {
@@ -168,14 +170,18 @@ async function stream(stream, transform, index) {
           resolve(nTransformed)
         }
       })
-        // count records
-        stream.on('data', () => { nRecords += 1 })
-        toEs.on('data', () => { nTransformed += 1 })
-        // this doesn't seem to work
-        //esStream.on('data', () => { nSaved += 1 })
+      // count records
+      stream.on('data', () => {
+        nRecords += 1
+      })
+      toEs.on('data', () => {
+        nTransformed += 1
+      })
+      // this doesn't seem to work
+      //esStream.on('data', () => { nSaved += 1 })
     })
   })
-  .catch((e) => console.log(e))
+    .catch((e) => console.log(e))
 }
 
 
@@ -260,13 +266,14 @@ function build_query(params) {
 // Create a term query
 const termQuery = (field, value) => {
   // the default is to search the properties of a record
+  let _field
   if (field !== 'id') {
-    field = 'properties.' + field
+    _field = `properties.${field}`
   }
   const vals = value.split(',').filter((x) => x)
-  const terms = vals.map((v) => ({ term: { [field]: v}}))
+  const terms = vals.map((v) => ({ term: { [_field]: v } }))
   // also return if the field is absent entirely
-  terms.push({ bool: { must_not: { exists: { field: field } } } })
+  terms.push({ bool: { must_not: { exists: { field: _field } } } })
   let query = {
     bool: {
       should: terms
@@ -282,12 +289,12 @@ const termQuery = (field, value) => {
 // Create a range query
 const rangeQuery = (field, frm, to) => {
   // range queries will always be on properties
-  field = 'properties.' + field
+  const _field = `properties.${field}`
   let query = {
     bool: {
       should: [
-        { range: { [field]: { gte: frm, lte: to } } },
-        { bool: { must_not: { exists: { field: field } } } }
+        { range: { [_field]: { gte: frm, lte: to } } },
+        { bool: { must_not: { exists: { field: _field } } } }
       ]
     }
   }
@@ -303,16 +310,16 @@ async function saveCollection(collection) {
   // ensure collections mapping in ES
   return prepare('collections').then(() => {
     // create input stream from collection record
-    var inStream = new readableStream.Readable({ objectMode: true })
+    const inStream = new readableStream.Readable({ objectMode: true })
     inStream.push(collection)
     inStream.push(null)
-    return stream(inStream, iTransform, 'collections')
+    return _stream(inStream, iTransform, 'collections')
   })
 }
 
 
 module.exports.prepare = prepare
-module.exports.stream = stream
+module.exports.stream = _stream
 module.exports.search = search
 
 module.exports.saveCollection = saveCollection

@@ -43,5 +43,4 @@ module.exports.handler = (event, context, cb) => {
   }
 
   satlib.api.STAC(event.path, endpoint, query, satlib.es, respond)
-  
 }

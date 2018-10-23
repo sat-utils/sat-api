@@ -19,7 +19,7 @@
     "kes": "^2.2.2"
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
+    "eslint": "^5.7.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-jsdoc": "^3.5.0",

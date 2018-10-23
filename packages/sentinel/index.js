@@ -119,19 +119,19 @@ const collection = {
     ]
   },
   'assets': {
-    'B01': {type: 'image/jp2', 'eo:bands': [0], title: 'Band 1 (coastal)'},
-    'B02': {type: 'image/jp2', 'eo:bands': [1], title: 'Band 2 (blue)'},
-    'B03': {type: 'image/jp2', 'eo:bands': [2], title: 'Band 3 (green)'},
-    'B04': {type: 'image/jp2', 'eo:bands': [3], title: 'Band 4 (red)'},
-    'B05': {type: 'image/jp2', 'eo:bands': [4], title: 'Band 5'},
-    'B06': {type: 'image/jp2', 'eo:bands': [5], title: 'Band 6'},
-    'B07': {type: 'image/jp2', 'eo:bands': [6], title: 'Band 7'},
-    'B08': {type: 'image/jp2', 'eo:bands': [7], title: 'Band 8 (nir)'},
-    'B8A': {type: 'image/jp2', 'eo:bands': [8], title: 'Band 8A'},
-    'B09': {type: 'image/jp2', 'eo:bands': [9], title: 'Band 9'},
-    'B10': {type: 'image/jp2', 'eo:bands': [10], title: 'Band 10 (cirrus)'},
-    'B11': {type: 'image/jp2', 'eo:bands': [11], title: 'Band 11 (swir16)'},
-    'B12': {type: 'image/jp2', 'eo:bands': [12], title: 'Band 12 (swir22)'}
+    'B01': { type: 'image/jp2', 'eo:bands': [0], title: 'Band 1 (coastal)' },
+    'B02': { type: 'image/jp2', 'eo:bands': [1], title: 'Band 2 (blue)' },
+    'B03': { type: 'image/jp2', 'eo:bands': [2], title: 'Band 3 (green)' },
+    'B04': { type: 'image/jp2', 'eo:bands': [3], title: 'Band 4 (red)' },
+    'B05': { type: 'image/jp2', 'eo:bands': [4], title: 'Band 5' },
+    'B06': { type: 'image/jp2', 'eo:bands': [5], title: 'Band 6' },
+    'B07': { type: 'image/jp2', 'eo:bands': [6], title: 'Band 7' },
+    'B08': { type: 'image/jp2', 'eo:bands': [7], title: 'Band 8 (nir)' },
+    'B8A': { type: 'image/jp2', 'eo:bands': [8], title: 'Band 8A' },
+    'B09': { type: 'image/jp2', 'eo:bands': [9], title: 'Band 9' },
+    'B10': { type: 'image/jp2', 'eo:bands': [10], title: 'Band 10 (cirrus)' },
+    'B11': { type: 'image/jp2', 'eo:bands': [11], title: 'Band 11 (swir16)' },
+    'B12': { type: 'image/jp2', 'eo:bands': [12], title: 'Band 12 (swir22)' }
   },
   links: [
     { rel: 'license', href: 'https://sentinel.esa.int/documents/247904/690755/Sentinel_Data_Legal_Notice' }
