@@ -187,80 +187,59 @@ function STAC(path, endpoint, query, backend, respond = () => {}) {
   const resources = path.split('/').filter((x) => x)
   console.log('resources', resources)
 
-  // make sure this is a STAC endpoint
-  if (resources[0] !== 'stac') {
-    const msg = 'endpoint not defined (use /stac)'
-    console.log(msg, resources)
-    respond(null, msg)
-    return
+  // a root catalog
+  const cat = {
+    id: 'sat-api',
+    description: 'A STAC API of public datasets',
+    'satapi:version': stac_version,
+    stac_version: stac_version,
+    links: [
+      { rel: 'self', href: `${endpoint}/stac` }
+    ]
   }
 
-  let msg
+  const api = new API(backend, _query, endpoint)
 
-  // /stac
-  if (resources.length === 1) {
-    const catalog = {
-      id: 'sat-api',
-      description: 'A STAC API of public datasets',
-      'satapi:version': stac_version,
-      stac_version: stac_version,
-      links: [
-        { rel: 'self', href: `${endpoint}/stac` }
-      ]
-    }
-    const api = new API(backend, _query, endpoint)
-    api.search_collections((err, results) => {
-      if (err) respond(err)
-      results.collections.forEach((c) => {
-        catalog.links.push({ rel: 'child', href: `${endpoint}/stac/collections/${c.id}` })
+  switch (resources[0]) {
+  case 'stac':
+    if (resources.length === 1) {
+      api.search_collections((err, results) => {
+        if (err) respond(err)
+        results.collections.forEach((c) => {
+          cat.links.push({ rel: 'child', href: `${endpoint}/stac/collections/${c.id}` })
+        })
+        respond(null, cat)
       })
-      respond(null, catalog)
-    })
-  } else {
-    // drop the /stac prefix
-    resources.splice(0, 1)
-    // STAC endpoints
-    switch (resources[0]) {
-    case 'api':
-      msg = 'TODO - return API doc'
+    } else if (resources[1] === 'search') {
+      api.search_items(page, limit, respond)
+    }
+    break
+  case 'collections':
+    if (resources.length === 1) {
+      // all collections
+      api.search_collections(respond)
+    } else if (resources.length === 2) {
+      // specific collection
+      api.get_collection(resources[1], respond)
+    } else if (resources[2] === 'items') {
+      console.log('search items in this collection')
+      // this is a search across items in this collection
+      api.params.collection = resources[1]
+      api.search_items(page, limit, respond)
+    } else if (resources[2] === 'item' && resources.length === 4) {
+      // Get specific item in collection
+      api.get_item(resources[3], respond)
+    } else {
+      const msg = 'endpoint not defined'
       console.log(msg, resources)
       respond(null, msg)
-      break
-    // collections endpoint
-    case 'collections':
-      if (resources.length === 1) {
-        // all collections
-        const api = new API(backend, _query, endpoint)
-        api.search_collections(respond)
-      } else if (resources.length === 2) {
-        // specific collection
-        const api = new API(backend, _query, endpoint)
-        api.get_collection(resources[1], respond)
-      } else if (resources[2] === 'items') {
-        console.log('search items in this collection')
-        // this is a search across items in this collection
-        _query.collection = resources[1]
-        const api = new API(backend, _query, endpoint)
-        api.search_items(page, limit, respond)
-      } else if (resources[2] === 'item' && resources.length === 4) {
-        // Get specific item in collection
-        const api = new API(backend, _query, endpoint)
-        api.get_item(resources[3], respond)
-      } else {
-        msg = 'endpoint not defined'
-        console.log(msg, resources)
-        respond(null, msg)
-      }
-      break
-    case 'search': {
-      // items api
-      const api = new API(backend, _query, endpoint)
-      api.search_items(page, limit, respond)
-      break
     }
-    default:
-      respond(null, 'endpoint not defined')
-    }
+    break
+  default: {
+    const msg = 'endpoint not defined'
+    console.log(msg, resources)
+    respond(null, msg)
+  }
   }
 }
 
