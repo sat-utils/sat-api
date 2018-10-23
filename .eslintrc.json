@@ -8,7 +8,7 @@
   },
   "rules": {
     "semi": [2, "never"],
-    "func-names": "as-needed",
+    "func-names": 0,
     "radix": "off",
     "no-console": "off",
     "indent": [ "error", 2 ],
