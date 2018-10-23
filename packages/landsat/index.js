@@ -26,19 +26,19 @@ const collection = {
   },
   providers: [{
     name: 'USGS',
-    role: 'producer',
+    roles: ['producer'],
     url: 'https://landsat.usgs.gov/'
   }, {
     name: 'Planet Labs',
-    role: 'processor',
+    roles: ['processor'],
     url: 'https://github.com/landsat-pds/landsat_ingestor'
   }, {
     name: 'AWS',
-    role: 'host',
+    roles: ['host'],
     url: 'https://landsatonaws.com/'
   }, {
     name: 'Development Seed',
-    role: 'processor',
+    roles: ['processor'],
     url: 'https://github.com/sat-utils/sat-api'
   }],
   license: 'PDDL-1.0',
