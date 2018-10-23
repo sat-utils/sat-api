@@ -76,10 +76,6 @@
         "asyncArrow": "always"
       }
     ],
-    "brace-style": [
-      2,
-      "stroustrup"
-    ],
     "max-len": [
       2,
       {
