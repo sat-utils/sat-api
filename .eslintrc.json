@@ -8,6 +8,8 @@
   },
   "rules": {
     "semi": [2, "never"],
+    "quote-props": 0,
+    "camelcase": 0,
     "func-names": 0,
     "radix": "off",
     "no-console": "off",

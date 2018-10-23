@@ -104,7 +104,7 @@ function API(backend, params, endpoint) {
   this.backend = backend
   this.params = params
   this.endpoint = endpoint
-  this.clink = `${this.endpoint}/stac/collections`
+  this.clink = `${this.endpoint}/collections`
 
   // process GeoJSON if provided
   if (this.params.intersects) {

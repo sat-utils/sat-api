@@ -24,19 +24,26 @@ const collection = {
     spatial: [-180, -90, 180, 90],
     temporal: ['2013-06-01', null]
   },
-  providers: [
-    {name: 'USGS', role: "producer",
-      url: 'https://landsat.usgs.gov/'},
-    {name: 'Planet Labs', role: "processor",
-      url: 'https://github.com/landsat-pds/landsat_ingestor',},
-    {name: 'AWS', role: "host",
-      url: 'https://landsatonaws.com/'},
-    {name: 'Development Seed', role: "processor",
-      url:'https://github.com/sat-utils/sat-api'}
-  ],
+  providers: [{
+    name: 'USGS',
+    role: 'producer',
+    url: 'https://landsat.usgs.gov/'
+  }, {
+    name: 'Planet Labs',
+    role: 'processor',
+    url: 'https://github.com/landsat-pds/landsat_ingestor'
+  }, {
+    name: 'AWS',
+    role: 'host',
+    url: 'https://landsatonaws.com/'
+  }, {
+    name: 'Development Seed',
+    role: 'processor',
+    url: 'https://github.com/sat-utils/sat-api'
+  }],
   license: 'PDDL-1.0',
   properties: {
-    'collection': 'landsat-8-l1',
+    collection: 'landsat-8-l1',
     'eo:gsd': 15,
     'eo:platform': 'landsat-8',
     'eo:instrument': 'OLI_TIRS',
@@ -111,23 +118,23 @@ const collection = {
       }
     ]
   },
-  'assets': {
-    'index': {type: 'text/html', title: 'HTML index page'},
-    'thumbnail': {title: 'Thumbnail image', type: 'image/jpeg'},
-    'B1': {type: 'image/x.geotiff', 'eo:bands': [0], title: "Band 1 (coastal)"},
-    'B2': {type: 'image/x.geotiff', 'eo:bands': [1], title: "Band 2 (blue)"},
-    'B3': {type: 'image/x.geotiff', 'eo:bands': [2], title: "Band 3 (green)"},
-    'B4': {type: 'image/x.geotiff', 'eo:bands': [3], title: "Band 4 (red)"},
-    'B5': {type: 'image/x.geotiff', 'eo:bands': [4], title: "Band 5 (nir)"},
-    'B6': {type: 'image/x.geotiff', 'eo:bands': [5], title: "Band 6 (swir16)"},
-    'B7': {type: 'image/x.geotiff', 'eo:bands': [6], title: "Band 7 (swir22)"},
-    'B8': {type: 'image/x.geotiff', 'eo:bands': [7], title: "Band 8 (pan)"},
-    'B9': {type: 'image/x.geotiff', 'eo:bands': [8], title: "Band 9 (cirrus)"},
-    'B10': {type: 'image/x.geotiff', 'eo:bands': [9], title: "Band 10 (lwir)"},
-    'B11': {type: 'image/x.geotiff', 'eo:bands': [10], title: "Band 11 (lwir)"},
-    'ANG': {title: "Angle coefficients file", type: 'text/plain'},
-    'MTL': {title: 'original metadata file', type: 'text/plain'},
-    'BQA': {title: "Band quality data", type: 'image/x.geotiff'}
+  assets: {
+    index: { type: 'text/html', title: 'HTML index page' },
+    thumbnail: { title: 'Thumbnail image', type: 'image/jpeg' },
+    B1: { type: 'image/x.geotiff', 'eo:bands': [0], title: 'Band 1 (coastal)' },
+    B2: { type: 'image/x.geotiff', 'eo:bands': [1], title: 'Band 2 (blue)' },
+    B3: { type: 'image/x.geotiff', 'eo:bands': [2], title: 'Band 3 (green)' },
+    B4: { type: 'image/x.geotiff', 'eo:bands': [3], title: 'Band 4 (red)' },
+    B5: { type: 'image/x.geotiff', 'eo:bands': [4], title: 'Band 5 (nir)' },
+    B6: { type: 'image/x.geotiff', 'eo:bands': [5], title: 'Band 6 (swir16)' },
+    B7: { type: 'image/x.geotiff', 'eo:bands': [6], title: 'Band 7 (swir22)' },
+    B8: { type: 'image/x.geotiff', 'eo:bands': [7], title: 'Band 8 (pan)' },
+    B9: { type: 'image/x.geotiff', 'eo:bands': [8], title: 'Band 9 (cirrus)' },
+    B10: { type: 'image/x.geotiff', 'eo:bands': [9], title: 'Band 10 (lwir)' },
+    B11: { type: 'image/x.geotiff', 'eo:bands': [10], title: 'Band 11 (lwir)' },
+    ANG: { title: 'Angle coefficients file', type: 'text/plain' },
+    MTL: { title: 'original metadata file', type: 'text/plain' },
+    BQA: { title: 'Band quality data', type: 'image/x.geotiff' }
   },
   links: []
 }
@@ -182,7 +189,6 @@ function awsLinks(data) {
 
   let files = ['ANG.txt', 'B1.TIF', 'B2.TIF', 'B3.TIF', 'B4.TIF', 'B5.TIF', 'B6.TIF',
     'B7.TIF', 'B8.TIF', 'B9.TIF', 'B10.TIF', 'B11.TIF', 'BQA.TIF', 'MTL.txt']
-  const _bands = Object.keys(collection.properties['eo:bands'])
 
   const c1Base = `https://landsat-pds.s3.amazonaws.com/c1/L8/${path.join(_path, row, productId)}`
   //const c1Files = bands.map((b) => [{name: b.slice(0, -4), href: `${c1Base}/${productId}_${b}`}])
@@ -219,7 +225,6 @@ function awsLinks(data) {
     else {
       const _sceneId = sceneId.slice(0, -2)
       let sid
-      let newKey
       const rev = sceneId.slice(-2)
       let prefix = `https://landsat-pds.s3.amazonaws.com/L8/${path.join(_path, row, _sceneId)}`
       const links = _.range(rev, -1, -1).map((r) => `${prefix}${_.pad(r, 2, '0')}/index.html`)
@@ -229,11 +234,7 @@ function awsLinks(data) {
         prefix += newVal.slice(-13, -11)
         sid = _sceneId + val.slice(-13, -11)
         files = _.fromPairs(files.map((b) => {
-          newKey = b.slice(0, -4)
           newVal = { href: `${prefix}/${sid}_${b}` }
-          //if (_bands.includes(newKey)) {
-          //  newVal['eo:bands'] = [newKey]
-          //}
           return [key, newVal]
         }))
         files.thumbnail = { href: `${prefix}/${sid}_thumb_large.jpg` }
@@ -359,9 +360,9 @@ function handler(event, context, cb) {
       // ensure mapping exists
       satlib.es.prepare('items').then(() => {
         // add items from files
-        satlib.ingestcsv.processFiles(
-          { bucket, key,  transform, currentFileNum, lastFileNum, arn, retries }
-        )
+        satlib.ingestcsv.processFiles({
+          bucket, key, transform, currentFileNum, lastFileNum, arn, retries
+        })
       })
     })
     .catch((e) => console.log(e))
