@@ -26,10 +26,14 @@ const collection = {
     temporal: ['2013-06-01', null]
   },
   provider: [
-    {name: 'ESA', href: 'https://sentinel.esa.int/web/sentinel/home', type: 'producer'},
-    {name: 'Sinergise', href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/', type: 'processor'},
-    {name: 'AWS', href: 'https://aws.amazon.com/blogs/publicsector/complete-sentinel-2-archives-freely-available-to-users/', type: 'host'},
-    {name: 'Development Seed', url:'https://developmentseed.org/', type: 'processor'}
+    {name: 'ESA', role: 'producer',
+      href: 'https://sentinel.esa.int/web/sentinel/home'},
+    {name: 'Sinergise', role: 'processor',
+       href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/'},
+    {name: 'AWS', role: 'host',
+       href: 'https://aws.amazon.com/blogs/publicsector/complete-sentinel-2-archives-freely-available-to-users/'},
+    {name: 'Development Seed', role: 'processor',
+       url:'https://github.com/sat-utils/sat-api'}
   ],
   license: 'proprietary',
   properties: {
