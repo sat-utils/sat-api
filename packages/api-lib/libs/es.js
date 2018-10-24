@@ -18,19 +18,6 @@ variable which is the URL to the elasticsearch host
 */
 
 
-// get existing ES client or create a new one
-async function esClient() {
-  if (!_esClient) {
-    _esClient = await connect()
-    console.log('connected to elasticsearch')
-  }
-  else {
-    console.log('using existing elasticsearch connection')
-  }
-  return _esClient
-}
-
-
 // Connect to an Elasticsearch cluster
 async function connect() {
   let esConfig
@@ -39,8 +26,7 @@ async function connect() {
   // use local client
   if (!process.env.ES_HOST) {
     client = new elasticsearch.Client({ host: 'localhost:9200' })
-  }
-  else {
+  } else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
       return resolve()
@@ -63,12 +49,23 @@ async function connect() {
     if (err) {
       console.log('unable to connect to elasticsearch')
       reject('unable to connect to elasticsearch')
-    }
-    else {
+    } else {
       resolve()
     }
   }))
   return client
+}
+
+
+// get existing ES client or create a new one
+async function esClient() {
+  if (!_esClient) {
+    _esClient = await connect()
+    console.log('connected to elasticsearch')
+  } else {
+    console.log('using existing elasticsearch connection')
+  }
+  return _esClient
 }
 
 
@@ -93,8 +90,8 @@ async function prepare(index) {
     }
   }
 
-  return esClient().then((client) => {
-    return client.indices.exists({ index }).then((exist) => {
+  return esClient().then((client) =>
+    client.indices.exists({ index }).then((exist) => {
       if (!exist) {
         const payload = {
           index: index,
@@ -121,21 +118,19 @@ async function prepare(index) {
           .then(() => {
             console.log(`Created index: ${JSON.stringify(payload)}`)
           })
-          .catch((err) => { 
+          .catch((err) => {
             console.log('Error creating index, already created: ', err)
           })
       }
-    })
-  })
+      return 0
+    }))
 }
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream(stream, transform, index) {
-
   let nRecords = 0
   let nTransformed = 0
-  let nSaved = 0
 
   const toEs = through2({ objectMode: true, consume: true }, function (data, encoding, next) {
     const record = {
@@ -164,8 +159,7 @@ async function _stream(stream, transform, index) {
         if (err) {
           console.log('error:', err)
           reject(err)
-        }
-        else {
+        } else {
           console.log(`Saving ${index} records: ${nRecords} in, ${nTransformed} saved.`)
           resolve(nTransformed)
         }
@@ -182,84 +176,6 @@ async function _stream(stream, transform, index) {
     })
   })
     .catch((e) => console.log(e))
-}
-
-
-// general search of an index
-function search(params, index, page, limit, callback) {
-  console.log('Search parameters: ', JSON.stringify(params))
-  const searchParams = {
-    index: index,
-    body: build_query(params),
-    size: limit,
-    from: (page - 1) * limit
-    //_source: this.fields
-  }
-
-  console.log('Search query (es): ', JSON.stringify(searchParams))
-
-  // connect to ES then search
-  esClient().then((client) => {
-    client.search(searchParams).then((body) => {
-      const count = body.hits.total
-      const results = body.hits.hits.map((r) => (r._source))
-
-      const response = {
-        meta: {
-          found: count,
-          returned: results.length,
-          limit: limit,
-          page: page
-        },
-        results: results
-      }
-
-      console.log(`Search response: ${JSON.stringify(response)}`)
-
-      return callback(null, response)
-    }, (err) => {
-      logger.error(err)
-      return callback(err)
-    })
-  })
-}
-
-
-function build_query(params) {
-  // no filters, return everything
-  if (Object.keys(params).length === 0) {
-    return {
-      query: { match_all: {} }
-    }
-  }
-
-  let queries = []
-
-  // intersects search
-  if (params.intersects) {
-    queries.push({ 
-      geo_shape: { [field]: { shape: params.intersects.geometry } } 
-    })
-    delete params.intersects
-  }
-
-  // create range and term queries
-  let range
-  for (var key in params) {
-    range = params[key].split('/')
-    if (range.length > 1) {
-      queries.push(rangeQuery(key, range[0], range[1]))
-    } else {
-      queries.push(termQuery(key, params[key]))
-    }
-  }
-
-  if (queries.length === 1) {
-    return { query: queries[0] }
-  } else {
-    return { query: { bool: { must: queries } } }
-  }
-
 }
 
 
@@ -300,6 +216,83 @@ const rangeQuery = (field, frm, to) => {
   }
   query = { nested: { path: 'properties', query: query } }
   return query
+}
+
+
+function build_query(params) {
+  // no filters, return everything
+  const _params = Object.assign({}, params)
+  if (Object.keys(_params).length === 0) {
+    return {
+      query: { match_all: {} }
+    }
+  }
+
+  const queries = []
+
+  // intersects search
+  if (params.intersects) {
+    queries.push({
+      geo_shape: { 'field': { shape: params.intersects.geometry } }
+    })
+    delete _params.intersects
+  }
+
+  // create range and term queries
+  let range
+  Object.keys(_params).forEach((key) => {
+    range = _params[key].split('/')
+    if (range.length > 1) {
+      queries.push(rangeQuery(key, range[0], range[1]))
+    } else {
+      queries.push(termQuery(key, _params[key]))
+    }
+  })
+
+  if (queries.length === 1) {
+    return { query: queries[0] }
+  }
+  return { query: { bool: { must: queries } } }
+}
+
+
+// general search of an index
+function search(params, index, page, limit, callback) {
+  console.log('Search parameters: ', JSON.stringify(params))
+  const searchParams = {
+    index: index,
+    body: build_query(params),
+    size: limit,
+    from: (page - 1) * limit
+    //_source: this.fields
+  }
+
+  console.log('Search query (es): ', JSON.stringify(searchParams))
+
+  // connect to ES then search
+  esClient().then((client) => {
+    client.search(searchParams).then((body) => {
+      const count = body.hits.total
+      const results = body.hits.hits.map((r) => (r._source))
+
+      const response = {
+        meta: {
+          found: count,
+          returned: results.length,
+          limit: limit,
+          page: page
+        },
+        results: results
+      }
+
+      console.log(`Search response: ${JSON.stringify(response)}`)
+
+      return callback(null, response)
+    }, (err) => {
+      logger.error(err)
+      return callback(err)
+    })
+  })
 }
 
 

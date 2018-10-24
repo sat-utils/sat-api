@@ -24,8 +24,7 @@ module.exports.handler = (event, context, cb) => {
   let endpoint
   if ('X-Forwarded-Host' in event.headers) {
     endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`
-  }
-  else {
+  } else {
     endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers.Host}`
     if ('stage' in event.requestContext) {
       endpoint = `${endpoint}/${event.requestContext.stage}`
@@ -37,8 +36,7 @@ module.exports.handler = (event, context, cb) => {
   let query = {}
   if (method === 'POST' && event.body) {
     query = JSON.parse(event.body)
-  }
-  else if (method === 'GET' && event.queryStringParameters) {
+  } else if (method === 'GET' && event.queryStringParameters) {
     query = event.queryStringParameters
   }
 

@@ -21,8 +21,7 @@ function API(backend, params, endpoint) {
     if (typeof geojson === 'string') {
       try {
         geojson = JSON.parse(geojson)
-      }
-      catch (e) {
+      } catch (e) {
         throw geojsonError
       }
     }
@@ -113,7 +112,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
       const params = { ...this.params }
       this.params.collection = collections.join(',')
 
-      this.backend.search(this.params, 'items', page, limit, (err, response) => {
+      this.backend.search(this.params, 'items', page, limit, (e, response) => {
         response.results.forEach((a, i, arr) => {
           // self link
           arr[i].links.splice(0, 0, {
@@ -135,7 +134,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
           params.limit = limit
           response.links = [{
             rel: 'next',
-            title: 'Next page of results', 
+            title: 'Next page of results',
             href: `${this.endpoint}/stac/search?` + dictToURI(params)
           }]
         }
