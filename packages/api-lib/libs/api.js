@@ -7,6 +7,13 @@ const gjv = require('geojson-validation')
 const stac_version = '0.6.0-rc2'
 
 
+// h/t https://medium.com/@mattccrampton/convert-a-javascript-dictionary-to-get-url-parameters-b77da8c78ec8
+function dictToURI(dict) {
+  return Object.keys(dict)
+    .map((p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`).join('&')
+}
+
+
 // Elasticsearch search class
 function API(backend, params, endpoint) {
   this.backend = backend
@@ -69,10 +76,12 @@ API.prototype.search_collections = function (callback) {
       arr[i].links.push({ rel: 'items', href: `${this.clink}/${a.id}/items` })
     })
 
-    resp.collections = resp.results
-    delete resp.results
+    const response = {
+      meta: resp.meta,
+      collections: resp.results
+    }
 
-    callback(err, resp)
+    callback(err, response)
   })
 }
 
@@ -113,17 +122,23 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
       this.params.collection = collections.join(',')
 
       this.backend.search(this.params, 'items', page, limit, (e, response) => {
-        response.results.forEach((a, i, arr) => {
+        response.results.forEach((a, i) => {
           // self link
-          arr[i].links.splice(0, 0, {
+          response[i].links.splice(0, 0, {
             rel: 'self',
             href: `${this.clink}/${a.properties.collection}/item/${a.id}`
           })
           // parent link
-          arr[i].links.push({ rel: 'parent', href: `${this.clink}/${a.properties.collection}` })
-          arr[i].links.push({ rel: 'collection', href: `${this.clink}/${a.properties.collection}` })
-          arr[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
-          arr[i]['type'] = 'Feature'
+          response[i].links.push({
+            rel: 'parent',
+            href: `${this.clink}/${a.properties.collection}`
+          })
+          response[i].links.push({
+            rel: 'collection',
+            href: `${this.clink}/${a.properties.collection}`
+          })
+          response[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
+          response[i].type = 'Feature'
         })
         response.type = 'FeatureCollection'
         response.features = response.results
@@ -135,7 +150,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
           response.links = [{
             rel: 'next',
             title: 'Next page of results',
-            href: `${this.endpoint}/stac/search?` + dictToURI(params)
+            href: `${this.endpoint}/stac/search?${dictToURI(params)}`
           }]
         }
         callback(null, response)
@@ -164,13 +179,6 @@ API.prototype.get_item = function (id, callback) {
       callback(err, {})
     }
   })
-}
-
-
-// h/t https://medium.com/@mattccrampton/convert-a-javascript-dictionary-to-get-url-parameters-b77da8c78ec8
-function dictToURI(dict) {
-  return Object.keys(dict)
-    .map((p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`).join('&')
 }
 
 

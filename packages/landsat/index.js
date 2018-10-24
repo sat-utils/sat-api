@@ -150,8 +150,7 @@ function fileExists(url) {
     s3.headObject(params, (err) => {
       if (err && err.code === 'NotFound') {
         reject(url)
-      }
-      else {
+      } else {
         resolve(url)
       }
     })
@@ -221,8 +220,7 @@ function awsLinks(data) {
           const error = new Error(`${c1.index} not available: ${JSON.stringify(data)}`)
           reject(error, e)
         })
-    }
-    else {
+    } else {
       const _sceneId = sceneId.slice(0, -2)
       let sid
       const rev = sceneId.slice(-2)
@@ -303,12 +301,10 @@ function _transform(incomingData, encoding, next) {
       `warning: skipping ${data.sceneID} for crossing anti-meridian (${JSON.stringify(geometry)})`
     )
     next()
-  }
-  else if ((moment(data.acquisitionDate) < moment('2013-05-26'))) {
+  } else if ((moment(data.acquisitionDate) < moment('2013-05-26'))) {
     console.log(`skipping pre-service data ${data.sceneID}`)
     next()
-  }
-  else {
+  } else {
     awsLinks(data).then((info) => {
       const start = moment(data.sceneStartTime, 'YYYY:DDD:HH:mm:ss.SSSSS')
       const record = {
@@ -343,7 +339,7 @@ function _transform(incomingData, encoding, next) {
 }
 
 
-function handler(event, context, cb) {
+function handler(event) {
   console.log(JSON.stringify(event))
   // create stream from transform function
   const transform = through2({ objectMode: true, consume: true }, _transform)
