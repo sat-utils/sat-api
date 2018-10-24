@@ -98,6 +98,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.collections.map((c) => c.id)
+    console.log('collections = ', JSON.stringify(collections))
     if (collections.length === 0) {
       const _resp = {
         type: 'FeatureCollection',
@@ -138,7 +139,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
             href: `${this.endpoint}/stac/search?` + dictToURI(params)
           }]
         }
-        callback(null, resp)
+        callback(null, response)
       })
     }
   })
