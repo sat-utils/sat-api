@@ -266,7 +266,7 @@ function build_query(params) {
 // Create a term query
 const termQuery = (field, value) => {
   // the default is to search the properties of a record
-  let _field
+  let _field = field
   if (field !== 'id') {
     _field = `properties.${field}`
   }

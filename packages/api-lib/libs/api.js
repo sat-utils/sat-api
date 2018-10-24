@@ -169,7 +169,8 @@ API.prototype.get_item = function (id, callback) {
 
 // h/t https://medium.com/@mattccrampton/convert-a-javascript-dictionary-to-get-url-parameters-b77da8c78ec8
 function dictToURI(dict) {
-  return dict.map((p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`).join('&')
+  return Object.keys(dict)
+    .map((p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`).join('&')
 }
 
 
@@ -206,7 +207,7 @@ function STAC(path, endpoint, query, backend, respond = () => {}) {
       api.search_collections((err, results) => {
         if (err) respond(err)
         results.collections.forEach((c) => {
-          cat.links.push({ rel: 'child', href: `${endpoint}/stac/collections/${c.id}` })
+          cat.links.push({ rel: 'child', href: `${endpoint}/collections/${c.id}` })
         })
         respond(null, cat)
       })
