@@ -153,8 +153,7 @@ function parseMgrs(mgrs) {
   if (alphaVal > 13) {
     // northern hemisphere
     vals.epsg = `326${vals.utm_zone}`
-  }
-  else {
+  } else {
     vals.epsg = `327${vals.utm_zone}`
   }
   return vals
@@ -194,14 +193,12 @@ function reproject(inputGeojson) {
       type: 'Polygon',
       coordinates: [geojson.coordinates[0].map((c) => proj4.default(from, to, c))]
     }
-  }
-  else if (geojson.type === 'Point') {
+  } else if (geojson.type === 'Point') {
     geojson = {
       type: 'Point',
       coordinates: proj4.default(from, to, geojson.coordinates)
     }
-  }
-  else {
+  } else {
     throw Error('cannot process non Point or Polygon geometries')
   }
   if (kinks(geojson).features.length > 0) {
@@ -225,8 +222,8 @@ function _transform(data, encoding, next) {
     const sat = info.body.productName.slice(0, 3)
     const satname = `Sentinel-2${sat.slice(-1)}`
     let val
-    const files = fromPairs(bands.map((b, i) => {
-      val = { href: `${tileBaseUrl}/${b}.jp2`}
+    const files = fromPairs(bands.map((b) => {
+      val = { href: `${tileBaseUrl}/${b}.jp2` }
       return [b, val]
     }))
     files.thumbnail = { href: `${rodaBaseUrl}/preview.jpg` }
@@ -279,12 +276,12 @@ function handler(event, context, cb) {
       // ensure mapping exists
       satlib.es.prepare('items').then(() => {
         // add items from files
-        satlib.ingestcsv.processFiles(
-          { bucket, key,  transform, cb, currentFileNum, lastFileNum, arn, retries }
-        )
+        satlib.ingestcsv.processFiles({
+          bucket, key, transform, cb, currentFileNum, lastFileNum, arn, retries
+        })
+      })
     })
-  })
-  .catch((e) => console.log(e))
+    .catch((e) => console.log(e))
 }
 
 module.exports.handler = handler

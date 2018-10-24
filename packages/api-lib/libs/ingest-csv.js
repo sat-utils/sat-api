@@ -27,8 +27,7 @@ function invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, retries) {
     return stepfunctions.startExecution(params, (err) => {
       if (err) {
         console.log(err, err.stack)
-      }
-      else {
+      } else {
         console.log(`launched ${JSON.stringify(params)}`)
       }
     })
@@ -78,8 +77,7 @@ function split({
     if (lineCounter === 0) {
       currentFile = new stream.PassThrough()
       currentFile.push(header)
-    }
-    else {
+    } else {
       currentFile.push(line.toString())
     }
     lineCounter += 1 // increment the filename
@@ -179,23 +177,23 @@ function processFiles({
 
   // CSV stream from file
   const csvStream = csv.parse({ headers: true, objectMode: true })
-  key = `${key}${currentFileNum}.csv`
-  s3.getObject({ Bucket: bucket, Key: key }).createReadStream().pipe(csvStream)
+  const _key = `${key}${currentFileNum}.csv`
+  s3.getObject({ Bucket: bucket, Key: _key }).createReadStream().pipe(csvStream)
 
-  console.log(`Processing s3://${bucket}/${key}`)
+  console.log(`Processing s3://${bucket}/${_key}`)
 
   return es.stream(csvStream, transform, index)
     .then(() => {
-      invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, 0)
+      invokeLambda(bucket, _key, nextFileNum, lastFileNum, arn, 0)
     }).catch(() => {
       // if CSV failed, try it again
       if (retries < maxRetries) {
-        invokeLambda(bucket, key, currentFileNum, lastFileNum, arn, retries + 1)
+        invokeLambda(bucket, _key, currentFileNum, lastFileNum, arn, retries + 1)
       }
       else {
         // log and move onto the next one
         console.log(`error: maxRetries hit in file ${currentFileNum}`)
-        invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, 0)
+        invokeLambda(bucket, _key, nextFileNum, lastFileNum, arn, 0)
       }
     })
 }
