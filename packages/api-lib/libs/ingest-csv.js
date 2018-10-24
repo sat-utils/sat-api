@@ -189,8 +189,7 @@ function processFiles({
       // if CSV failed, try it again
       if (retries < maxRetries) {
         invokeLambda(bucket, _key, currentFileNum, lastFileNum, arn, retries + 1)
-      }
-      else {
+      } else {
         // log and move onto the next one
         console.log(`error: maxRetries hit in file ${currentFileNum}`)
         invokeLambda(bucket, _key, nextFileNum, lastFileNum, arn, 0)
