@@ -319,7 +319,6 @@ function search(params, index, page, limit, callback) {
 
 
 async function saveCollection(collection) {
-  function iStream(x, enc, next) { this.push(x); next() }
   const iTransform = through2({ objectMode: true, consume: true }, iStream)
 
   // ensure collections mapping in ES
