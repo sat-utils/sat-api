@@ -122,27 +122,27 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
       this.params.collection = collections.join(',')
 
       this.backend.search(this.params, 'items', page, limit, (e, response) => {
-        response.results.forEach((a, i) => {
-          // self link
-          response[i].links.splice(0, 0, {
+        const results = response.results.map((r) => {
+          r.links.splice(0, 0, {
             rel: 'self',
-            href: `${this.clink}/${a.properties.collection}/item/${a.id}`
+            href: `${this.clink}/${r.properties.collection}/item/${r.id}`
           })
           // parent link
-          response[i].links.push({
+          r.links.push({
             rel: 'parent',
-            href: `${this.clink}/${a.properties.collection}`
+            href: `${this.clink}/${r.properties.collection}`
           })
-          response[i].links.push({
+          r.links.push({
             rel: 'collection',
-            href: `${this.clink}/${a.properties.collection}`
+            href: `${this.clink}/${r.properties.collection}`
           })
-          response[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
-          response[i].type = 'Feature'
+          r.links.push({ rel: 'root', href: `${this.endpoint}/stac` })
+          r.type = 'Feature'
+          return r
         })
+        //})
         response.type = 'FeatureCollection'
-        response.features = response.results
-        delete response.results
+        response.features = results
         // add next link if not last page
         if ((page * limit) < response.meta.found) {
           params.page = page + 1
