@@ -103,19 +103,19 @@ API.prototype.get_collection = function (collection, callback) {
 
 // Search items (searching both collections and items)
 API.prototype.search_items = function (page = 1, limit = 1, callback) {
+  const _response = {
+    type: 'FeatureCollection',
+    features: []
+  }
   // check collection first
   this.search_collections((err, resp) => {
     const collections = resp.collections.map((c) => c.id)
     console.log('collections = ', JSON.stringify(collections))
     if (collections.length === 0) {
-      const _resp = {
-        type: 'FeatureCollection',
-        meta: {
-          found: 0, returned: 0, limit: limit, page: page
-        },
-        features: []
+      _response.meta = {
+        found: 0, returned: 0, limit: limit, page: page
       }
-      callback(null, _resp)
+      callback(null, _response)
     } else {
       // shallow copy of this.params
       const params = { ...this.params }
@@ -140,20 +140,19 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
           r.type = 'Feature'
           return r
         })
-        //})
-        response.type = 'FeatureCollection'
-        response.features = results
+        _response.meta = response.meta
+        _response.features = results
         // add next link if not last page
-        if ((page * limit) < response.meta.found) {
+        if ((page * limit) < resp.meta.found) {
           params.page = page + 1
           params.limit = limit
-          response.links = [{
+          _response.links.append({
             rel: 'next',
             title: 'Next page of results',
             href: `${this.endpoint}/stac/search?${dictToURI(params)}`
-          }]
+          })
         }
-        callback(null, response)
+        callback(null, _response)
       })
     }
   })
