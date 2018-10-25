@@ -105,6 +105,7 @@ API.prototype.get_collection = function (collection, callback) {
 API.prototype.search_items = function (page = 1, limit = 1, callback) {
   const _response = {
     type: 'FeatureCollection',
+    meta: {},
     features: []
   }
   // check collection first
