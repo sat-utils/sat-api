@@ -11,6 +11,8 @@
     "quote-props": 0,
     "camelcase": 0,
     "func-names": 0,
+    "no-param-reassign": "off",
+    "no-prototype-builtins": "off",
     "radix": "off",
     "no-console": "off",
     "indent": [ "error", 2 ],
