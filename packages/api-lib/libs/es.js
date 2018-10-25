@@ -36,15 +36,16 @@ async function connect() {
       host: process.env.ES_HOST,
       connectionClass: httpAwsEs,
       amazonES: {
-        region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-        credentials: AWS.config.credentials
+        //region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+        accessKey: process.env.AWS_ACCESS_KEY_ID,
+        secretKey: process.env.AWS_SECRET_ACCESS_KEY
       },
+      //awsConfig: new AWS.Config({ region: process.env.AWS_REGION }),
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
     client = new elasticsearch.Client(esConfig)
   }
-
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
     if (err) {
       console.log('unable to connect to elasticsearch')
@@ -60,7 +61,7 @@ async function connect() {
 // get existing ES client or create a new one
 async function esClient() {
   if (!_esClient) {
-    _esClient = await connect()
+    _esClient = await connect().catch((err) => console.log('client error', err))
     console.log('connected to elasticsearch')
   } else {
     console.log('using existing elasticsearch connection')
@@ -124,15 +125,35 @@ async function prepare(index) {
       }
       return 0
     }))
+    .catch((err) => console.log(`Error connecting to elasticsearch: ${JSON.stringify(err)}`))
 }
+
+// identity stream
+function iStream(x, enc, next) { this.push(x); next() }
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream(stream, transform, index) {
+async function _stream(stream, transform = null) {
   let nRecords = 0
   let nTransformed = 0
 
+  if (transform === null) {
+    transform = through2({ objectMode: true, consume: true }, iStream)
+  }
+
   const toEs = through2({ objectMode: true, consume: true }, function (data, encoding, next) {
+    // clean data of any hierarchy links
+    let index = ''
+    if (data.hasOwnProperty('geometry')) {
+      index = 'items'
+    } else if (data.hasOwnProperty('extent')) {
+      index = 'collections'
+    } else {
+      next()
+      return
+    }
+    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
+    data.links = data.links.filter((link) => hlinks.indexOf(link.rel) === -1)
     const record = {
       index,
       type: 'doc',
@@ -157,16 +178,17 @@ async function _stream(stream, transform, index) {
     return new Promise((resolve, reject) => {
       pump(stream, transform, toEs, esStream, (err) => {
         if (err) {
-          console.log('error:', err)
+          console.log('error: ', err)
           reject(err)
         } else {
-          console.log(`Saving ${index} records: ${nRecords} in, ${nTransformed} saved.`)
+          console.log(`Saving records: ${nRecords} in, ${nTransformed} saved.`)
           resolve(nTransformed)
         }
       })
       // count records
       stream.on('data', () => {
         nRecords += 1
+        console.log('data')
       })
       toEs.on('data', () => {
         nTransformed += 1
