@@ -10,7 +10,6 @@ function readFile(filename) {
 }
 
 
-
 // iterator through every node in a Catalog tree
 function* readCatalog(filename) {
   console.log(`Catalog: ${filename.toString()}`)

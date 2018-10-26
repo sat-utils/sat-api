@@ -11,6 +11,9 @@ const through2 = require('through2')
 const s3 = new AWS.S3()
 
 
+const imgtype = 'image/vnd.stac.geotiff; cloud-optimized=true'
+
+
 const collection = {
   id: 'landsat-8-l1',
   title: 'Landsat 8 L1',
@@ -121,20 +124,20 @@ const collection = {
   assets: {
     index: { type: 'text/html', title: 'HTML index page' },
     thumbnail: { title: 'Thumbnail image', type: 'image/jpeg' },
-    B1: { type: 'image/x.geotiff', 'eo:bands': [0], title: 'Band 1 (coastal)' },
-    B2: { type: 'image/x.geotiff', 'eo:bands': [1], title: 'Band 2 (blue)' },
-    B3: { type: 'image/x.geotiff', 'eo:bands': [2], title: 'Band 3 (green)' },
-    B4: { type: 'image/x.geotiff', 'eo:bands': [3], title: 'Band 4 (red)' },
-    B5: { type: 'image/x.geotiff', 'eo:bands': [4], title: 'Band 5 (nir)' },
-    B6: { type: 'image/x.geotiff', 'eo:bands': [5], title: 'Band 6 (swir16)' },
-    B7: { type: 'image/x.geotiff', 'eo:bands': [6], title: 'Band 7 (swir22)' },
-    B8: { type: 'image/x.geotiff', 'eo:bands': [7], title: 'Band 8 (pan)' },
-    B9: { type: 'image/x.geotiff', 'eo:bands': [8], title: 'Band 9 (cirrus)' },
-    B10: { type: 'image/x.geotiff', 'eo:bands': [9], title: 'Band 10 (lwir)' },
-    B11: { type: 'image/x.geotiff', 'eo:bands': [10], title: 'Band 11 (lwir)' },
+    B1: { type: imgtype, 'eo:bands': [0], title: 'Band 1 (coastal)' },
+    B2: { type: imgtype, 'eo:bands': [1], title: 'Band 2 (blue)' },
+    B3: { type: imgtype, 'eo:bands': [2], title: 'Band 3 (green)' },
+    B4: { type: imgtype, 'eo:bands': [3], title: 'Band 4 (red)' },
+    B5: { type: imgtype, 'eo:bands': [4], title: 'Band 5 (nir)' },
+    B6: { type: imgtype, 'eo:bands': [5], title: 'Band 6 (swir16)' },
+    B7: { type: imgtype, 'eo:bands': [6], title: 'Band 7 (swir22)' },
+    B8: { type: imgtype, 'eo:bands': [7], title: 'Band 8 (pan)' },
+    B9: { type: imgtype, 'eo:bands': [8], title: 'Band 9 (cirrus)' },
+    B10: { type: imgtype, 'eo:bands': [9], title: 'Band 10 (lwir)' },
+    B11: { type: imgtype, 'eo:bands': [10], title: 'Band 11 (lwir)' },
     ANG: { title: 'Angle coefficients file', type: 'text/plain' },
     MTL: { title: 'original metadata file', type: 'text/plain' },
-    BQA: { title: 'Band quality data', type: 'image/x.geotiff' }
+    BQA: { title: 'Band quality data', type: imgtype }
   },
   links: []
 }

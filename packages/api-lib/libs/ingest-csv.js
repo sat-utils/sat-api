@@ -10,7 +10,6 @@ const stream = require('stream')
 
 const s3 = new AWS.S3()
 
-const index = 'items'
 
 // kick off processing next CSV file
 function invokeLambda(bucket, key, nextFileNum, lastFileNum, arn, retries) {
@@ -182,7 +181,7 @@ function processFiles({
 
   console.log(`Processing s3://${bucket}/${_key}`)
 
-  return es.stream(csvStream, transform, index)
+  return es.stream(csvStream, transform)
     .then(() => {
       invokeLambda(bucket, _key, nextFileNum, lastFileNum, arn, 0)
     }).catch(() => {
