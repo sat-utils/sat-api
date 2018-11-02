@@ -32,23 +32,30 @@ async function connect() {
       return resolve()
     }))
 
+    AWS.config.update({
+      credentials: new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY),
+      region: process.env.AWS_REGION || 'us-east-1'
+    })
+
     esConfig = {
-      host: process.env.ES_HOST,
+      hosts: [process.env.ES_HOST],
       connectionClass: httpAwsEs,
-      amazonES: {
-        //region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-        accessKey: process.env.AWS_ACCESS_KEY_ID,
-        secretKey: process.env.AWS_SECRET_ACCESS_KEY
-      },
-      //awsConfig: new AWS.Config({ region: process.env.AWS_REGION }),
+      //amazonES: {
+       // //region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+      //  accessKey: process.env.AWS_ACCESS_KEY_ID,
+      //  secretKey: process.env.AWS_SECRET_ACCESS_KEY
+        //credentials: AWS.config.credentials
+      //},
+      awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
+      //httpOptions: {}
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
     client = new elasticsearch.Client(esConfig)
   }
+  //console.log('client', esConfig)
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
     if (err) {
-      console.log('unable to connect to elasticsearch')
       reject('unable to connect to elasticsearch')
     } else {
       resolve()
@@ -61,8 +68,8 @@ async function connect() {
 // get existing ES client or create a new one
 async function esClient() {
   if (!_esClient) {
-    _esClient = await connect().catch((err) => console.log('client error', err))
-    console.log('connected to elasticsearch')
+    _esClient = await connect().catch((err) => console.log('Error: ', err))
+    if (_esClient) console.log('connected to elasticsearch')
   } else {
     console.log('using existing elasticsearch connection')
   }
@@ -128,26 +135,31 @@ async function prepare(index) {
     .catch((err) => console.log(`Error connecting to elasticsearch: ${JSON.stringify(err)}`))
 }
 
-// identity stream
-function iStream(x, enc, next) { this.push(x); next() }
-
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream(stream, transform = null) {
-  let nRecords = 0
-  let nTransformed = 0
+  let nStream = 0
+  let nTransform = 0
+  let nToEs = 0
+  let nEsStream = 0
 
+  let _transform = transform
   if (transform === null) {
-    transform = through2({ objectMode: true, consume: true }, iStream)
+    // identity stream
+    _transform = through2.obj()
+    /* function(x, enc, next) {
+      console.log('identity transform: ', x.id)
+      //this.push(x)
+      next(null, x)
+    })*/
   }
 
-  const toEs = through2({ objectMode: true, consume: true }, function (data, encoding, next) {
-    // clean data of any hierarchy links
+  const toEs = through2({ objectMode: true, consume: true }, (data, encoding, next) => {
     let index = ''
-    if (data.hasOwnProperty('geometry')) {
-      index = 'items'
-    } else if (data.hasOwnProperty('extent')) {
+    if (data.hasOwnProperty('extent')) {
       index = 'collections'
+    } else if (data.hasOwnProperty('geometry')) {
+      index = 'items'
     } else {
       next()
       return
@@ -165,36 +177,60 @@ async function _stream(stream, transform = null) {
         doc_as_upsert: true
       }
     }
-    this.push(record)
-    next()
+    //this.push(record)
+    next(null, record)
   })
+
 
   return esClient().then((client) => {
     const esStream = new ElasticsearchWritableStream(client, {
       highWaterMark: 100,
-      flushTimeout: 1000
+      flushTimeout: 10000
     })
 
     return new Promise((resolve, reject) => {
-      pump(stream, transform, toEs, esStream, (err) => {
+      // count records
+      stream.on('data', (dat) => {
+        nStream += 1
+        //console.log(`stream ${dat}`)
+      })
+      _transform.on('data', (dat) => {
+        nTransform += 1
+        //console.log(`nTransform ${nTransform}`)
+      })
+      toEs.on('data', (dat) => {
+        nToEs += 1
+        //console.log(`nToEs ${nToEs}`)
+      })
+      esStream.on('data', (dat) => {
+        nEsStream += 1
+        //console.log(`nEsStream ${nEsStream}`)
+      })
+
+      stream.on('end', () => {
+        console.log(`stream end ${nStream}`)
+      })
+      _transform.on('end', () => {
+        console.log(`transform end ${nTransform}`)
+      })
+      toEs.on('end', () => {
+        console.log(`toEs end ${nToEs}`)
+      })
+      esStream.on('end', () => {
+        console.log(`esStream end ${nEsStream}`)
+      })
+
+      //stream.pipe(identity).pipe(toEs)
+      pump(stream, toEs, esStream, (err) => {
+        //console.log('djfkdjf')
         if (err) {
           console.log('error: ', err)
           reject(err)
         } else {
-          console.log(`Saving records: ${nRecords} in, ${nTransformed} saved.`)
-          resolve(nTransformed)
+          console.log(`Saving records: ${nStream} in, ${nTransform} transformed, ${nToEs} toEs, ${nEsStream} nEsStream`)
+          resolve(nTransform)
         }
       })
-      // count records
-      stream.on('data', () => {
-        nRecords += 1
-        console.log('data')
-      })
-      toEs.on('data', () => {
-        nTransformed += 1
-      })
-      // this doesn't seem to work
-      //esStream.on('data', () => { nSaved += 1 })
     })
   })
     .catch((e) => console.log(e))
@@ -319,15 +355,13 @@ function search(params, index, page, limit, callback) {
 
 
 async function saveCollection(collection) {
-  const iTransform = through2({ objectMode: true, consume: true }, iStream)
-
   // ensure collections mapping in ES
   return prepare('collections').then(() => {
     // create input stream from collection record
     const inStream = new readableStream.Readable({ objectMode: true })
     inStream.push(collection)
     inStream.push(null)
-    return _stream(inStream, iTransform, 'collections')
+    return _stream(inStream)
   })
 }
 

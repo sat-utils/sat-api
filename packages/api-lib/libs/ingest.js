@@ -12,10 +12,15 @@ function readFile(filename) {
 
 // iterator through every node in a Catalog tree
 function* readCatalog(filename) {
-  console.log(`Catalog: ${filename.toString()}`)
-
   const cat = readFile(filename.toString())
   yield cat
+  /*if (cat.hasOwnProperty('extent')) {
+    console.log(`Collection: ${filename.toString()}`)
+  } else if (cat.hasOwnProperty('geometry')) {
+    console.log(`Item: ${filename.toString()}`)
+  } else {
+    console.log(`Catalog: ${filename.toString()}`)
+  }*/
   for (let index = 0; index < cat.links.length; index += 1) {
     const link = cat.links[index]
     if (link.rel === 'child' || link.rel === 'item') {
@@ -26,11 +31,13 @@ function* readCatalog(filename) {
       }
     }
   }
+  return true
 }
 
 
 async function ingest(url) {
   const catStream = highland(readCatalog(url))
+  //console.log(`catStream ${JSON.stringify(catStream)}`)
 
   // prepare backend
   await backend.prepare('collections')
