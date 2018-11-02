@@ -25,7 +25,7 @@ const collection = {
     spatial: [-180, -90, 180, 90],
     temporal: ['2013-06-01', null]
   },
-  provider: [{
+  providers: [{
     name: 'ESA', roles: ['producer'], href: 'https://sentinel.esa.int/web/sentinel/home'
   }, {
     name: 'Sinergise', roles: ['processor'], href: 'http://sentinel-pds.s3-website.eu-central-1.amazonaws.com/'
