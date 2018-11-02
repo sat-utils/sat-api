@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/landsat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lambda function for ingesting landsat metadata to sat-api",
   "main": "index.js",
   "repository": {
@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.1.0",
+    "@sat-utils/api-lib": "^0.2.0",
     "got": "^8.3.2",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
