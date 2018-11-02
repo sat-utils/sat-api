@@ -59,7 +59,7 @@ API.prototype.search_collections = function (callback) {
     this.params = _.omit(this.params, 'intersects')
   }
 
-  this.backend.search(this.params, 'collections', 1, 100, (err, resp) => {
+  this.backend.search(this.params, 'collections', 1, 10000, (err, resp) => {
     // set geometry back
     if (geom) {
       this.params.intersects = geom
@@ -106,7 +106,8 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
   const _response = {
     type: 'FeatureCollection',
     meta: {},
-    features: []
+    features: [],
+    links: []
   }
   // check collection first
   this.search_collections((err, resp) => {
@@ -147,7 +148,7 @@ API.prototype.search_items = function (page = 1, limit = 1, callback) {
         if ((page * limit) < resp.meta.found) {
           params.page = page + 1
           params.limit = limit
-          _response.links.append({
+          _response.links.push({
             rel: 'next',
             title: 'Next page of results',
             href: `${this.endpoint}/stac/search?${dictToURI(params)}`
