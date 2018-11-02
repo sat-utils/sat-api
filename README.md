@@ -6,6 +6,13 @@ Sat-api is a STAC compliant web API for searching and serving metadata for geosp
 
 Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org. *An older version of sat-api can be found on the [legacy branch](https://github.com/sat-utils/sat-api/tree/legacy) and is deployed at https://api.developmentseed.org/satellites.*
 
+The STAC version supported by a given version of sat-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
+
+| sat-api | STAC  |
+| -------- | ----  |
+| 0.1.0    | 0.5.0 |
+| 0.2.0    | 0.6.0 |
+
 
 ## Documentation
 
@@ -45,21 +52,12 @@ To create a new version for npm:
 - create a new branch from master
 - `$ yarn update`
 - Follow the prompt and select the correct the version, then commit the changes.
-- Update [CHANGES.md](CHANGES.md).
+- Update [CHANGELOG.md](CHANGELOG.md).
 - Tag your branch with the same version number
 - Make a PR
-- When the PR is merged, the npm packages are automatically deployed to npm
-
-If you need to publish a package manually follow the steps below. **WARNING:** This is not recommended. Only use it if absolutely necessary.
-
-- create a new branch from master
-- `$ yarn update`
-- Follow the prompt and select the correct the version, then commit the changes.
-- Update [CHANGES.md](CHANGES.md).
-- Tag your branch with the same version number
-- Run: `./node_modules/.bin/lerna publish --skip-git --repo-version <replace-version> --yes --force-publish=* --npm-client=npm`
+- When the PR is merged to master, the npm packages are automatically deployed to npm
 
 
 ## About
 
-[sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).
+[sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).
