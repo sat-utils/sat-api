@@ -6,11 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+## [v0.2.0] - 2018-11-02
+
 ### Added
 - links now all connect to each other between STAC catalog, Datasets (?), and Items. STAC points to all Datasets, each Dataset points to items. items point to STAC catalog as 'root' and Dataset as 'parent'.
 
 ### Changed
-- sat-api versioning from now matches versioning of STAC
 - implemented the changes in [STAC 0.6.0](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md)
 - All functionality and references relating to Elasticsearch have been moved into the es.js module, and is now abstracted enough so that it could be replaced by another backend like PostGIS.
 - All functionality relating to handling a STAC API path has been moved into a the api.js module. This greatly simplifies the API lambda handler function, which now just determines the requested endpoint from the headers, gets the payload from POST or GET, and passes it all on, along with query parameters, to the api module.
@@ -57,7 +59,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor several modules: metadata, landsat, sentinel
 - Refactor and improve splitting
 
-[Unreleased]: https://github.com/sat-utils/sat-api/compare/v0.1.0...HEAD
-[v0.1.0]: https://github.com/sat-utils/sat-api/compare/v0.0.2...v0.1.0
+[Unreleased]: https://github.com/sat-utils/sat-api/compare/master...develop
+[v0.2.0]: https://github.com/sat-utils/sat-api/compare/0.1.0...0.2.0
+[v0.1.0]: https://github.com/sat-utils/sat-api/compare/v0.0.2...0.1.0
 [v0.0.2]: https://github.com/sat-utils/sat-api/compare/legacy-v2.0.0...v0.0.2
 [legacy-v2.0.0]: https://github.com/sat-utils/sat-api/tree/legacy
