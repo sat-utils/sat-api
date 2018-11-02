@@ -11,6 +11,7 @@ const logger = require('./logger')
 
 let _esClient
 
+
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
@@ -40,20 +41,13 @@ async function connect() {
     esConfig = {
       hosts: [process.env.ES_HOST],
       connectionClass: httpAwsEs,
-      //amazonES: {
-       // //region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-      //  accessKey: process.env.AWS_ACCESS_KEY_ID,
-      //  secretKey: process.env.AWS_SECRET_ACCESS_KEY
-        //credentials: AWS.config.credentials
-      //},
       awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
-      //httpOptions: {}
+      httpOptions: {},
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
     client = new elasticsearch.Client(esConfig)
   }
-  //console.log('client', esConfig)
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
     if (err) {
       reject('unable to connect to elasticsearch')
@@ -138,23 +132,12 @@ async function prepare(index) {
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream(stream, transform = null) {
-  let nStream = 0
-  let nTransform = 0
-  let nToEs = 0
-  let nEsStream = 0
-
-  let _transform = transform
   if (transform === null) {
     // identity stream
-    _transform = through2.obj()
-    /* function(x, enc, next) {
-      console.log('identity transform: ', x.id)
-      //this.push(x)
-      next(null, x)
-    })*/
+    transform = through2.obj()
   }
 
-  const toEs = through2({ objectMode: true, consume: true }, (data, encoding, next) => {
+  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
     let index = ''
     if (data.hasOwnProperty('extent')) {
       index = 'collections'
@@ -164,6 +147,7 @@ async function _stream(stream, transform = null) {
       next()
       return
     }
+    // remove any hierarchy links
     const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
     data.links = data.links.filter((link) => hlinks.indexOf(link.rel) === -1)
     const record = {
@@ -189,48 +173,22 @@ async function _stream(stream, transform = null) {
     })
 
     return new Promise((resolve, reject) => {
-      // count records
-      stream.on('data', (dat) => {
-        nStream += 1
-        //console.log(`stream ${dat}`)
-      })
-      _transform.on('data', (dat) => {
-        nTransform += 1
-        //console.log(`nTransform ${nTransform}`)
-      })
-      toEs.on('data', (dat) => {
-        nToEs += 1
-        //console.log(`nToEs ${nToEs}`)
-      })
-      esStream.on('data', (dat) => {
-        nEsStream += 1
-        //console.log(`nEsStream ${nEsStream}`)
-      })
-
-      stream.on('end', () => {
-        console.log(`stream end ${nStream}`)
-      })
-      _transform.on('end', () => {
-        console.log(`transform end ${nTransform}`)
-      })
-      toEs.on('end', () => {
-        console.log(`toEs end ${nToEs}`)
-      })
-      esStream.on('end', () => {
-        console.log(`esStream end ${nEsStream}`)
-      })
-
-      //stream.pipe(identity).pipe(toEs)
-      pump(stream, toEs, esStream, (err) => {
-        //console.log('djfkdjf')
-        if (err) {
-          console.log('error: ', err)
-          reject(err)
-        } else {
-          console.log(`Saving records: ${nStream} in, ${nTransform} transformed, ${nToEs} toEs, ${nEsStream} nEsStream`)
-          resolve(nTransform)
+      //stream.pipe(toEs).pipe(esStream)
+      pump(
+        stream,
+        transform,
+        toEs,
+        esStream,
+        (err) => {
+          if (err) {
+            console.log('error: ', err)
+            reject(err)
+          } else {
+            console.log('Ingest complete')
+            resolve()
+          }
         }
-      })
+      )
     })
   })
     .catch((e) => console.log(e))
