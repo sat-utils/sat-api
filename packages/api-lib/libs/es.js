@@ -131,12 +131,7 @@ async function prepare(index) {
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream(stream, transform = null) {
-  if (transform === null) {
-    // identity stream
-    transform = through2.obj()
-  }
-
+async function _stream(stream, transform = through2.obj()) {
   const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
     let index = ''
     if (data.hasOwnProperty('extent')) {
@@ -150,6 +145,7 @@ async function _stream(stream, transform = null) {
     // remove any hierarchy links
     const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
     data.links = data.links.filter((link) => hlinks.indexOf(link.rel) === -1)
+    // create ES record
     const record = {
       index,
       type: 'doc',
@@ -161,7 +157,6 @@ async function _stream(stream, transform = null) {
         doc_as_upsert: true
       }
     }
-    //this.push(record)
     next(null, record)
   })
 
