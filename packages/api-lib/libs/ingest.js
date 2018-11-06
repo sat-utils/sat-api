@@ -1,21 +1,27 @@
 const fs = require('fs')
-const path = require('path')
+const request = require('sync-request')
 const highland = require('highland')
+const isUrl = require('is-url')
+const path = require('path')
+
 
 // this should be passed in as a backend parameter
 const backend = require('./es')
 
+
 function readFile(filename) {
+  if (isUrl(filename)) {
+    const data = JSON.parse(request('GET', filename).getBody('utf8'))
+    return data
+  }
   return JSON.parse(fs.readFileSync(filename, 'utf8'))
 }
 
 
+// iterator through every node in a Catalog tree
 let nCat = 0
 let nCol = 0
 let nItem = 0
-
-
-// iterator through every node in a Catalog tree
 function* readCatalog(filename, root = false) {
   const fname = filename.toString()
   const cat = readFile(fname)
@@ -26,7 +32,11 @@ function* readCatalog(filename, root = false) {
   } else {
     nCat += 1
   }
-  yield cat
+  if (nItem < 50) {
+    yield cat
+  } else {
+    return true
+  }
   let index = 0
   for (index = 0; index < cat.links.length; index += 1) {
     const link = cat.links[index]
@@ -34,7 +44,7 @@ function* readCatalog(filename, root = false) {
       if (path.isAbsolute(link.href)) {
         yield* readCatalog(link.href)
       } else {
-        yield* readCatalog(path.join(path.dirname(fname), link.href))
+        yield* readCatalog(`${path.dirname(fname)}/${link.href}`)
       }
     }
   }
@@ -45,18 +55,20 @@ function* readCatalog(filename, root = false) {
 }
 
 
-async function ingest(url) {
-  const catStream = highland(readCatalog(url, true), (x) => {
-    console.log(`highland func: ${x}`)
-  })
-  //console.log(`catStream ${JSON.stringify(catStream)}`)
-
-  // prepare backend
+async function prepare() {
   await backend.prepare('collections')
   await backend.prepare('items')
+}
+
+
+async function ingest(url) {
+  const catStream = highland(readCatalog(url, true))
+
+  // prepare backend
+  await prepare()
 
   await backend.stream(catStream)
 }
 
 
-module.exports = ingest
+module.exports = { ingest, prepare }
