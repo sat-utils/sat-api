@@ -4,8 +4,8 @@
   "description": "An instance of sat-api for Development Seed",
   "main": "index.js",
   "scripts": {
-    "prepare": "node -e 'require(\"@sat-utils/api-lib/libs/ingest\").prepare()'",
-    "linkall": "yarn link @sat-utils/api @sat-utils/api-lib @sat-utils/ingest @sat-utils/landsat @sat-utils/manager @sat-utils/sentinel",
+    "prepare": "node -e 'require(\"./node_modules/@sat-utils/api-lib/libs/ingest.js\").prepare()'",
+    "linkall": "yarn link @sat-utils/api @sat-utils/api-lib @sat-utils/ingest",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
