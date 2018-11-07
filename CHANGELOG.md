@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Elasticsearch query parameters updated, should be faster and more accurate as all unique text fields (ID, instrument, etc.) are property mapped as keywords and exact matches are used as term queries rather than previous behavior or scoring based on text similarity.
 
 ### Removed
-- no more manager module: it wasn't doing much (delete an elasticsearch index and reindex elasticsearch) and was not necessary given the much better elasticsearch admin tools like Kibana, which do that and more.
+- manager module: it wasn't doing much (delete an elasticsearch index and reindex elasticsearch) and was not necessary given the much better elasticsearch admin tools like Kibana, which do that and more.
+- Landsat and Sentinel lambda functions: Data is ingested via the ingest Lambda from SNS messages, or using the ingest catalog script.
 
 
 ## [v0.1.0] - 2018-09-18

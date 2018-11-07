@@ -7,7 +7,7 @@
     "type": "git",
     "url": "git+https://github.com/sat-utils/sat-api.git"
   },
-  "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
+  "author": "Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sat-utils/sat-api/issues"
@@ -21,6 +21,7 @@
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
     "@sat-utils/api-lib": "^0.2.0",
+    "got": "^9.3.1",
     "sync-requests": "^1.0.0"
   },
   "devDependencies": {

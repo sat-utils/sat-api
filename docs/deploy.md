@@ -40,8 +40,6 @@ Then run this command:
 
 The command will return the api endpoint that is created by the operation.
 
-The Landsat and Sentinel ingestors are run as Step Functions every 12 hours (Landsat at 6:00 and 18:00, Sentinel at 0:00 and 12:00), as can be seen under the CloudWatch Rules console. They can be disabled from the console.
-
 ### Deploy Devseed's Dev stack
 
 This command only works if you have access to Devseed's AWS account
