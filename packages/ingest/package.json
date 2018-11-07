@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.2.0"
+    "@sat-utils/api-lib": "^0.2.0",
+    "sync-requests": "^1.0.0"
   },
   "devDependencies": {
     "webpack": "~4.5.0",

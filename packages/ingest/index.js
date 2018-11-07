@@ -1,5 +1,6 @@
 'use strict'
-
+const got = require('got')
+const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
 
 
@@ -12,6 +13,14 @@ module.exports.handler = function handler(event, context, cb) {
   msg.Records.forEach((val) => {
     url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
     console.log(`ingesting ${url}`)
-    satlib.ingest.ingest(url)
+
+    got(url, { json: true }).then((data) => {
+      // create input stream from collection record
+      const inStream = new readableStream.Readable({ objectMode: true })
+      inStream.push(data)
+      inStream.push(null)
+      return satlib.es.stream(inStream)
+    })
+
   })
 }
