@@ -23,6 +23,7 @@ let nCat = 0
 let nCol = 0
 let nItem = 0
 function* readCatalog(filename, root = false) {
+  console.log(`Reading ${filename}`)
   const fname = filename.toString()
   const cat = readFile(fname)
   if (cat.hasOwnProperty('extent')) {
@@ -32,11 +33,7 @@ function* readCatalog(filename, root = false) {
   } else {
     nCat += 1
   }
-  if (nItem < 50) {
-    yield cat
-  } else {
-    return true
-  }
+  yield cat
   let index = 0
   for (index = 0; index < cat.links.length; index += 1) {
     const link = cat.links[index]
