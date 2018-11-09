@@ -22,8 +22,6 @@
   "dependencies": {
     "@sat-utils/api-lib": "^0.2.0",
     "@sat-utils/ingest": "^0.2.0",
-    "@sat-utils/landsat": "^0.2.0",
-    "@sat-utils/sentinel": "^0.2.0",
     "lambda-proxy-utils": "^1.2.4",
     "lodash.get": "^4.4.2"
   },

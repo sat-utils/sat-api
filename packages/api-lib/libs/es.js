@@ -177,7 +177,7 @@ async function _stream(stream, transform = through2.obj()) {
         esStream,
         (err) => {
           if (err) {
-            console.log('error: ', err)
+            console.log('Error streaming: ', err)
             reject(err)
           } else {
             console.log('Ingest complete')
