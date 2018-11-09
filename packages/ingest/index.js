@@ -1,11 +1,12 @@
 'use strict'
+
 const got = require('got')
 const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
 
 
 // SNS message
-module.exports.handler = function handler(event, context, cb) {
+module.exports.handler = function handler(event) {
   const msg = JSON.parse(event.Records[0].Sns.Message)
   console.log('ingest message: ', JSON.stringify(msg))
   let url
@@ -22,6 +23,5 @@ module.exports.handler = function handler(event, context, cb) {
     }).catch((err) => {
       console.log(`Error ingesting: ${err}`)
     })
-
   })
 }
