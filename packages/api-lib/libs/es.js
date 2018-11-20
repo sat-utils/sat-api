@@ -7,7 +7,7 @@ const through2 = require('through2')
 const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
 const readableStream = require('readable-stream')
 const pump = require('pump')
-const logger = require('./logger')
+//const logger = require('./logger')
 
 let _esClient
 
@@ -269,44 +269,74 @@ function build_query(params) {
 
 
 // general search of an index
-function search(params, index, page, limit, callback) {
+//function search(params, index, page, limit, callback) {
+  //console.log('Search parameters: ', JSON.stringify(params))
+  //const searchParams = {
+    //index: index,
+    //body: build_query(params),
+    //size: limit,
+    //from: (page - 1) * limit
+    ////_source: this.fields
+  //}
+
+  //console.log('Search query (es): ', JSON.stringify(searchParams))
+
+  //// connect to ES then search
+  //esClient().then((client) => {
+    //client.search(searchParams).then((body) => {
+      //const count = body.hits.total
+      //const results = body.hits.hits.map((r) => (r._source))
+
+      //const response = {
+        //meta: {
+          //found: count,
+          //returned: results.length,
+          //limit: limit,
+          //page: page
+        //},
+        //results: results
+      //}
+
+      //console.log(`Search response: ${JSON.stringify(response)}`)
+
+      //return callback(null, response)
+    //}, (err) => {
+      //logger.error(err)
+      //return callback(err)
+    //})
+  //})
+//}
+
+async function search(params, index = '*', page, limit) {
   console.log('Search parameters: ', JSON.stringify(params))
+
   const searchParams = {
-    index: index,
+    index,
     body: build_query(params),
     size: limit,
     from: (page - 1) * limit
     //_source: this.fields
   }
-
   console.log('Search query (es): ', JSON.stringify(searchParams))
 
-  // connect to ES then search
-  esClient().then((client) => {
-    client.search(searchParams).then((body) => {
-      const count = body.hits.total
-      const results = body.hits.hits.map((r) => (r._source))
+  const client = await esClient()
+  const body = await client.search(searchParams)
+  const { hits } = body
+  const found = hits.total
+  const results = hits.hits.map((r) => (r._source))
+  const response = {
+    results,
+    meta: {
+      found,
+      returned: results.length,
+      limit: limit,
+      page: page
+    }
+  }
 
-      const response = {
-        meta: {
-          found: count,
-          returned: results.length,
-          limit: limit,
-          page: page
-        },
-        results: results
-      }
-
-      console.log(`Search response: ${JSON.stringify(response)}`)
-
-      return callback(null, response)
-    }, (err) => {
-      logger.error(err)
-      return callback(err)
-    })
-  })
+  console.log(`Search response: ${JSON.stringify(response)}`)
+  return response
 }
-
 
 async function saveCollection(collection) {
   // ensure collections mapping in ES
