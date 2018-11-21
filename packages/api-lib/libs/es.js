@@ -267,46 +267,6 @@ function build_query(params) {
   return { query: { bool: { must: queries } } }
 }
 
-
-// general search of an index
-//function search(params, index, page, limit, callback) {
-  //console.log('Search parameters: ', JSON.stringify(params))
-  //const searchParams = {
-    //index: index,
-    //body: build_query(params),
-    //size: limit,
-    //from: (page - 1) * limit
-    ////_source: this.fields
-  //}
-
-  //console.log('Search query (es): ', JSON.stringify(searchParams))
-
-  //// connect to ES then search
-  //esClient().then((client) => {
-    //client.search(searchParams).then((body) => {
-      //const count = body.hits.total
-      //const results = body.hits.hits.map((r) => (r._source))
-
-      //const response = {
-        //meta: {
-          //found: count,
-          //returned: results.length,
-          //limit: limit,
-          //page: page
-        //},
-        //results: results
-      //}
-
-      //console.log(`Search response: ${JSON.stringify(response)}`)
-
-      //return callback(null, response)
-    //}, (err) => {
-      //logger.error(err)
-      //return callback(err)
-    //})
-  //})
-//}
-
 async function search(params, index = '*', page, limit) {
   console.log('Search parameters: ', JSON.stringify(params))
 
@@ -315,27 +275,11 @@ async function search(params, index = '*', page, limit) {
     body: build_query(params),
     size: limit,
     from: (page - 1) * limit
-    //_source: this.fields
   }
-  console.log('Search query (es): ', JSON.stringify(searchParams))
 
   const client = await esClient()
   const body = await client.search(searchParams)
-  const { hits } = body
-  const found = hits.total
-  const results = hits.hits.map((r) => (r._source))
-  const response = {
-    results,
-    meta: {
-      found,
-      returned: results.length,
-      limit: limit,
-      page: page
-    }
-  }
-
-  console.log(`Search response: ${JSON.stringify(response)}`)
-  return response
+  return body
 }
 
 async function saveCollection(collection) {
