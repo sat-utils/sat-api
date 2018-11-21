@@ -1,7 +1,5 @@
 const gjv = require('geojson-validation')
 const logger = require('./logger')
-const page = 1
-const limit = 10000
 const stac_version = '0.6.0-rc2'
 const sat_api = 'sat-api'
 
@@ -99,6 +97,39 @@ const addCollectionLinks = function (body, endpoint) {
   return results
 }
 
+// Impure - mutates body
+const addItemLinks = function (body, endpoint) {
+  const { hits } = body
+  const { hits: subHits } = hits
+  const results = subHits.map((result) => (result._source))
+
+  results.forEach((result) => {
+    // self link
+    const { id } = result
+    const { collection } = result.properties
+    result.links.splice(0, 0, {
+      rel: 'self',
+      href: `${endpoint}/collections/${collection}/item/${id}`
+    })
+    // parent catalogs
+    result.links.push({
+      rel: 'parent',
+      href: `${endpoint}/collections/${collection}`
+    })
+    result.links.push({
+      rel: 'collection',
+      href: `${endpoint}/collections/${collection}`
+    })
+    // root catalog
+    result.links.push({
+      rel: 'root',
+      href: `${endpoint}/stac`
+    })
+    result.type = 'Feature'
+  })
+  return results
+}
+
 const collectionsToCatalogLinks = function (body, endpoint) {
   const { hits } = body
   const { hits: subHits } = hits
@@ -121,23 +152,71 @@ const collectionsToCatalogLinks = function (body, endpoint) {
   return catalog
 }
 
-const wrapResponseWithMeta = function (body) {
+const buildMetaObject = function (body, page, limit) {
   const { hits } = body
   const { total: found, hits: subHits } = hits
-  const results = subHits.map((result) => (result._source))
-  const response = {
-    results,
-    meta: {
-      found,
-      limit,
-      page,
-      returned: results.length
-    }
+  return {
+    found,
+    limit,
+    page,
+    returned: subHits.length
   }
-  return response
 }
 
-const esSearch = async function (path = '', query = {}, backend, endpoint = '') {
+const extractPageFromQuery = function (originalQuery) {
+  const query = Object.assign({}, originalQuery)
+  const page = parseInt(originalQuery.page) || 1
+  const limit = parseInt(originalQuery.limit) || 1
+  delete query.page
+  delete query.limit
+  return { query, page, limit }
+}
+
+const extractCollectionList = function (body) {
+  const { hits } = body
+  const { hits: subHits } = hits
+  const results = subHits.map((result) => (result._source))
+  const collections = results.map((result) => result.id).join()
+  return collections
+}
+
+const wrapResponseInFeatureCollection = function (
+  meta, features = [], links = []
+) {
+  return {
+    type: 'FeatureCollection',
+    meta,
+    features,
+    links
+  }
+}
+
+const buildPageLinks = function (body, page, limit, query, endpoint) {
+  const pageLinks = []
+
+  const dictToURI = (dict) => (
+    Object.keys(dict).map(
+      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+    ).join('&')
+  )
+
+  const { hits } = body
+  const { total: found } = hits
+  if ((page * limit) < found) {
+    const newParams = Object.assign({}, query, { page: page + 1, limit })
+    const nextQueryParameters = dictToURI(newParams)
+    pageLinks.push({
+      rel: 'next',
+      title: 'Next page of results',
+      href: `${endpoint}/stac/search?${nextQueryParameters}`
+    })
+  }
+  return pageLinks
+}
+
+const esSearch = async function (
+  path = '', queryParameters = {}, backend, endpoint = ''
+) {
   let apiResponse
   const {
     stac,
@@ -146,14 +225,34 @@ const esSearch = async function (path = '', query = {}, backend, endpoint = '') 
     collectionId
   } = parsePath(path)
 
+  const { query, page, limit } = extractPageFromQuery(queryParameters)
   try {
     if (stac && !search) {
       const body = await backend.search(query, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(body, endpoint)
-    } else if (collections && collectionId) {
+    }
+    if (stac && search) {
+      const collectionBody = await backend.search(
+        query, 'collections', page, limit
+      )
+      const collectionList = extractCollectionList(collectionBody)
+      if (!collectionList.length) {
+        const meta = buildMetaObject(collectionBody, page, limit)
+        apiResponse = wrapResponseInFeatureCollection(meta)
+      } else {
+        const itemsBody = await backend.search(query, 'items', page, limit)
+        const pageLinks = buildPageLinks(itemsBody, page, limit, query, endpoint)
+        const items = addItemLinks(itemsBody, endpoint)
+        const meta = buildMetaObject(itemsBody, page, limit)
+        apiResponse = wrapResponseInFeatureCollection(meta, items, pageLinks)
+      }
+    }
+    if (collections && collectionId) {
       // Do query params need merging here ?
-      const updatedQuery = Object.assign({}, query, { 'id': collectionId })
-      const body = await backend.search(updatedQuery, 'collections', page, limit)
+      const collectionQuery = Object.assign({}, query, { 'id': collectionId })
+      const body = await backend.search(
+        collectionQuery, 'collections', page, limit
+      )
       const collection = addCollectionLinks(body, endpoint)
       if (collection.length > 0) {
         apiResponse = collection
