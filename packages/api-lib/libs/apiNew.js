@@ -134,7 +134,6 @@ const addItemLinks = function (body, endpoint) {
 const collectionsToCatalogLinks = function (body, endpoint) {
   const { hits } = body
   const { hits: subHits } = hits
-  const results = subHits.map((result) => (result._source))
 
   const catalog = {
     stac_version,
@@ -142,10 +141,14 @@ const collectionsToCatalogLinks = function (body, endpoint) {
     description: 'A STAC API of public datasets',
     'satapi:version': stac_version
   }
-  catalog.links = results.map((result) => ({
-    rel: 'child',
-    href: `${endpoint}/collections/${result.id}`
-  }))
+  catalog.links = subHits.map((hit) => {
+    const { _source } = hit
+    const { id } = _source
+    return {
+      rel: 'child',
+      href: `${endpoint}/collections/${id}`
+    }
+  })
   catalog.links.push({
     rel: 'self',
     href: `${endpoint}/stac`
@@ -253,7 +256,7 @@ const esSearch = async function (
   try {
     // Root catalog with collection links
     if (stac && !search) {
-      const body = await backend.search(query, 'collections', page, limit)
+      const body = await backend.search(undefined, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(body, endpoint)
     }
     if (stac && search) {
