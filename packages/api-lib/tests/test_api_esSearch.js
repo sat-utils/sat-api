@@ -1,7 +1,7 @@
 const test = require('ava')
 const sinon = require('sinon')
 const proxquire = require('proxyquire')
-const api = require('../libs/apiNew')
+const api = require('../libs/api')
 
 test('esSearch /stac', async (t) => {
   const collection = 'collection'
@@ -32,7 +32,7 @@ test('esSearch /stac', async (t) => {
 
 test('esSearch es error', async (t) => {
   const error = sinon.spy()
-  const proxyApi = proxquire('../libs/apiNew', {
+  const proxyApi = proxquire('../libs/api', {
     './logger': {
       error
     }

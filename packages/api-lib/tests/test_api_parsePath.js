@@ -1,5 +1,5 @@
 const test = require('ava')
-const api = require('../libs/apiNew')
+const api = require('../libs/api')
 
 test('parsePath', (t) => {
   let expected = {

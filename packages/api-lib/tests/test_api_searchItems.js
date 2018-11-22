@@ -1,6 +1,6 @@
 const test = require('ava')
 const sinon = require('sinon')
-const api = require('../libs/apiNew')
+const api = require('../libs/api')
 const item = require('./fixtures/item.json')
 const itemLinks = require('./fixtures/itemLinks.json')
 
