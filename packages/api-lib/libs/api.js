@@ -266,7 +266,7 @@ const esSearch = async function (
 
 module.exports = {
   parsePath,
-  esSearch,
   searchItems,
-  extractIntersectsParam
+  extractIntersectsParam,
+  search: esSearch
 }
