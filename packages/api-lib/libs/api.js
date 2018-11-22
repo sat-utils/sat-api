@@ -3,10 +3,10 @@ const logger = require('./logger')
 const stac_version = '0.6.0-rc2'
 const sat_api = 'sat-api'
 
-const parseIntersectsParam = function (params) {
+const extractIntersectsParam = function (params) {
+  let returnParams
   const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
   const { intersects } = params
-  let returnParams
   if (intersects) {
     let geojson
     // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
@@ -18,21 +18,22 @@ const parseIntersectsParam = function (params) {
       }
     } else {
       geojson = Object.assign({}, intersects)
-      if (gjv.valid(geojson)) {
-        if (geojson.type === 'FeatureCollection') {
-          throw geojsonError
-        } else if (geojson.type !== 'Feature') {
-          geojson = {
-            type: 'Feature',
-            properties: {},
-            geometry: Object.assign({}, intersects)
-          }
-        } else {
-          throw geojsonError
+    }
+
+    if (gjv.valid(geojson)) {
+      if (geojson.type === 'FeatureCollection') {
+        throw geojsonError
+      } else if (geojson.type !== 'Feature') {
+        geojson = {
+          type: 'Feature',
+          properties: {},
+          geometry: Object.assign({}, intersects)
         }
       }
+      returnParams = Object.assign({}, params, { intersects: geojson })
+    } else {
+      throw geojsonError
     }
-    returnParams = Object.assign({}, params, { intersects: geojson })
   } else {
     returnParams = params
   }
@@ -218,7 +219,8 @@ const esSearch = async function (
     items
   } = parsePath(path)
 
-  const { query, page, limit } = extractPageFromQuery(queryParameters)
+  const intersectsParams = extractIntersectsParam(queryParameters)
+  const { query, page, limit } = extractPageFromQuery(intersectsParams)
   try {
     // Root catalog with collection links
     if (stac && !search) {
@@ -266,5 +268,5 @@ module.exports = {
   parsePath,
   esSearch,
   searchItems,
-  parseIntersectsParam
+  extractIntersectsParam
 }
