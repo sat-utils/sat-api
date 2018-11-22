@@ -7,12 +7,11 @@ const itemLinks = require('./fixtures/itemLinks.json')
 test('searchItems', async (t) => {
   const limit = 10
   const page = 1
-  const hits = []
   const meta = {
     limit,
     page,
-    found: hits.length,
-    returned: hits.length
+    found: 0,
+    returned: 0
   }
   const expected = {
     meta,
@@ -20,14 +19,9 @@ test('searchItems', async (t) => {
     links: [],
     type: 'FeatureCollection'
   }
-  const body = {
-    hits: {
-      hits,
-      total: hits.length
-    }
-  }
+  const results = { meta, results: [] }
 
-  const search = sinon.stub().resolves(body)
+  const search = sinon.stub().resolves(results)
   const backend = { search }
   const actual = await api.searchItems({}, page, limit, backend, 'endpoint')
   t.deepEqual(actual, expected,
@@ -38,28 +32,17 @@ test('searchItems', async (t) => {
   const collectionId = 'collectionId'
   const limit = 10
   const page = 1
-  const collectionsHits = [{
-    _source: {
-      id: collectionId
-    }
-  }]
-  const collectionsBody = {
-    hits: {
-      hits: collectionsHits
-    }
+  const meta = {
+    limit,
+    page,
+    found: 1,
+    returned: 1
   }
-  const itemsHits = [{
-    _source: item
-  }]
-  const itemsBody = {
-    hits: {
-      hits: itemsHits,
-      total: itemsHits.length
-    }
-  }
+  const collectionResults = { meta, results: [{ id: collectionId }] }
+  const itemsResults = { meta, results: [item] }
   const search = sinon.stub()
-  search.onFirstCall().resolves(collectionsBody)
-  search.onSecondCall().resolves(itemsBody)
+  search.onFirstCall().resolves(collectionResults)
+  search.onSecondCall().resolves(itemsResults)
   const backend = { search }
   const actual = await api.searchItems({}, page, limit, backend, 'endpoint')
   t.is(search.secondCall.args[0].collection, collectionId,

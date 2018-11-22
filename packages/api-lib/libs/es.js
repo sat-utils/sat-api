@@ -279,7 +279,17 @@ async function search(params, index = '*', page, limit) {
 
   const client = await esClient()
   const body = await client.search(searchParams)
-  return body
+  const results = body.hits.hits.map((r) => (r._source))
+  const response = {
+    results,
+    meta: {
+      page,
+      limit,
+      found: body.hits.total,
+      returned: results.length
+    }
+  }
+  return response
 }
 
 async function saveCollection(collection) {

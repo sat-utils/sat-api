@@ -5,14 +5,8 @@ const api = require('../libs/api')
 
 test('esSearch /stac', async (t) => {
   const collection = 'collection'
-  const body = {
-    hits: {
-      hits: [{
-        _source: { id: collection }
-      }]
-    }
-  }
-  const search = sinon.stub().resolves(body)
+  const results = { results: [{ id: collection }] }
+  const search = sinon.stub().resolves(results)
   const backend = { search }
   const actual = await api.esSearch('/stac', undefined, backend, 'endpoint')
   const expectedLinks = [
