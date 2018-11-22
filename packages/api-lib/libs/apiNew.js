@@ -101,31 +101,32 @@ const addCollectionLinks = function (body, endpoint) {
 const addItemLinks = function (body, endpoint) {
   const { hits } = body
   const { hits: subHits } = hits
-  const results = subHits.map((result) => (result._source))
 
-  results.forEach((result) => {
-    // self link
-    const { id } = result
+  const results = subHits.map((hit) => {
+    const { _source: result } = hit
+    const { id, links } = result
     const { collection } = result.properties
-    result.links.splice(0, 0, {
+    // self link
+    links.splice(0, 0, {
       rel: 'self',
       href: `${endpoint}/collections/${collection}/item/${id}`
     })
     // parent catalogs
-    result.links.push({
+    links.push({
       rel: 'parent',
       href: `${endpoint}/collections/${collection}`
     })
-    result.links.push({
+    links.push({
       rel: 'collection',
       href: `${endpoint}/collections/${collection}`
     })
     // root catalog
-    result.links.push({
+    links.push({
       rel: 'root',
       href: `${endpoint}/stac`
     })
     result.type = 'Feature'
+    return result
   })
   return results
 }
@@ -214,6 +215,28 @@ const buildPageLinks = function (body, page, limit, query, endpoint) {
   return pageLinks
 }
 
+const searchItems = async function (query, page, limit, backend, endpoint) {
+  let response
+  const collectionBody = await backend.search(
+    query, 'collections', page, limit
+  )
+  const collectionList = extractCollectionList(collectionBody)
+  const collectionsQuery = Object.assign(
+    {}, query, { collection: collectionList }
+  )
+  if (!collectionList.length) {
+    const meta = buildMetaObject(collectionBody, page, limit)
+    response = wrapResponseInFeatureCollection(meta)
+  } else {
+    const itemsBody = await backend.search(collectionsQuery, 'items', page, limit)
+    const pageLinks = buildPageLinks(itemsBody, page, limit, query, endpoint)
+    const items = addItemLinks(itemsBody, endpoint)
+    const meta = buildMetaObject(itemsBody, page, limit)
+    response = wrapResponseInFeatureCollection(meta, items, pageLinks)
+  }
+  return response
+}
+
 const esSearch = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
@@ -222,32 +245,29 @@ const esSearch = async function (
     stac,
     search,
     collections,
-    collectionId
+    collectionId,
+    items
   } = parsePath(path)
 
   const { query, page, limit } = extractPageFromQuery(queryParameters)
   try {
+    // Root catalog with collection links
     if (stac && !search) {
       const body = await backend.search(query, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(body, endpoint)
     }
     if (stac && search) {
-      const collectionBody = await backend.search(
-        query, 'collections', page, limit
-      )
-      const collectionList = extractCollectionList(collectionBody)
-      if (!collectionList.length) {
-        const meta = buildMetaObject(collectionBody, page, limit)
-        apiResponse = wrapResponseInFeatureCollection(meta)
-      } else {
-        const itemsBody = await backend.search(query, 'items', page, limit)
-        const pageLinks = buildPageLinks(itemsBody, page, limit, query, endpoint)
-        const items = addItemLinks(itemsBody, endpoint)
-        const meta = buildMetaObject(itemsBody, page, limit)
-        apiResponse = wrapResponseInFeatureCollection(meta, items, pageLinks)
-      }
+      apiResponse = await searchItems(query, page, limit, backend, endpoint)
     }
-    if (collections && collectionId) {
+    // All collections
+    if (collections && !collectionId) {
+      const body = await backend.search(query, 'collections', page, limit)
+      const collectionResults = addCollectionLinks(body, endpoint)
+      const meta = buildMetaObject(body, page, limit)
+      apiResponse = { meta, collectionResults }
+    }
+    // Specific collection
+    if (collections && collectionId && !items) {
       // Do query params need merging here ?
       const collectionQuery = Object.assign({}, query, { 'id': collectionId })
       const body = await backend.search(
@@ -255,10 +275,16 @@ const esSearch = async function (
       )
       const collection = addCollectionLinks(body, endpoint)
       if (collection.length > 0) {
-        apiResponse = collection
+        apiResponse = collection[0]
       } else {
         apiResponse = new Error('Collection not found')
       }
+    }
+    if (collections && collectionId && items) {
+      const itemsQuery = Object.assign(
+        {}, query, { collection: collectionId }
+      )
+      apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
     }
   } catch (error) {
     logger.error(error)
@@ -269,5 +295,6 @@ const esSearch = async function (
 module.exports = {
   parsePath,
   esSearch,
+  searchItems,
   parseIntersectsParam
 }
