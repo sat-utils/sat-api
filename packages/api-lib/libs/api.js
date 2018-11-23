@@ -252,16 +252,25 @@ const esSearch = async function (
         apiResponse = new Error('Collection not found')
       }
     }
-    if (collections && collectionId && items) {
+    if (collections && collectionId && items && !itemId) {
       const itemsQuery = Object.assign(
         {}, query, { collection: collectionId }
       )
       apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
     }
     if (collections && collectionId && items && itemId) {
+      const itemQuery = Object.assign({}, query, { 'id': itemId })
+      const { results } = await backend.search(itemQuery, 'items', page, limit)
+      const [item] = addItemLinks(results, endpoint)
+      if (item) {
+        apiResponse = item
+      } else {
+        apiResponse = new Error('Item not found')
+      }
     }
   } catch (error) {
     logger.error(error)
+    apiResponse = error
   }
   return apiResponse
 }

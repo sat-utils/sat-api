@@ -4,7 +4,7 @@ const proxquire = require('proxyquire')
 const api = require('../libs/api')
 const item = require('./fixtures/item.json')
 
-test('esSearch es error', async (t) => {
+test('search es error', async (t) => {
   const error = sinon.spy()
   const proxyApi = proxquire('../libs/api', {
     './logger': {
@@ -19,7 +19,7 @@ test('esSearch es error', async (t) => {
     'Logs Elasticsearch error via Winston transport')
 })
 
-test('esSearch /stac', async (t) => {
+test('search /stac', async (t) => {
   const collection = 'collection'
   const results = { results: [{ id: collection }] }
   const search = sinon.stub().resolves(results)
@@ -40,7 +40,7 @@ test('esSearch /stac', async (t) => {
     'Returns STAC catalog with links to collections')
 })
 
-test('esSearch /stac/search query parameters', async (t) => {
+test('search /stac/search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [] })
   const backend = { search }
   const queryParams = {
@@ -57,7 +57,7 @@ test('esSearch /stac/search query parameters', async (t) => {
     'Sends extracted limit query parameter to Elasticsearch')
 })
 
-test('esSearch /stac/search intersects parameter', async (t) => {
+test('search /stac/search intersects parameter', async (t) => {
   const search = sinon.stub().resolves({ results: [] })
   const backend = { search }
   const queryParams = {
@@ -77,7 +77,7 @@ test('esSearch /stac/search intersects parameter', async (t) => {
 })
 
 
-test('esSearch /collections', async (t) => {
+test('search /collections', async (t) => {
   const meta = {
     limit: 1,
     page: 1,
@@ -98,7 +98,7 @@ test('esSearch /collections', async (t) => {
   t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
 })
 
-test('esSearch /collections/collectionId', async (t) => {
+test('search /collections/collectionId', async (t) => {
   const meta = {
     limit: 1,
     page: 1,
@@ -131,4 +131,48 @@ test('esSearch /collections/collectionId', async (t) => {
   )
   t.is(actual.message, 'Collection not found',
     'Sends error when not collections are found in Elasticsearch')
+})
+
+test('search /collections/collectionId/items', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+
+  const search = sinon.stub().resolves({
+    meta,
+    results: []
+  })
+  const backend = { search }
+  const collectionId = 'collectionId'
+  await api.search(
+    `/collections/${collectionId}/items`, {}, backend, 'endpoint'
+  )
+  t.deepEqual(search.firstCall.args[0], { collection: collectionId },
+    'Calls Elasticsearch with the collectionId path element as collection parameter')
+})
+
+test('search /collections/collectionId/items/itemId', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+
+  const search = sinon.stub().resolves({
+    meta,
+    results: [item]
+  })
+  const backend = { search }
+  const itemId = 'itemId'
+  const actual = await api.search(
+    `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
+  )
+  t.deepEqual(search.firstCall.args[0], { id: itemId },
+    'Calls Elasticsearch with the itemId path element as id parameter')
+  t.is(actual.type, 'Feature')
+  t.is(actual.links.length, 4, 'Adds STAC links to response object')
 })
