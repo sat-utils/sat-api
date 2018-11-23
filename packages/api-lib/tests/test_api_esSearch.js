@@ -2,6 +2,7 @@ const test = require('ava')
 const sinon = require('sinon')
 const proxquire = require('proxyquire')
 const api = require('../libs/api')
+const item = require('./fixtures/item.json')
 
 test('esSearch es error', async (t) => {
   const error = sinon.spy()
@@ -39,7 +40,7 @@ test('esSearch /stac', async (t) => {
     'Returns STAC catalog with links to collections')
 })
 
-test('esSearch /stac', async (t) => {
+test('esSearch /stac/search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [] })
   const backend = { search }
   const queryParams = {
@@ -54,4 +55,23 @@ test('esSearch /stac', async (t) => {
     'Sends extracted page query parameter to Elasticsearch')
   t.is(search.firstCall.args[3], queryParams.limit,
     'Sends extracted limit query parameter to Elasticsearch')
+})
+
+test('esSearch /stac/search intersects parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [] })
+  const backend = { search }
+  const queryParams = {
+    intersects: item,
+    page: 1,
+    limit: 1
+  }
+  api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, item,
+    'Uses valid GeoJSON as Elasticsearch intersects search parameter')
+
+  search.resetHistory()
+  queryParams.intersects = JSON.stringify(item)
+  api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, item,
+    'Handles stringified GeoJSON intersects parameter')
 })

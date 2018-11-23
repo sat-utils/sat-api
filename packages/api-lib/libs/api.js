@@ -10,9 +10,9 @@ const extractIntersectsParam = function (params) {
   if (intersects) {
     let geojson
     // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
-    if (typeof geojson === 'string') {
+    if (typeof intersects === 'string') {
       try {
-        geojson = JSON.parse(geojson)
+        geojson = JSON.parse(intersects)
       } catch (e) {
         throw geojsonError
       }
@@ -216,9 +216,9 @@ const esSearch = async function (
     search,
     collections,
     collectionId,
-    items
+    items,
+    itemId
   } = parsePath(path)
-
   const intersectsParams = extractIntersectsParam(queryParameters)
   const { query, page, limit } = extractPageFromQuery(intersectsParams)
   try {
@@ -257,6 +257,8 @@ const esSearch = async function (
         {}, query, { collection: collectionId }
       )
       apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
+    }
+    if (collections && collectionId && items && itemId) {
     }
   } catch (error) {
     logger.error(error)
