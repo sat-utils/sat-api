@@ -75,3 +75,60 @@ test('esSearch /stac/search intersects parameter', async (t) => {
   t.deepEqual(search.firstCall.args[0].intersects, item,
     'Handles stringified GeoJSON intersects parameter')
 })
+
+
+test('esSearch /collections', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+  const search = sinon.stub().resolves({
+    meta,
+    results: [{
+      id: 1,
+      links: []
+    }]
+  })
+  const backend = { search }
+  const actual = await api.search('/collections', {}, backend, 'endpoint')
+  t.is(search.firstCall.args[1], 'collections')
+  t.is(actual.collections.length, 1)
+  t.is(actual.collections[0].links.length, 4, 'Adds STAC links to each collection')
+})
+
+test('esSearch /collections/collectionId', async (t) => {
+  const meta = {
+    limit: 1,
+    page: 1,
+    found: 1,
+    returned: 1
+  }
+  const search = sinon.stub().resolves({
+    meta,
+    results: [{
+      id: 1,
+      links: []
+    }]
+  })
+  const backend = { search }
+  const collectionId = 'collectionId'
+  let actual = await api.search(
+    `/collections/${collectionId}`, {}, backend, 'endpoint'
+  )
+  t.deepEqual(search.firstCall.args[0], { id: collectionId },
+    'Calls Elasticsearch with the collectionId path element as id parameter')
+  t.is(actual.links.length, 4, 'Returns the first found collection as object')
+
+  search.reset()
+  search.resolves({
+    meta,
+    results: []
+  })
+  actual = await api.search(
+    `/collections/${collectionId}`, {}, backend, 'endpoint'
+  )
+  t.is(actual.message, 'Collection not found',
+    'Sends error when not collections are found in Elasticsearch')
+})

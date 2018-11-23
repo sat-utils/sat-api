@@ -236,7 +236,7 @@ const esSearch = async function (
       const { results, meta } =
         await backend.search(query, 'collections', page, limit)
       const linkedCollections = addCollectionLinks(results, endpoint)
-      apiResponse = { meta, linkedCollections }
+      apiResponse = { meta, collections: linkedCollections }
     }
     // Specific collection
     if (collections && collectionId && !items) {
