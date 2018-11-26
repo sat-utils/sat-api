@@ -76,6 +76,42 @@ test('search /stac/search intersects parameter', async (t) => {
     'Handles stringified GeoJSON intersects parameter')
 })
 
+test('search /stac/search bbox parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [] })
+  const backend = { search }
+  const w = -10
+  const s = -10
+  const e = 10
+  const n = 10
+  const queryParams = {
+    bbox: [w, s, e, n],
+    page: 1,
+    limit: 1
+  }
+  const expected = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'Polygon',
+      coordinates: [[
+        [s, w],
+        [n, w],
+        [n, e],
+        [s, e],
+        [s, w]
+      ]]
+    }
+  }
+  await api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, expected,
+    'Converts a [w,s,e,n] bbox to an intersects filter parameter')
+  search.resetHistory()
+
+  queryParams.intersects = JSON.stringify(item)
+  await api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, item,
+    'Prefer intersects if both bbox and intersects parameters are provided')
+})
 
 test('search /collections', async (t) => {
   const meta = {

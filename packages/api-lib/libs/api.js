@@ -1,4 +1,6 @@
 const gjv = require('geojson-validation')
+const extent = require('@mapbox/extent')
+const { feature } = require('@turf/helpers')
 const logger = require('./logger')
 const stac_version = '0.6.0-rc2'
 const sat_api = 'sat-api'
@@ -24,16 +26,25 @@ const extractIntersectsParam = function (params) {
       if (geojson.type === 'FeatureCollection') {
         throw geojsonError
       } else if (geojson.type !== 'Feature') {
-        geojson = {
-          type: 'Feature',
-          properties: {},
-          geometry: Object.assign({}, intersects)
-        }
+        geojson = feature(geojson)
       }
       returnParams = Object.assign({}, params, { intersects: geojson })
     } else {
       throw geojsonError
     }
+  } else {
+    returnParams = params
+  }
+  return returnParams
+}
+
+const extractBboxParam = function (params) {
+  let returnParams
+  const { bbox } = params
+  if (bbox) {
+    const boundingBox = extent(bbox)
+    const geojson = feature(boundingBox.polygon())
+    returnParams = Object.assign({}, params, { intersects: geojson })
   } else {
     returnParams = params
   }
@@ -219,8 +230,11 @@ const esSearch = async function (
     items,
     itemId
   } = parsePath(path)
+  const bboxParams = extractBboxParam(queryParameters)
   const intersectsParams = extractIntersectsParam(queryParameters)
-  const { query, page, limit } = extractPageFromQuery(intersectsParams)
+  // Prefer intersects
+  const params = intersectsParams.intersects ? intersectsParams : bboxParams
+  const { query, page, limit } = extractPageFromQuery(params)
   try {
     // Root catalog with collection links
     if (stac && !search) {
