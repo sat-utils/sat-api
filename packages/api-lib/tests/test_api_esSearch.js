@@ -113,6 +113,21 @@ test('search /stac/search bbox parameter', async (t) => {
     'Prefer intersects if both bbox and intersects parameters are provided')
 })
 
+test('search /stac/search time parameter', async (t) => {
+  const search = sinon.stub().resolves({ results: [] })
+  const backend = { search }
+  const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
+  const queryParams = {
+    page: 1,
+    limit: 2,
+    time: range
+  }
+  await api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0], { datetime: range },
+    'Extracts time query parameter and transforms it into ' +
+    'datetime Elasticsearch parameter')
+})
+
 test('search /collections', async (t) => {
   const meta = {
     limit: 1,

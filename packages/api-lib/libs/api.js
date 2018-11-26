@@ -51,6 +51,18 @@ const extractBboxParam = function (params) {
   return returnParams
 }
 
+const extractTimeParam = function (params) {
+  let returnParams
+  const { time } = params
+  if (time) {
+    returnParams = Object.assign({}, params, { datetime: time })
+    delete returnParams.time
+  } else {
+    returnParams = params
+  }
+  return returnParams
+}
+
 const parsePath = function (path) {
   const searchFilters = {
     stac: false,
@@ -230,7 +242,9 @@ const esSearch = async function (
     items,
     itemId
   } = parsePath(path)
-  const bboxParams = extractBboxParam(queryParameters)
+
+  const timeParams = extractTimeParam(queryParameters)
+  const bboxParams = extractBboxParam(timeParams)
   const intersectsParams = extractIntersectsParam(queryParameters)
   // Prefer intersects
   const params = intersectsParams.intersects ? intersectsParams : bboxParams
