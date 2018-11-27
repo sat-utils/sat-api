@@ -42,6 +42,8 @@
   },
   "devDependencies": {
     "ava": "^0.16.0",
-    "nock": "^8.0.0"
+    "nock": "^8.0.0",
+    "proxyquire": "^2.1.0",
+    "sinon": "^7.1.1"
   }
 }

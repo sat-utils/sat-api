@@ -1,0 +1,8 @@
+version: '2'
+services:
+  local:
+    image: localstack/localstack:0.8.6
+    environment:
+      SERVICES: 'elasticsearch'
+    ports:
+      - 4571:4571 # elasticsearch

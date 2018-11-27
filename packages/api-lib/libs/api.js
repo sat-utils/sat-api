@@ -1,37 +1,25 @@
-'use strict'
-
-const _ = require('lodash')
-const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
 const gjv = require('geojson-validation')
-
+const logger = require('./logger')
 const stac_version = '0.6.0-rc2'
+const sat_api = 'sat-api'
 
-
-// h/t https://medium.com/@mattccrampton/convert-a-javascript-dictionary-to-get-url-parameters-b77da8c78ec8
-function dictToURI(dict) {
-  return Object.keys(dict)
-    .map((p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`).join('&')
-}
-
-
-// Elasticsearch search class
-function API(backend, params, endpoint) {
-  this.backend = backend
-  this.params = params
-  this.endpoint = endpoint
-  this.clink = `${this.endpoint}/collections`
-
-  // process GeoJSON if provided
-  if (this.params.intersects) {
-    let geojson = params.intersects
+const extractIntersectsParam = function (params) {
+  let returnParams
+  const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+  const { intersects } = params
+  if (intersects) {
+    let geojson
     // if we receive a string, try to parse as GeoJSON, otherwise assume it is GeoJSON
-    if (typeof geojson === 'string') {
+    if (typeof intersects === 'string') {
       try {
-        geojson = JSON.parse(geojson)
+        geojson = JSON.parse(intersects)
       } catch (e) {
         throw geojsonError
       }
+    } else {
+      geojson = Object.assign({}, intersects)
     }
+
     if (gjv.valid(geojson)) {
       if (geojson.type === 'FeatureCollection') {
         throw geojsonError
@@ -39,220 +27,257 @@ function API(backend, params, endpoint) {
         geojson = {
           type: 'Feature',
           properties: {},
-          geometry: geojson
+          geometry: Object.assign({}, intersects)
         }
-      } else {
-        throw geojsonError
       }
+      returnParams = Object.assign({}, params, { intersects: geojson })
+    } else {
+      throw geojsonError
     }
-    this.params.intersects = geojson
+  } else {
+    returnParams = params
   }
+  return returnParams
 }
 
-
-// Search collections
-API.prototype.search_collections = function (callback) {
-  // hacky way to remove geometry from search of collections...temporary
-  let geom
-  if (_.has(this.params, 'intersects')) {
-    geom = this.params.intersects
-    this.params = _.omit(this.params, 'intersects')
+const parsePath = function (path) {
+  const searchFilters = {
+    stac: false,
+    collections: false,
+    search: false,
+    collectionId: false,
+    items: false,
+    itemId: false
   }
+  const stac = 'stac'
+  const collections = 'collections'
+  const search = 'search'
+  const items = 'items'
 
-  this.backend.search(this.params, 'collections', 1, 10000, (err, resp) => {
-    // set geometry back
-    if (geom) {
-      this.params.intersects = geom
-    }
+  const pathComponents = path.split('/').filter((x) => x)
+  const { length } = pathComponents
+  searchFilters.stac = pathComponents[0] === stac
+  searchFilters.collections = pathComponents[0] === collections
+  searchFilters.collectionId =
+    pathComponents[0] === collections && length >= 2 ? pathComponents[1] : false
+  searchFilters.search = pathComponents[1] === search
+  searchFilters.items = pathComponents[2] === items
+  searchFilters.itemId =
+    pathComponents[2] === items && length === 4 ? pathComponents[3] : false
+  return searchFilters
+}
 
-    resp.results.forEach((a, i, arr) => {
-      // self link
-      arr[i].links.splice(0, 0, { rel: 'self', href: `${this.clink}/${a.id}` })
-      // parent catalog
-      arr[i].links.push({ rel: 'parent', href: `${this.endpoint}/stac` })
-      // root catalog
-      arr[i].links.push({ rel: 'root', href: `${this.endpoint}/stac` })
-      // child items
-      arr[i].links.push({ rel: 'items', href: `${this.clink}/${a.id}/items` })
+// Impure - mutates results
+const addCollectionLinks = function (results, endpoint) {
+  results.forEach((result) => {
+    const { id, links } = result
+    // self link
+    links.splice(0, 0, {
+      rel: 'self',
+      href: `${endpoint}/collections/${id}`
     })
-
-    const response = {
-      meta: resp.meta,
-      collections: resp.results
-    }
-
-    callback(err, response)
+    // parent catalog
+    links.push({
+      rel: 'parent',
+      href: `${endpoint}/stac`
+    })
+    // root catalog
+    links.push({
+      rel: 'root',
+      href: `${endpoint}/stac`
+    })
+    // child items
+    links.push({
+      rel: 'items',
+      href: `${endpoint}/collections/${id}/items`
+    })
   })
+  return results
 }
 
-
-// Get a single collection by name
-API.prototype.get_collection = function (collection, callback) {
-  const params = this.params
-  this.params = { 'id': collection }
-  this.search_collections((err, resp) => {
-    this.params = params
-    if (resp.collections.length === 1) {
-      callback(err, resp.collections[0])
-    } else {
-      callback(err, {})
-    }
+// Impure - mutates results
+const addItemLinks = function (results, endpoint) {
+  results.forEach((result) => {
+    const { id, links } = result
+    const { collection } = result.properties
+    // self link
+    links.splice(0, 0, {
+      rel: 'self',
+      href: `${endpoint}/collections/${collection}/item/${id}`
+    })
+    // parent catalogs
+    links.push({
+      rel: 'parent',
+      href: `${endpoint}/collections/${collection}`
+    })
+    links.push({
+      rel: 'collection',
+      href: `${endpoint}/collections/${collection}`
+    })
+    // root catalog
+    links.push({
+      rel: 'root',
+      href: `${endpoint}/stac`
+    })
+    result.type = 'Feature'
+    return result
   })
+  return results
 }
 
-
-// Search items (searching both collections and items)
-API.prototype.search_items = function (page = 1, limit = 1, callback) {
-  const _response = {
-    type: 'FeatureCollection',
-    meta: {},
-    features: [],
-    links: []
-  }
-  // check collection first
-  this.search_collections((err, resp) => {
-    const collections = resp.collections.map((c) => c.id)
-    console.log('collections = ', JSON.stringify(collections))
-    if (collections.length === 0) {
-      _response.meta = {
-        found: 0, returned: 0, limit: limit, page: page
-      }
-      callback(null, _response)
-    } else {
-      // shallow copy of this.params
-      const params = { ...this.params }
-      this.params.collection = collections.join(',')
-
-      this.backend.search(this.params, 'items', page, limit, (e, response) => {
-        const results = response.results.map((r) => {
-          r.links.splice(0, 0, {
-            rel: 'self',
-            href: `${this.clink}/${r.properties.collection}/item/${r.id}`
-          })
-          // parent link
-          r.links.push({
-            rel: 'parent',
-            href: `${this.clink}/${r.properties.collection}`
-          })
-          r.links.push({
-            rel: 'collection',
-            href: `${this.clink}/${r.properties.collection}`
-          })
-          r.links.push({ rel: 'root', href: `${this.endpoint}/stac` })
-          r.type = 'Feature'
-          return r
-        })
-        _response.meta = response.meta
-        _response.features = results
-        // add next link if not last page
-        if ((page * limit) < resp.meta.found) {
-          params.page = page + 1
-          params.limit = limit
-          _response.links.push({
-            rel: 'next',
-            title: 'Next page of results',
-            href: `${this.endpoint}/stac/search?${dictToURI(params)}`
-          })
-        }
-        callback(null, _response)
-      })
-    }
-  })
-}
-
-
-API.prototype.get_item = function (id, callback) {
-  this.backend.search({ id }, 'items', 1, 1, (err, resp) => {
-    if (resp.results.length === 1) {
-      const item = resp.results[0]
-      // self link
-      item.links.splice(0, 0, {
-        rel: 'self',
-        href: `${this.clink}/${item.properties.collection}/item/${item.id}`
-      })
-      // parent link
-      item.links.push({ rel: 'parent', href: `${this.clink}/${item.properties.collection}` })
-      item.links.push({ rel: 'collection', href: `${this.clink}/${item.properties.collection}` })
-      item.links.push({ rel: 'root', href: `${this.endpoint}/stac` })
-      item.type = 'Feature'
-      callback(err, item)
-    } else {
-      callback(err, {})
-    }
-  })
-}
-
-
-function STAC(path, endpoint, query, backend, respond = () => {}) {
-  // default page and limit
-  const _query = Object.assign({}, query)
-  const page = parseInt(_query.page) || 1
-  const limit = parseInt(_query.limit) || 1
-  delete _query.page
-  delete _query.limit
-
-  console.log(`Query page=${page}, limit=${limit}`)
-
-  // split and remove empty strings
-  const resources = path.split('/').filter((x) => x)
-  console.log('resources', resources)
-
-  // a root catalog
-  const cat = {
-    id: 'sat-api',
+const collectionsToCatalogLinks = function (results, endpoint) {
+  const catalog = {
+    stac_version,
+    id: sat_api,
     description: 'A STAC API of public datasets',
-    'satapi:version': stac_version,
-    stac_version: stac_version,
-    links: [
-      { rel: 'self', href: `${endpoint}/stac` }
-    ]
+    'satapi:version': stac_version
   }
-
-  const api = new API(backend, _query, endpoint)
-
-  switch (resources[0]) {
-  case 'stac':
-    if (resources.length === 1) {
-      api.search_collections((err, results) => {
-        if (err) respond(err)
-        results.collections.forEach((c) => {
-          cat.links.push({ rel: 'child', href: `${endpoint}/collections/${c.id}` })
-        })
-        respond(null, cat)
-      })
-    } else if (resources[1] === 'search') {
-      api.search_items(page, limit, respond)
+  catalog.links = results.map((result) => {
+    const { id } = result
+    return {
+      rel: 'child',
+      href: `${endpoint}/collections/${id}`
     }
-    break
-  case 'collections':
-    if (resources.length === 1) {
-      // all collections
-      api.search_collections(respond)
-    } else if (resources.length === 2) {
-      // specific collection
-      api.get_collection(resources[1], respond)
-    } else if (resources[2] === 'items') {
-      console.log('search items in this collection')
-      // this is a search across items in this collection
-      api.params.collection = resources[1]
-      api.search_items(page, limit, respond)
-    } else if (resources[2] === 'item' && resources.length === 4) {
-      // Get specific item in collection
-      api.get_item(resources[3], respond)
-    } else {
-      const msg = 'endpoint not defined'
-      console.log(msg, resources)
-      respond(null, msg)
-    }
-    break
-  default: {
-    const msg = 'endpoint not defined'
-    console.log(msg, resources)
-    respond(null, msg)
-  }
+  })
+  catalog.links.push({
+    rel: 'self',
+    href: `${endpoint}/stac`
+  })
+  return catalog
+}
+
+const extractPageFromQuery = function (originalQuery) {
+  const query = Object.assign({}, originalQuery)
+  const page = parseInt(originalQuery.page) || 1
+  const limit = parseInt(originalQuery.limit) || 1
+  delete query.page
+  delete query.limit
+  return { query, page, limit }
+}
+
+const wrapResponseInFeatureCollection = function (
+  meta, features = [], links = []
+) {
+  return {
+    type: 'FeatureCollection',
+    meta,
+    features,
+    links
   }
 }
 
+const buildPageLinks = function (meta, query, endpoint) {
+  const pageLinks = []
 
-module.exports.stac_version = stac_version
-module.exports.STAC = STAC
+  const dictToURI = (dict) => (
+    Object.keys(dict).map(
+      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+    ).join('&')
+  )
+  const { found, page, limit } = meta
+  if ((page * limit) < found) {
+    const newParams = Object.assign({}, query, { page: page + 1, limit })
+    const nextQueryParameters = dictToURI(newParams)
+    pageLinks.push({
+      rel: 'next',
+      title: 'Next page of results',
+      href: `${endpoint}/stac/search?${nextQueryParameters}`
+    })
+  }
+  return pageLinks
+}
+
+const searchItems = async function (query, page, limit, backend, endpoint) {
+  let response
+  const { results: collectionResults, meta: collectionMeta } =
+    await backend.search(query, 'collections', page, limit)
+  const collectionList = collectionResults.map((result) => result.id).join()
+  const collectionsQuery = Object.assign(
+    {}, query, { collection: collectionList }
+  )
+  if (!collectionList.length) {
+    response = wrapResponseInFeatureCollection(collectionMeta)
+  } else {
+    const { results: itemsResults, meta: itemsMeta } =
+      await backend.search(collectionsQuery, 'items', page, limit)
+    const pageLinks = buildPageLinks(itemsMeta, query, endpoint)
+    const items = addItemLinks(itemsResults, endpoint)
+    response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
+  }
+  return response
+}
+
+const esSearch = async function (
+  path = '', queryParameters = {}, backend, endpoint = ''
+) {
+  let apiResponse
+  const {
+    stac,
+    search,
+    collections,
+    collectionId,
+    items,
+    itemId
+  } = parsePath(path)
+  const intersectsParams = extractIntersectsParam(queryParameters)
+  const { query, page, limit } = extractPageFromQuery(intersectsParams)
+  try {
+    // Root catalog with collection links
+    if (stac && !search) {
+      const { results } =
+        await backend.search(undefined, 'collections', page, limit)
+      apiResponse = collectionsToCatalogLinks(results, endpoint)
+    }
+    if (stac && search) {
+      apiResponse = await searchItems(query, page, limit, backend, endpoint)
+    }
+    // All collections
+    if (collections && !collectionId) {
+      const { results, meta } =
+        await backend.search(query, 'collections', page, limit)
+      const linkedCollections = addCollectionLinks(results, endpoint)
+      apiResponse = { meta, collections: linkedCollections }
+    }
+    // Specific collection
+    if (collections && collectionId && !items) {
+      // Do query params need merging here ?
+      const collectionQuery = Object.assign({}, query, { 'id': collectionId })
+      const { results } = await backend.search(
+        collectionQuery, 'collections', page, limit
+      )
+      const collection = addCollectionLinks(results, endpoint)
+      if (collection.length > 0) {
+        apiResponse = collection[0]
+      } else {
+        apiResponse = new Error('Collection not found')
+      }
+    }
+    if (collections && collectionId && items && !itemId) {
+      const itemsQuery = Object.assign(
+        {}, query, { collection: collectionId }
+      )
+      apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
+    }
+    if (collections && collectionId && items && itemId) {
+      const itemQuery = Object.assign({}, query, { 'id': itemId })
+      const { results } = await backend.search(itemQuery, 'items', page, limit)
+      const [item] = addItemLinks(results, endpoint)
+      if (item) {
+        apiResponse = item
+      } else {
+        apiResponse = new Error('Item not found')
+      }
+    }
+  } catch (error) {
+    logger.error(error)
+    apiResponse = error
+  }
+  return apiResponse
+}
+
+module.exports = {
+  parsePath,
+  searchItems,
+  extractIntersectsParam,
+  search: esSearch
+}

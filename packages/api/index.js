@@ -2,24 +2,9 @@
 
 'use strict'
 
-const util = require('lambda-proxy-utils')
 const satlib = require('@sat-utils/api-lib')
 
-
-module.exports.handler = (event, context, cb) => {
-  console.log(`API handler: ${JSON.stringify(event)}`)
-
-  // function to send response to browser
-  function respond(err, resp) {
-    if (err) {
-      console.log(err)
-      const res = new util.Response({ cors: true, statusCode: 400 })
-      return cb(null, res.send({ details: err.message }))
-    }
-    const res = new util.Response({ cors: true, statusCode: 200 })
-    return cb(null, res.send(resp))
-  }
-
+module.exports.handler = async (event) => {
   // determine endpoint
   let endpoint
   if ('X-Forwarded-Host' in event.headers) {
@@ -31,6 +16,17 @@ module.exports.handler = (event, context, cb) => {
     }
   }
 
+  const buildResponse = (statusCode, body) => ({
+    isBase64Encoded: false,
+    statusCode,
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*', // Required for CORS support to work
+      'Access-Control-Allow-Credentials': true
+    }
+  })
+
   // get payload
   const method = event.httpMethod
   let query = {}
@@ -40,5 +36,12 @@ module.exports.handler = (event, context, cb) => {
     query = event.queryStringParameters
   }
 
-  satlib.api.STAC(event.path, endpoint, query, satlib.es, respond)
+  const result = await satlib.api.search(event.path, query, satlib.es, endpoint)
+  let returnResponse
+  if (result instanceof Error) {
+    returnResponse = buildResponse(404, result.message)
+  } else {
+    returnResponse = buildResponse(200, JSON.stringify(result))
+  }
+  return returnResponse
 }

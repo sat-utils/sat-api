@@ -1,0 +1,183 @@
+{
+    "assets": {
+        "ANG": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_ANG.txt",
+            "title": "Angle coefficients file",
+            "type": "text/plain"
+        },
+        "B1": {
+            "eo:bands": [
+                0
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B1.TIF",
+            "title": "Band 1 (coastal)",
+            "type": "image/x.geotiff"
+        },
+        "B10": {
+            "eo:bands": [
+                9
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B10.TIF",
+            "title": "Band 10 (lwir)",
+            "type": "image/x.geotiff"
+        },
+        "B11": {
+            "eo:bands": [
+                10
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B11.TIF",
+            "title": "Band 11 (lwir)",
+            "type": "image/x.geotiff"
+        },
+        "B2": {
+            "eo:bands": [
+                1
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B2.TIF",
+            "title": "Band 2 (blue)",
+            "type": "image/x.geotiff"
+        },
+        "B3": {
+            "eo:bands": [
+                2
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B3.TIF",
+            "title": "Band 3 (green)",
+            "type": "image/x.geotiff"
+        },
+        "B4": {
+            "eo:bands": [
+                3
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B4.TIF",
+            "title": "Band 4 (red)",
+            "type": "image/x.geotiff"
+        },
+        "B5": {
+            "eo:bands": [
+                4
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B5.TIF",
+            "title": "Band 5 (nir)",
+            "type": "image/x.geotiff"
+        },
+        "B6": {
+            "eo:bands": [
+                5
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B6.TIF",
+            "title": "Band 6 (swir16)",
+            "type": "image/x.geotiff"
+        },
+        "B7": {
+            "eo:bands": [
+                6
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B7.TIF",
+            "title": "Band 7 (swir22)",
+            "type": "image/x.geotiff"
+        },
+        "B8": {
+            "eo:bands": [
+                7
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B8.TIF",
+            "title": "Band 8 (pan)",
+            "type": "image/x.geotiff"
+        },
+        "B9": {
+            "eo:bands": [
+                8
+            ],
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_B9.TIF",
+            "title": "Band 9 (cirrus)",
+            "type": "image/x.geotiff"
+        },
+        "BQA": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_BQA.TIF",
+            "title": "Band quality data",
+            "type": "image/x.geotiff"
+        },
+        "MTL": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_MTL.txt",
+            "title": "original metadata file",
+            "type": "text/plain"
+        },
+        "index": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/index.html",
+            "title": "HTML index page",
+            "type": "text/html"
+        },
+        "thumbnail": {
+            "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/010/010/LC80100102015082LGN00/LC80100102015082LGN00_thumb_large.jpg",
+            "title": "Thumbnail image",
+            "type": "image/jpeg"
+        }
+    },
+    "bbox": [
+        -52.70915,
+        69.68455,
+        -45.21422,
+        72.07651
+    ],
+    "geometry": {
+        "coordinates": [
+            [
+                [
+                    -52.70915,
+                    72.07651
+                ],
+                [
+                    -45.21422,
+                    71.9981
+                ],
+                [
+                    -45.8512,
+                    69.68455
+                ],
+                [
+                    -52.52,
+                    69.75337
+                ],
+                [
+                    -52.70915,
+                    72.07651
+                ]
+            ]
+        ],
+        "type": "Polygon"
+    },
+    "id": "LC80100102015082LGN00",
+    "links": [
+        {
+            "href": "LC80100102015082LGN00.json",
+            "rel": "self"
+        },
+        {
+            "href": "catalog.json",
+            "rel": "root"
+        },
+        {
+            "href": "collection.json",
+            "rel": "parent"
+        },
+        {
+            "href": "collection.json",
+            "rel": "collection"
+        }
+    ],
+    "properties": {
+        "collection": "landsat-8-l1",
+        "datetime": "2015-03-23T15:05:56.200728+00:00",
+        "eo:cloud_cover": 8.26,
+        "eo:epsg": 32622,
+        "eo:sun_azimuth": 175.47823280,
+        "eo:sun_elevation": 20.20572191,
+        "landsat:path": "10",
+        "landsat:processing_level": "L1T",
+        "landsat:product_id": null,
+        "landsat:row": "10",
+        "landsat:scene_id": "LC80100102015082LGN00"
+    },
+    "type": "Feature"
+}
