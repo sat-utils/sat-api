@@ -230,13 +230,13 @@ const searchItems = async function (query, page, limit, backend, endpoint) {
   return response
 }
 
-const esSearch = async function (
+const search = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   const {
     stac,
-    search,
+    search: searchPath,
     collections,
     collectionId,
     items,
@@ -251,12 +251,12 @@ const esSearch = async function (
   const { query, page, limit } = extractPageFromQuery(params)
   try {
     // Root catalog with collection links
-    if (stac && !search) {
+    if (stac && !searchPath) {
       const { results } =
         await backend.search(undefined, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
-    if (stac && search) {
+    if (stac && searchPath) {
       apiResponse = await searchItems(query, page, limit, backend, endpoint)
     }
     // All collections
@@ -304,8 +304,8 @@ const esSearch = async function (
 }
 
 module.exports = {
+  search,
   parsePath,
   searchItems,
-  extractIntersectsParam,
-  search: esSearch
+  extractIntersectsParam
 }
