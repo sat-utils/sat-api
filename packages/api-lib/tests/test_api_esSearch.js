@@ -166,10 +166,11 @@ test('search /collections/collectionId', async (t) => {
   const backend = { search }
   const collectionId = 'collectionId'
   let actual = await api.search(
-    `/collections/${collectionId}`, {}, backend, 'endpoint'
+    `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
   )
   t.deepEqual(search.firstCall.args[0], { id: collectionId },
-    'Calls Elasticsearch with the collectionId path element as id parameter')
+    'Calls Elasticsearch with the collectionId path element as id parameter' +
+    ' and ignores other passed filter parameters')
   t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
   search.reset()
@@ -223,7 +224,9 @@ test('search /collections/collectionId/items/itemId', async (t) => {
     `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
   )
   t.deepEqual(search.firstCall.args[0], { id: itemId },
-    'Calls Elasticsearch with the itemId path element as id parameter')
+    'Calls Elasticsearch with the itemId path element as id parameter' +
+    ' and ignores other passed filter parameters')
+
   t.is(actual.type, 'Feature')
   t.is(actual.links.length, 4, 'Adds STAC links to response object')
 })

@@ -268,8 +268,7 @@ const search = async function (
     }
     // Specific collection
     if (collections && collectionId && !items) {
-      // Do query params need merging here ?
-      const collectionQuery = Object.assign({}, query, { 'id': collectionId })
+      const collectionQuery = { 'id': collectionId }
       const { results } = await backend.search(
         collectionQuery, 'collections', page, limit
       )
@@ -287,7 +286,7 @@ const search = async function (
       apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
     }
     if (collections && collectionId && items && itemId) {
-      const itemQuery = Object.assign({}, query, { 'id': itemId })
+      const itemQuery = { 'id': itemId }
       const { results } = await backend.search(itemQuery, 'items', page, limit)
       const [item] = addItemLinks(results, endpoint)
       if (item) {
