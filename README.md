@@ -33,9 +33,6 @@ The latest version released is on the [master branch](https://github.com/sat-uti
     # run lerna boostrap to link together packages and install those package dependencies
     $ yarn bootstrap
 
-    # run the build command in each of the packages (runs webpack)
-    $ yarn build
-
     # to continually watch and build source files
     $ yarn watch
 
