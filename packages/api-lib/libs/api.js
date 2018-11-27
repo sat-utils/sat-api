@@ -2,8 +2,6 @@ const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const { feature } = require('@turf/helpers')
 const logger = require('./logger')
-const stac_version = '0.6.0-rc2'
-const sat_api = 'sat-api'
 
 const extractIntersectsParam = function (params) {
   let returnParams
@@ -149,11 +147,15 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const collectionsToCatalogLinks = function (results, endpoint) {
+  const stac_version = process.env.STAC_VERSION
+  const stac_id = process.env.STAC_ID
+  const stac_title = process.env.STAC_TITLE
+  const stac_description = process.env.STAC_DESCRIPTION
   const catalog = {
     stac_version,
-    id: sat_api,
-    description: 'A STAC API of public datasets',
-    'satapi:version': stac_version
+    id: stac_id,
+    title: stac_title,
+    description: stac_description
   }
   catalog.links = results.map((result) => {
     const { id } = result
