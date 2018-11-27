@@ -25,6 +25,8 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
+    "@mapbox/extent": "^0.4.0",
+    "@turf/helpers": "^6.1.4",
     "elasticsearch": "^14.2.2",
     "elasticsearch-writable-stream": "^2.0.1",
     "geojson-validation": "^0.1.6",
