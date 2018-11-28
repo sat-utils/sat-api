@@ -39,6 +39,13 @@ The latest version released is on the [master branch](https://github.com/sat-uti
     # to continually watch and build source files
     $ yarn watch
 
+### Environment variables
+
+`STAC_VERSION`
+`STAC_ID`
+`STAC_TITLE`
+`STAC_DESCRIPTION`
+
 ### Serving docs locally
 
     $ yarn docs-serve

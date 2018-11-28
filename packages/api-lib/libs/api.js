@@ -2,8 +2,6 @@ const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const { feature } = require('@turf/helpers')
 const logger = require('./logger')
-const stac_version = '0.6.0-rc2'
-const sat_api = 'sat-api'
 
 const extractIntersectsParam = function (params) {
   let returnParams
@@ -45,6 +43,18 @@ const extractBboxParam = function (params) {
     const boundingBox = extent(bbox)
     const geojson = feature(boundingBox.polygon())
     returnParams = Object.assign({}, params, { intersects: geojson })
+  } else {
+    returnParams = params
+  }
+  return returnParams
+}
+
+const extractTimeParam = function (params) {
+  let returnParams
+  const { time } = params
+  if (time) {
+    returnParams = Object.assign({}, params, { datetime: time })
+    delete returnParams.time
   } else {
     returnParams = params
   }
@@ -137,11 +147,15 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const collectionsToCatalogLinks = function (results, endpoint) {
+  const stac_version = process.env.STAC_VERSION
+  const stac_id = process.env.STAC_ID
+  const stac_title = process.env.STAC_TITLE
+  const stac_description = process.env.STAC_DESCRIPTION
   const catalog = {
     stac_version,
-    id: sat_api,
-    description: 'A STAC API of public datasets',
-    'satapi:version': stac_version
+    id: stac_id,
+    title: stac_title,
+    description: stac_description
   }
   catalog.links = results.map((result) => {
     const { id } = result
@@ -218,31 +232,33 @@ const searchItems = async function (query, page, limit, backend, endpoint) {
   return response
 }
 
-const esSearch = async function (
+const search = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   const {
     stac,
-    search,
+    search: searchPath,
     collections,
     collectionId,
     items,
     itemId
   } = parsePath(path)
-  const bboxParams = extractBboxParam(queryParameters)
+
+  const timeParams = extractTimeParam(queryParameters)
+  const bboxParams = extractBboxParam(timeParams)
   const intersectsParams = extractIntersectsParam(queryParameters)
   // Prefer intersects
   const params = intersectsParams.intersects ? intersectsParams : bboxParams
   const { query, page, limit } = extractPageFromQuery(params)
   try {
     // Root catalog with collection links
-    if (stac && !search) {
+    if (stac && !searchPath) {
       const { results } =
         await backend.search(undefined, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
-    if (stac && search) {
+    if (stac && searchPath) {
       apiResponse = await searchItems(query, page, limit, backend, endpoint)
     }
     // All collections
@@ -254,8 +270,7 @@ const esSearch = async function (
     }
     // Specific collection
     if (collections && collectionId && !items) {
-      // Do query params need merging here ?
-      const collectionQuery = Object.assign({}, query, { 'id': collectionId })
+      const collectionQuery = { 'id': collectionId }
       const { results } = await backend.search(
         collectionQuery, 'collections', page, limit
       )
@@ -273,7 +288,7 @@ const esSearch = async function (
       apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
     }
     if (collections && collectionId && items && itemId) {
-      const itemQuery = Object.assign({}, query, { 'id': itemId })
+      const itemQuery = { 'id': itemId }
       const { results } = await backend.search(itemQuery, 'items', page, limit)
       const [item] = addItemLinks(results, endpoint)
       if (item) {
@@ -290,8 +305,8 @@ const esSearch = async function (
 }
 
 module.exports = {
+  search,
   parsePath,
   searchItems,
-  extractIntersectsParam,
-  search: esSearch
+  extractIntersectsParam
 }
