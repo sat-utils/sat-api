@@ -19,6 +19,14 @@ default:
   apis:
     - name: stac
 
+  tasks:
+    SatApiTaskRunner:
+      image: developmentseed/lambda-ecs-runner:node-8.11
+      cpu: 512
+      memory: 1024
+      envs:
+        stackName: '{{stackName}}'
+
   lambdas:
     ingest:
       source: 'node_modules/@sat-utils/ingest/dist/'

@@ -21,8 +21,7 @@
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
     "@sat-utils/api-lib": "^0.2.0",
-    "got": "^9.3.1",
-    "sync-requests": "^1.0.0"
+    "@developmentseed/task-starter": "^0.1.0"
   },
   "devDependencies": {
     "webpack": "~4.5.0",

@@ -2,6 +2,7 @@
 
 const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
+const taskStarter = require('@developmentseed/task-starter/src')
 
 // SNS message
 module.exports.handler = function handler(event) {
@@ -15,7 +16,18 @@ module.exports.handler = function handler(event) {
       satlib.ingest.ingest(url)
     })
   } else if (msg.hasOwnProperty('catalog')) {
-    satlib.ingest.ingest(msg.catalog)
+    // msg is URL to a catalog node - start a Fargate instance to process
+    if (msg.hasOwnProperty('fargate')) {
+      console.log('this IS fargate')
+    } else {
+      taskStarter({
+        arn: context.invoked_function_arn,
+        input: { catalog: msg.catalog, fargate: true },
+        cluster: 'SatApiECSCluster',
+        taskDefinition: 'SatApiTaskRunner'
+      })
+    }
+    //satlib.ingest.ingest({catalog: msg.catalog})
   } else {
     // msg is STAC record itself
     const inStream = new readableStream.Readable({ objectMode: true })

@@ -22,7 +22,7 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
-              # Allow Lambda logging
+              # allow Lambda logging
               - Effect: Allow
                 Action:
                 - logs:DescribeLogStreams
@@ -31,7 +31,7 @@ Resources:
                 - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
-              # Allow writing to s3 buckets
+              # allow writing to s3 buckets
               - Effect: Allow
                 Action:
                 - s3:AbortMultipartUpload
@@ -44,12 +44,78 @@ Resources:
                 - !Sub arn:aws:s3:::*
                 - !Sub arn:aws:s3:::*/*
 
-              # Allow access to ES
+              # allow access to ES
               - Effect: Allow
                 Action:
                 - es:*
                 Resource:
                 - "arn:aws:es:*:*:domain/*"
+
+              # allow starting ECS tasks 
+              - Effect: Allow
+                Action:
+                - ecs:RunTask
+                - iam:PassRole
+                Resource:
+                - "*"
+
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: ECSRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: "*"
+               - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: "*"
+               # Allow writing to ingest buckets
+              - Effect: Allow
+                Action:
+                  - s3:GetBucket*
+                  - s3:ListBucket*
+                Resource:
+                  - arn:aws:s3:::{{system_bucket}}
+               - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetObject*
+                  - s3:PutObject*
+                  - s3:ListMultipartUploadParts
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource: 
+                  - arn:aws:s3:::{{system_bucket}}/*
+               - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                Resource: '*'
+               # Allow lambdas to call other lambdas
+              - Effect: Allow
+                Action:
+                  - lambda:*
+                Resource:
+                  - arn:aws:lambda:::function:{{stackName}}-*
 
 {{# if es.name}}
   #################################################
