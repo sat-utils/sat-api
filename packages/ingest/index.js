@@ -14,6 +14,8 @@ module.exports.handler = function handler(event) {
       url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
       satlib.ingest.ingest(url)
     })
+  } else if (msg.hasOwnProperty('catalog')) {
+    satlib.ingest.ingest(msg.catalog)
   } else {
     // msg is STAC record itself
     const inStream = new readableStream.Readable({ objectMode: true })
