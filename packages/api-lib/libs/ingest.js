@@ -22,31 +22,41 @@ function readFile(filename) {
 let nCat = 0
 let nCol = 0
 let nItem = 0
-function* readCatalog(filename, root = false) {
+function* readCatalog(filename, root = false, recursive = true, collectionsOnly = false) {
   console.log(`Reading ${filename}`)
   const fname = filename.toString()
   const cat = readFile(fname)
   if (cat.hasOwnProperty('extent')) {
+    // Collection
     nCol += 1
+    yield cat
+    if (collectionsOnly) {
+      // stop recursing
+      return true
+    }
   } else if (cat.hasOwnProperty('geometry')) {
+    // Item
     nItem += 1
+    yield cat
   } else {
+    // Catalog
     nCat += 1
   }
-  yield cat
   let index = 0
-  for (index = 0; index < cat.links.length; index += 1) {
-    const link = cat.links[index]
-    if (link.rel === 'child' || link.rel === 'item') {
-      if (path.isAbsolute(link.href)) {
-        yield* readCatalog(link.href)
-      } else {
-        yield* readCatalog(`${path.dirname(fname)}/${link.href}`)
+  if (recursive) {
+    for (index = 0; index < cat.links.length; index += 1) {
+      const link = cat.links[index]
+      if (link.rel === 'child' || link.rel === 'item') {
+        if (path.isAbsolute(link.href)) {
+          yield* readCatalog(link.href)
+        } else {
+          yield* readCatalog(`${path.dirname(fname)}/${link.href}`)
+        }
       }
     }
   }
   if (root) {
-    console.log(`Read ${nCat} catalogs, ${nCol} collections, ${nItem} items.`)
+    console.log(`Read ${nCat} catalogs, ingested ${nCol} collections and ${nItem} items.`)
   }
   return true
 }
@@ -58,8 +68,8 @@ async function prepare() {
 }
 
 
-async function ingest(url) {
-  const catStream = highland(readCatalog(url, true))
+async function ingest(url, recursive = true, collectionsOnly = false) {
+  const catStream = highland(readCatalog(url, true, recursive, collectionsOnly))
 
   // prepare backend
   await prepare()
