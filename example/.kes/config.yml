@@ -5,6 +5,14 @@ default:
   tags:
     project: sat-api
 
+  lambdas:
+    api:
+      envs:
+        STAC_TITLE: "sat-api for public datasets"
+        STAC_ID: "sat-api"
+        STAC_VERSION: "0.6.0"
+        STAC_DESCRIPTION: "Development Seed's sat-api for Public Datasets (landsat-8, sentinel-2)"
+
 dev:
   stackName: sat-api-dev
   es:
