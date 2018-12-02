@@ -30,16 +30,17 @@ module.exports.handler = function handler(event) {
   } else if (event.hasOwnProperty('url')) {
     const recursive = event.recursive || true
     const collectionsOnly = event.collectionsOnly || false
-    console.log(`Ingesting URL ${event.url}`)
+    console.log(`Ingesting URL ${JSON.stringify(event)}`)
     satlib.ingest.ingest(event.url, recursive, collectionsOnly)
   } else if (event.hasOwnProperty('fargate')) {
     // event is URL to a catalog node - start a Fargate instance to process
     console.log('Starting Fargate task to ingest URL')
-    /*taskStarter({
+    // TODO - pass in all args from event
+    taskStarter({
       arn: context.invoked_function_arn,
-      input: { event.fargate },
+      input: { url: event.fargate.url },
       cluster: 'SatApiECSCluster',
       taskDefinition: 'SatApiTaskRunner'
-    })*/
+    })
   }
 }
