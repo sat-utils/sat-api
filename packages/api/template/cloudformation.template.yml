@@ -82,7 +82,7 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource: "*"
-               - Effect: Allow
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
@@ -96,7 +96,7 @@ Resources:
                   - s3:ListBucket*
                 Resource:
                   - arn:aws:s3:::{{system_bucket}}
-               - Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:AbortMultipartUpload
                   - s3:GetObject*
@@ -106,7 +106,7 @@ Resources:
                   - s3:DeleteObjectVersion
                 Resource: 
                   - arn:aws:s3:::{{system_bucket}}/*
-               - Effect: Allow
+              - Effect: Allow
                 Action:
                   - s3:ListAllMyBuckets
                 Resource: '*'
