@@ -51,6 +51,14 @@ Resources:
                 Resource:
                 - "arn:aws:es:*:*:domain/*"
 
+              # Allow lambdas to call other lambdas
+              - Effect: Allow
+                Action:
+                - lambda:GetFunction
+                - lambda:invokeFunction
+                Resource:
+                - "*"
+
               # allow starting ECS tasks 
               - Effect: Allow
                 Action:
@@ -115,7 +123,7 @@ Resources:
                 Action:
                   - lambda:*
                 Resource:
-                  - arn:aws:lambda:::function:{{stackName}}-*
+                  - arn:aws:lambda:*:function:{{stackName}}-*
 
 {{# if es.name}}
   #################################################
@@ -158,6 +166,98 @@ Resources:
   # ElasticSearch config END
   #################################################
 {{/if}}
+
+  #################################################
+  # ECS config BEGIN
+  #################################################
+
+  SatApiECSCluster:
+    Type: AWS::ECS::Cluster
+
+{{#each tasks}}
+  # adding TaskDefinition for Lambda/ECS services
+  {{@key}}TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      RequiresCompatibilities:
+        - FARGATE
+    {{# if this.volumes}}
+      Volumes:
+      {{# each this.volumes}}
+        - Name: {{name}}
+          Host:
+            SourcePath: {{path}} 
+      {{/each}}
+    {{/if}}
+      NetworkMode: awsvpc
+      ExecutionRoleArn:
+        Fn::GetAtt:
+          - ECSRole
+          - Arn
+      Cpu: {{#if this.cpu }}{{ this.cpu }}{{ else }}256{{/if}}
+      Memory: {{#if this.memory }}{{ this.memory }}{{ else }}1024{{/if}}
+      ContainerDefinitions:
+      - Name: {{@key}}
+        Essential: true
+      {{# if this.volumes}}
+        MountPoints:
+        {{# each this.volumes}}
+          - SourceVolume: {{name}}
+            ContainerPath: {{dst}}
+        {{/each}}
+      
+      {{/if}}
+
+        Environment:
+    {{#each this.envs}}
+      {{# if this.function}}
+        {{#if this.array}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}:
+              {{#each this.array}}
+                - {{this}}
+              {{/each}}          
+        {{/if}}
+        {{#if this.value}}
+          - Name: {{@key}}
+            Value:
+              {{this.function}}: {{this.value}}
+        {{/if}}
+      {{else}}
+          - Name: {{@key}}
+            Value: {{{this}}}
+      {{/if}}
+    {{/each}}
+        Image: {{image}}
+    {{# if this.commands }}
+        Command:
+      {{# each this.commands }}
+        {{# if this.function}}
+          - {{this.function}}: {{this.value}}
+        {{else}}
+          - {{{ @this }}}
+        {{/if}}
+      {{/each}}
+    {{/if}}
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group:
+              Ref: {{@key}}EcsLogs
+            awslogs-region:
+              Fn::Sub: ${AWS::Region}
+            awslogs-stream-prefix: sat-api-taskrunner
+
+  {{@key}}EcsLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: {{../stackName}}-{{@key}}EcsLogs
+
+{{/each}}
+  #################################################
+  # ECS config END
+  #################################################
 
   #################################################
   # APIGateway config BEGIN
