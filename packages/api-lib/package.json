@@ -37,9 +37,6 @@
     "moment": "^2.15.1",
     "pump": "^3.0.0",
     "sync-request": "^6.0.0",
-    "turf-area": "^3.0.1",
-    "turf-intersect": "^3.0.10",
-    "turf-kinks": "^3.0.12",
     "winston": "^2.2.0"
   },
   "devDependencies": {
