@@ -37,9 +37,9 @@ default:
         bucket: '{{system_bucket}}'
         prefix: '{{stackName}}'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        ECS_ROLE: "!GetAtt ECSRole.Arn"
-        CLUSTER_NAME: "!GetAtt SatApiECSCluster.Arn"
-        #TASK_NAME: "!GetAtt SatApiTaskRunnerTaskDefinition.Name"
+        ECS_ROLE_ARN: "!GetAtt ECSRole.Arn"
+        CLUSTER_ARN: "!GetAtt SatApiECSCluster.Arn"
+        TASK_ARN: "!Ref SatApiTaskRunnerTaskDefinition"
     api:
       source: 'node_modules/@sat-utils/api/dist/'
       handler: index.handler
