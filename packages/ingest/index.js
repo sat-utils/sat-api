@@ -2,12 +2,11 @@
 
 const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
-const taskStarter = require('@developmentseed/task-starter/src')
+const taskStarter = require('@developmentseed/task-starter')
 
 // SNS message
-module.exports.handler = function handler(event) {
+module.exports.handler = function handler(event, context) {
   console.log('Ingest message: ', JSON.stringify(event))
-  let url
 
   // event is SNS message of updated file on s3
   if (event.hasOwnProperty('Records')) {
@@ -33,14 +32,21 @@ module.exports.handler = function handler(event) {
     console.log(`Ingesting URL ${JSON.stringify(event)}`)
     satlib.ingest.ingest(event.url, recursive, collectionsOnly)
   } else if (event.hasOwnProperty('fargate')) {
+  if (event.hasOwnProperty('fargate')) {
     // event is URL to a catalog node - start a Fargate instance to process
     console.log('Starting Fargate task to ingest URL')
     // TODO - pass in all args from event
-    taskStarter({
-      arn: context.invoked_function_arn,
+    const payload = {
+      arn: context.invokedFunctionArn,
       input: { url: event.fargate.url },
-      cluster: 'SatApiECSCluster',
-      taskDefinition: 'SatApiTaskRunner'
+      cluster: process.env.CLUSTER_ARN,
+      taskDefinition: process.env.TASK_ARN,
+      subnets: event.fargate.subnets,
+      securityGroups: event.fargate.securityGroups,
+      roleArn: process.env.ECS_ROLE_ARN
+    }
+    taskStarter.handler(payload, context, (err) => {
+      if (err) { console.log(`Error: ${JSON.stringify(err)}`) }
     })
   }
 }
