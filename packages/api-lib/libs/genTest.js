@@ -7,6 +7,9 @@ const Bottleneck = require('bottleneck')
 const isUrl = require('is-url')
 const util = require('util')
 const fs = require('fs')
+const { Readable } = require('stream');
+process.env.ES_HOST = 'http://192.168.99.100:4571'
+const backend = require('./es')
 
 const limiter = new Bottleneck({
   maxConcurrent: 50,
@@ -21,13 +24,14 @@ function streamSink(stream) {
       if (data) {
         next(null, `${data.links[0].href}\n`)
       } else {
-        next()
+        next(null, null)
       }
     })
-  pump(stream, transform, process.stdout)
+    stream.pipe(transform)
+    .pipe(process.stdout)
 }
 
-async function traverse(url, push, count, root) {
+async function traverse(url, stream, count, root, next) {
   count += 1
   try {
     let response
@@ -37,36 +41,51 @@ async function traverse(url, push, count, root) {
       response = await limitedRead(url)
     }
     const cat = JSON.parse(response)
-    push(null, cat)
+    stream.push(cat)
     const { links } = cat
     links.forEach(async (link) => {
       const { rel, href } = link
       if (rel === 'child' || rel === 'item') {
         count -= 1
         if (path.isAbsolute(href)) {
-          traverse(href, push, count)
+          traverse(href, stream, count)
         } else {
-          traverse(`${path.dirname(url)}/${link.href}`, push, count)
+          traverse(`${path.dirname(url)}/${link.href}`, stream, count)
         }
       }
     })
     if (count === 0 && !root) {
-      push(null)
+      stream.push(null)
     }
   } catch (err) {
     console.log(err)
   }
 }
 
-function processCatalog(url) {
+async function processCatalog(url) {
+
+  const readStream = new Readable({ objectMode: true });
+  readStream._read = () => {}
+  streamSink(readStream)
+
+  //await backend.prepare('collections')
+  //await backend.prepare('items')
+  //const { toEs, esStream } = await backend.stream()
+  //pump(
+    //readStream,
+    //toEs,
+    //esStream,
+    //(err) => {
+      //if (err) {
+        //console.log('Error streaming: ', err)
+      //} else {
+        //console.log('Ingest complete')
+      //}
+    //})
+
   let count = 0
-  const catStream = highland((push) => {
-    traverse(url, push, count, true)
-  })
-  streamSink(catStream)
+  traverse(url, readStream, count, true)
 }
 
-//processCatalog('https://landsat-stac.s3.amazonaws.com/catalog.json')
-processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/catalog.json')
-//processCatalog('../tests/integration/data/catalog.json')
+processCatalog('../tests/integration/data/catalog.json')
 

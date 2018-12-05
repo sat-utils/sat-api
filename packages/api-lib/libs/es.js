@@ -4,7 +4,8 @@ const AWS = require('aws-sdk')
 const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
-const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
+//const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
+const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const readableStream = require('readable-stream')
 const pump = require('pump')
 //const logger = require('./logger')
@@ -132,8 +133,8 @@ async function prepare(index) {
 
 
 // Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream(stream, transform = through2.obj()) {
-  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
+async function _stream() {
+  const toEs = through2.obj({ objectMode: true }, function (data, encoding, next) {
     let index = ''
     if (data.hasOwnProperty('extent')) {
       index = 'collections'
@@ -160,34 +161,16 @@ async function _stream(stream, transform = through2.obj()) {
     }
     next(null, record)
   })
-
-
-  return esClient().then((client) => {
-    const esStream = new ElasticsearchWritableStream(client, {
-      highWaterMark: 100,
-      flushTimeout: 10000
+  try {
+    const client = await esClient()
+    const esStream = new ElasticsearchWritableStream({ client: client }, {
+      objectMode: true,
+      highWaterMark: 1
     })
-
-    return new Promise((resolve, reject) => {
-      //stream.pipe(toEs).pipe(esStream)
-      pump(
-        stream,
-        transform,
-        toEs,
-        esStream,
-        (err) => {
-          if (err) {
-            console.log('Error streaming: ', err)
-            reject(err)
-          } else {
-            console.log('Ingest complete')
-            resolve()
-          }
-        }
-      )
-    })
-  })
-    .catch((e) => console.log(e))
+    return { toEs, esStream }
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 
