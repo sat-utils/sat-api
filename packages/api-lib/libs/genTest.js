@@ -29,55 +29,57 @@ function streamSink(stream) {
     stream.pipe(transform)
     .pipe(process.stdout)
 }
-
-async function traverse(url, stream, count, root) {
+let count = 0
+async function traverse(url, stream, root) {
   count += 1
   try {
     let response
     if (isUrl(url)) {
       response = await limitedRequest(url)
+      count -= 1
     } else {
       response = await limitedRead(url)
+      count -= 1
     }
     const item = JSON.parse(response)
     const written = stream.write(item)
     if (written) {
-      traverseLinks(url, item, stream, count)
+      traverseLinks(item, url, stream)
     } else {
       stream.once('drain', () => {
-        traverseLinks(url, item, stream, count)
+        traverseLinks(item, url, stream)
       })
     }
     if (count === 0 && !root) {
-      stream.push(null)
+      console.log('completed')
+      stream.write('completed')
+      //return 'completed'
     }
   } catch (err) {
     console.log(err)
   }
 }
 
-function traverseLinks(url, item, stream, count) {
+function traverseLinks(item, url, stream) {
   const { links } = item
   links.forEach(async (link) => {
     const { rel, href } = link
     if (rel === 'child' || rel === 'item') {
-      count -= 1
       if (path.isAbsolute(href)) {
-        traverse(href, stream, count)
+        traverse(href, stream)
       } else {
-        traverse(`${path.dirname(url)}/${link.href}`, stream, count)
+        traverse(`${path.dirname(url)}/${link.href}`, stream)
       }
     }
   })
 }
-
 class ItemStream extends Duplex {
   constructor(options) {
     super({
       readableObjectMode : true,
       writableObjectMode: true
     })
-    this.items = [{}]
+    this.items = []
   }
   _write(chunk, encoding, callback) {
     this.items.push(chunk)
@@ -85,15 +87,20 @@ class ItemStream extends Duplex {
   }
   _read() {
     const item = this.items.pop()
-    this.items.push(item)
+    if (item === 'completed') {
+      this.push(null)
+    } else {
+      this.push(item)
+    }
   }
 }
 
 async function processCatalog(url) {
   const duplexStream = new ItemStream()
-
-  await backend.prepare('collections')
-  await backend.prepare('items')
+  const start = await traverse(url, duplexStream, true)
+  streamSink(duplexStream)
+  //await backend.prepare('collections')
+  //await backend.prepare('items')
   //const { toEs, esStream } = await backend.stream()
   //pump(
     //duplexStream,
@@ -106,9 +113,6 @@ async function processCatalog(url) {
         //console.log('Ingest complete')
       //}
     //})
-  streamSink(duplexStream)
-  let count = 0
-  traverse(url, duplexStream, count, true)
 }
 processCatalog('../tests/integration/data/catalog.json')
 //processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/81/catalog.json')
