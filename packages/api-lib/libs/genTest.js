@@ -1,32 +1,24 @@
 const pump = require('pump')
 const request = require('request-promise-native')
 const path = require('path')
-const Bottleneck = require('bottleneck')
 const isUrl = require('is-url')
 const util = require('util')
-const through2 = require('through2')
 const fs = require('fs')
 const { Duplex } = require('stream');
 process.env.ES_HOST = 'http://192.168.99.100:4571'
 const backend = require('./es')
 
-const limiter = new Bottleneck({
-  maxConcurrent: 50,
-  minTime: 10
-})
-const limitedRequest = limiter.wrap(request)
-const limitedRead = limiter.wrap(util.promisify(fs.readFile))
-
+const read = util.promisify(fs.readFile)
 let count = 0
 async function traverse(url, stream, root) {
   count += 1
   try {
     let response
     if (isUrl(url)) {
-      response = await limitedRequest(url)
+      response = await request(url)
       count -= 1
     } else {
-      response = await limitedRead(url)
+      response = await read(url)
       count -= 1
     }
     const item = JSON.parse(response)
@@ -44,6 +36,7 @@ async function traverse(url, stream, root) {
       stream.write('completed')
     }
   } catch (err) {
+    count -= 1
     console.log(err)
   }
 }
@@ -70,7 +63,7 @@ class ItemStream extends Duplex {
     this.items = []
   }
   _write(chunk, encoding, callback) {
-    console.log('wrote ', chunk.id)
+    console.log('pushed ', chunk.id)
     this.items.push(chunk)
     this.push()
     callback()
@@ -91,11 +84,9 @@ class ItemStream extends Duplex {
 
 async function processCatalog(url) {
   const duplexStream = new ItemStream()
-  traverse(url, duplexStream, true)
   await backend.prepare('collections')
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
-  //duplexStream.pipe(toEs).pipe(esStream)
   pump(
     duplexStream,
     toEs,
@@ -107,7 +98,9 @@ async function processCatalog(url) {
         console.log('Ingest complete')
       }
     })
+  traverse(url, duplexStream, true)
 }
-processCatalog('../tests/integration/data/catalog.json')
-//processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/72/catalog.json')
+//processCatalog('../tests/integration/data/catalog.json')
+processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/72/catalog.json')
+//LC08_L1TP_227072_20181110_20181127_01_T1
 
