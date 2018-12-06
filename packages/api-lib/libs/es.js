@@ -164,7 +164,7 @@ async function _stream() {
     const client = await esClient()
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
-      highWaterMark: 1
+      highWaterMark: 20
     })
     return { toEs, esStream }
   } catch (err) {

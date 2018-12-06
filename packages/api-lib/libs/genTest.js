@@ -35,9 +35,9 @@ async function traverse(url, stream, root) {
     if (count === 0 && !root) {
       stream.write('completed')
     }
-  } catch (err) {
+  } catch (error) {
     count -= 1
-    console.log(err)
+    console.log(error)
   }
 }
 
@@ -63,7 +63,7 @@ class ItemStream extends Duplex {
     this.items = []
   }
   _write(chunk, encoding, callback) {
-    console.log('pushed ', chunk.id)
+    console.log('Pushed ', chunk.id)
     this.items.push(chunk)
     this.push()
     callback()

@@ -34,7 +34,7 @@ class ElasticSearchWritableStream extends stream.Writable {
         type: record.type,
         body: record.body
       })
-      console.log(record.body.doc.id)
+      console.log('Wrote ', record.body.doc.id)
       next()
       return
     } catch(err) {
@@ -43,10 +43,29 @@ class ElasticSearchWritableStream extends stream.Writable {
   }
 
   async _writev(chunks, next) {
+    const body = chunks.reduce((bulkOperations, chunk) => {
+      const record = chunk.chunk
+      var operation = {};
+      operation[record.action] = {
+        _index: record.index,
+        _type: record.type,
+        _id: record.id
+      };
+      if (record.parent) {
+        operation[record.action]._parent = record.parent;
+      }
+      bulkOperations.push(operation);
+      if (record.action !== 'delete') {
+        bulkOperations.push(record.body);
+      }
+      return bulkOperations;
+    }, [])
+
     try {
       await this.client.bulk({
-        body: chunks
+        body
       })
+      console.log('Wrote ', body.length)
       next()
     } catch(err) {
       next(err)
