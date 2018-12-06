@@ -17,14 +17,6 @@ const limiter = new Bottleneck({
 const limitedRequest = limiter.wrap(request)
 const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 
-function streamSink(stream) {
-  const transform = through2.obj({ objectMode: true },
-    (data, encoding, next) => {
-      next(null, `${data.links[0].href}\n`)
-    })
-    stream.pipe(transform).pipe(process.stdout)
-}
-
 let count = 0
 async function traverse(url, stream, root) {
   count += 1
@@ -38,18 +30,18 @@ async function traverse(url, stream, root) {
       count -= 1
     }
     const item = JSON.parse(response)
-    const written = stream.write(item)
-    if (written) {
-      traverseLinks(item, url, stream)
-    } else {
-      stream.once('drain', () => {
+    if (item) {
+      const written = stream.write(item)
+      if (written && item) {
         traverseLinks(item, url, stream)
-      })
+      } else {
+        stream.once('drain', () => {
+          traverseLinks(item, url, stream)
+        })
+      }
     }
     if (count === 0 && !root) {
-      console.log('completed')
       stream.write('completed')
-      //return 'completed'
     }
   } catch (err) {
     console.log(err)
@@ -78,41 +70,44 @@ class ItemStream extends Duplex {
     this.items = []
   }
   _write(chunk, encoding, callback) {
+    console.log('wrote ', chunk.id)
     this.items.push(chunk)
+    this.push()
     callback()
   }
   _read() {
     this.items.some((item, index, _items) => {
       if (item === 'completed') {
         this.push(null)
+      } else {
+      console.log('Read ', item.id)
+        const pause = this.push(item)
+        _items.splice(index, 1)
+        return !pause
       }
-      const pause = this.push(item)
-      _items.splice(index, 1)
-      console.log(!pause)
-      return !pause
     })
   }
 }
 
 async function processCatalog(url) {
   const duplexStream = new ItemStream()
-  streamSink(duplexStream)
   traverse(url, duplexStream, true)
-  //await backend.prepare('collections')
-  //await backend.prepare('items')
-  //const { toEs, esStream } = await backend.stream()
-  //pump(
-    //duplexStream,
-    //toEs,
-    //esStream,
-    //(err) => {
-      //if (err) {
-        //console.log('Error streaming: ', err)
-      //} else {
-        //console.log('Ingest complete')
-      //}
-    //})
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  //duplexStream.pipe(toEs).pipe(esStream)
+  pump(
+    duplexStream,
+    toEs,
+    esStream,
+    (err) => {
+      if (err) {
+        console.log('Error streaming: ', err)
+      } else {
+        console.log('Ingest complete')
+      }
+    })
 }
 processCatalog('../tests/integration/data/catalog.json')
-//processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/81/catalog.json')
+//processCatalog('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/227/72/catalog.json')
 
