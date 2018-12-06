@@ -136,9 +136,9 @@ async function prepare(index) {
 async function _stream() {
   const toEs = through2.obj({ objectMode: true }, function (data, encoding, next) {
     let index = ''
-    if (data.hasOwnProperty('extent')) {
+    if (data && data.hasOwnProperty('extent')) {
       index = 'collections'
-    } else if (data.hasOwnProperty('geometry')) {
+    } else if (data && data.hasOwnProperty('geometry')) {
       index = 'items'
     } else {
       next()

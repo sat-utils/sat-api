@@ -7,7 +7,7 @@ const Bottleneck = require('bottleneck')
 const isUrl = require('is-url')
 const util = require('util')
 const fs = require('fs')
-const { Readable } = require('stream');
+const { Duplex } = require('stream');
 process.env.ES_HOST = 'http://192.168.99.100:4571'
 const backend = require('./es')
 
@@ -41,7 +41,7 @@ async function traverse(url, stream, count, root, next) {
       response = await limitedRead(url)
     }
     const cat = JSON.parse(response)
-    stream.push(cat)
+    stream.write(cat)
     const { links } = cat
     links.forEach(async (link) => {
       const { rel, href } = link
@@ -61,31 +61,43 @@ async function traverse(url, stream, count, root, next) {
     console.log(err)
   }
 }
-
-async function processCatalog(url) {
-
-  const readStream = new Readable({ objectMode: true });
-  readStream._read = () => {}
-  streamSink(readStream)
-
-  //await backend.prepare('collections')
-  //await backend.prepare('items')
-  //const { toEs, esStream } = await backend.stream()
-  //pump(
-    //readStream,
-    //toEs,
-    //esStream,
-    //(err) => {
-      //if (err) {
-        //console.log('Error streaming: ', err)
-      //} else {
-        //console.log('Ingest complete')
-      //}
-    //})
-
-  let count = 0
-  traverse(url, readStream, count, true)
+class ItemStream extends Duplex {
+  constructor(options) {
+    super({
+      readableObjectMode : true,
+      writableObjectMode: true
+    })
+    this.items = []
+  }
+  _write(chunk, encoding, callback) {
+    this.items.push(chunk)
+    callback()
+  }
+  _read() {
+    const item = this.items.pop()
+    this.items.push(item)
+  }
 }
 
+async function processCatalog(url) {
+  const duplexStream = new ItemStream()
+
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  pump(
+    duplexStream,
+    toEs,
+    esStream,
+    (err) => {
+      if (err) {
+        console.log('Error streaming: ', err)
+      } else {
+        console.log('Ingest complete')
+      }
+    })
+  let count = 0
+  traverse(url, duplexStream, count, true)
+}
 processCatalog('../tests/integration/data/catalog.json')
 
