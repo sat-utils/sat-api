@@ -20,15 +20,11 @@ const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 function streamSink(stream) {
   const transform = through2.obj({ objectMode: true },
     (data, encoding, next) => {
-      if (data) {
-        next(null, `${data.links[0].href}\n`)
-      } else {
-        next(null, null)
-      }
+      next(null, `${data.links[0].href}\n`)
     })
-    stream.pipe(transform)
-    .pipe(process.stdout)
+    stream.pipe(transform).pipe(process.stdout)
 }
+
 let count = 0
 async function traverse(url, stream, root) {
   count += 1
@@ -86,19 +82,22 @@ class ItemStream extends Duplex {
     callback()
   }
   _read() {
-    const item = this.items.pop()
-    if (item === 'completed') {
-      this.push(null)
-    } else {
-      this.push(item)
-    }
+    this.items.some((item, index, _items) => {
+      if (item === 'completed') {
+        this.push(null)
+      }
+      const pause = this.push(item)
+      _items.splice(index, 1)
+      console.log(!pause)
+      return !pause
+    })
   }
 }
 
 async function processCatalog(url) {
   const duplexStream = new ItemStream()
-  const start = await traverse(url, duplexStream, true)
   streamSink(duplexStream)
+  traverse(url, duplexStream, true)
   //await backend.prepare('collections')
   //await backend.prepare('items')
   //const { toEs, esStream } = await backend.stream()
