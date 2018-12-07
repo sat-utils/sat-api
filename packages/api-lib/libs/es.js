@@ -4,20 +4,18 @@ const AWS = require('aws-sdk')
 const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
-const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
+const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const readableStream = require('readable-stream')
 const pump = require('pump')
 //const logger = require('./logger')
 
 let _esClient
 
-
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
 variable which is the URL to the elasticsearch host
 */
-
 
 // Connect to an Elasticsearch cluster
 async function connect() {
@@ -59,7 +57,6 @@ async function connect() {
   return client
 }
 
-
 // get existing ES client or create a new one
 async function esClient() {
   if (!_esClient) {
@@ -70,7 +67,6 @@ async function esClient() {
   }
   return _esClient
 }
-
 
 // Create STAC mappings
 async function prepare(index) {
@@ -130,14 +126,13 @@ async function prepare(index) {
     .catch((err) => console.log(`Error connecting to elasticsearch: ${JSON.stringify(err)}`))
 }
 
-
 // Given an input stream and a transform, write records to an elasticsearch instance
-async function _stream(stream, transform = through2.obj()) {
-  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
+async function _stream() {
+  const toEs = through2.obj({ objectMode: true }, function (data, encoding, next) {
     let index = ''
-    if (data.hasOwnProperty('extent')) {
+    if (data && data.hasOwnProperty('extent')) {
       index = 'collections'
-    } else if (data.hasOwnProperty('geometry')) {
+    } else if (data && data.hasOwnProperty('geometry')) {
       index = 'items'
     } else {
       next()
@@ -160,36 +155,17 @@ async function _stream(stream, transform = through2.obj()) {
     }
     next(null, record)
   })
-
-
-  return esClient().then((client) => {
-    const esStream = new ElasticsearchWritableStream(client, {
-      highWaterMark: 100,
-      flushTimeout: 10000
+  try {
+    const client = await esClient()
+    const esStream = new ElasticsearchWritableStream({ client: client }, {
+      objectMode: true,
+      highWaterMark: 50
     })
-
-    return new Promise((resolve, reject) => {
-      //stream.pipe(toEs).pipe(esStream)
-      pump(
-        stream,
-        transform,
-        toEs,
-        esStream,
-        (err) => {
-          if (err) {
-            console.log('Error streaming: ', err)
-            reject(err)
-          } else {
-            console.log('Ingest complete')
-            resolve()
-          }
-        }
-      )
-    })
-  })
-    .catch((e) => console.log(e))
+    return { toEs, esStream }
+  } catch (err) {
+    console.log(err)
+  }
 }
-
 
 // Create a term query
 const termQuery = (field, value) => {
@@ -213,7 +189,6 @@ const termQuery = (field, value) => {
   return query
 }
 
-
 // Create a range query
 const rangeQuery = (field, frm, to) => {
   // range queries will always be on properties
@@ -229,7 +204,6 @@ const rangeQuery = (field, frm, to) => {
   query = { nested: { path: 'properties', query: query } }
   return query
 }
-
 
 function build_query(params) {
   // no filters, return everything
@@ -292,20 +266,6 @@ async function search(params, index = '*', page, limit) {
   return response
 }
 
-async function saveCollection(collection) {
-  // ensure collections mapping in ES
-  return prepare('collections').then(() => {
-    // create input stream from collection record
-    const inStream = new readableStream.Readable({ objectMode: true })
-    inStream.push(collection)
-    inStream.push(null)
-    return _stream(inStream)
-  })
-}
-
-
 module.exports.prepare = prepare
 module.exports.stream = _stream
 module.exports.search = search
-
-module.exports.saveCollection = saveCollection
