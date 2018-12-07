@@ -5,8 +5,6 @@ const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
-const readableStream = require('readable-stream')
-const pump = require('pump')
 //const logger = require('./logger')
 
 let _esClient
