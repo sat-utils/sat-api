@@ -4,6 +4,6 @@
 
 module.exports = {
   api: require('./libs/api.js'),
-  es: require('./libs/es.js')
-  //ingest: require('./libs/ingest.js')
+  es: require('./libs/es.js'),
+  ingest: require('./libs/ingest.js')
 }
