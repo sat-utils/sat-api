@@ -1,7 +1,15 @@
 version: 2
 
+references:
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v1-repo-{{ .Branch }}-{{ .Revision }}
+        - v1-repo-{{ .Branch }}
+        - v1-repo
+
 jobs:
-  build:
+  test:
     docker:
       - image: circleci/node:8.11
     working_directory: ~/project
@@ -23,14 +31,12 @@ jobs:
       - run:
           name: Test
           command: yarn test
-    
       - run:
           name: Build Documentation
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
               yarn docs-build
             fi
-      
       - run:
           name: Deploy example to aws
           command: |
@@ -41,5 +47,25 @@ jobs:
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               VERSION=$(jq --raw-output .version lerna.json)
               node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
+            fi
+
+  docker:
+    steps:
+      - *restore_repo
+      - checkout
+      - save_cache:
+          key: v1-repo-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ~/project
+      - run:
+          name: Build Docker image
+          command: |
+            touch .env
+            docker-compose build
+      - run:
+          name: Deploy Docker image
+          command: |
+            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              # TODO - update environment variables in lambda
             fi
 

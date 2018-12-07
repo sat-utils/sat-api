@@ -1,5 +1,5 @@
 default:
-  stackName: sat-api-v3
+  stackName: sat-api
 
   system_bucket: change-me 
 
@@ -19,14 +19,6 @@ default:
   apis:
     - name: stac
 
-  tasks:
-    SatApiTaskRunner:
-      image: developmentseed/lambda-ecs-runner:node-8.11
-      cpu: 512
-      memory: 1024
-      envs:
-        stackName: '{{stackName}}'
-
   lambdas:
     ingest:
       source: 'node_modules/@sat-utils/ingest/dist/'
@@ -37,9 +29,9 @@ default:
         bucket: '{{system_bucket}}'
         prefix: '{{stackName}}'
         ES_HOST: "!GetAtt {{es.name}}Domain.DomainEndpoint"
-        ECS_ROLE: "!GetAtt ECSRole.Arn"
-        CLUSTER_NAME: "!GetAtt SatApiECSCluster.Arn"
-        #TASK_NAME: "!GetAtt SatApiTaskRunnerTaskDefinition.Name"
+        ECS_ROLE_ARN: "!GetAtt ECSRole.Arn"
+        CLUSTER_ARN: "!GetAtt SatApiECSCluster.Arn"
+        TASK_ARN: "!Ref SatApiTaskDefinition"
     api:
       source: 'node_modules/@sat-utils/api/dist/'
       handler: index.handler
@@ -51,3 +43,11 @@ default:
           path: '{proxy+}'
           method: get
           cors: true
+
+  tasks:
+    SatApi:
+      image: satutils/sat-api:latest
+      cpu: 512
+      memory: 1024
+      envs:
+        stackName: '{{stackName}}'

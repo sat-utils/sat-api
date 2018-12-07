@@ -1,22 +1,24 @@
 'use strict'
 
+const AWS = require('aws-sdk')
 const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
-const taskStarter = require('@developmentseed/task-starter/src')
 
-// SNS message
-module.exports.handler = function handler(event) {
+
+module.exports.handler = function handler(event, context) {
+  try {
+    event = JSON.parse(event)
+  } catch(err) {}
   console.log('Ingest message: ', JSON.stringify(event))
-  let url
 
   // event is SNS message of updated file on s3
   if (event.hasOwnProperty('Records')) {
     const msg = JSON.parse(event.Records[0].Sns.Message)
     msg.Records.forEach((val) => {
       // msg is link to updated file
-      url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
+      const url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
       console.log(`Ingesting ${url}`)
-      satlib.ingest.ingest(url)
+      //satlib.ingest.ingest(url)
     })
   // event is a STAC Item
   } else if (event.hasOwnProperty('type' === 'Feature')) {
@@ -30,17 +32,49 @@ module.exports.handler = function handler(event) {
   } else if (event.hasOwnProperty('url')) {
     const recursive = event.recursive || true
     const collectionsOnly = event.collectionsOnly || false
-    console.log(`Ingesting URL ${JSON.stringify(event)}`)
     satlib.ingest.ingest(event.url, recursive, collectionsOnly)
   } else if (event.hasOwnProperty('fargate')) {
     // event is URL to a catalog node - start a Fargate instance to process
     console.log('Starting Fargate task to ingest URL')
-    // TODO - pass in all args from event
-    taskStarter({
-      arn: context.invoked_function_arn,
-      input: { url: event.fargate.url },
-      cluster: 'SatApiECSCluster',
-      taskDefinition: 'SatApiTaskRunner'
+    const envvars = [
+      { 'name': 'ES_HOST', 'value': process.env.ES_HOST }
+    ]
+    runIngestTask(event.fargate, envvars, (err) => {
+      if (err) { console.log(`Error: ${JSON.stringify(err)}`) }
     })
   }
+}
+
+
+// Runs on Fargate
+const runIngestTask = async function (input, envvars, cb) {
+  const ecs = new AWS.ECS()
+  const params = {
+    cluster: process.env.CLUSTER_ARN,
+    taskDefinition: process.env.TASK_ARN,
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: JSON.parse(process.env.SUBNETS),
+        assignPublicIp: 'ENABLED',
+        securityGroups: JSON.parse(process.env.SECURITY_GROUPS)
+      }
+    },
+    overrides: {
+      containerOverrides: [
+        {
+          command: [
+            'node',
+            'packages/ingest/bin/ingest.js',
+            JSON.stringify(input)
+          ],
+          environment: envvars,
+          name: 'SatApi'
+        }
+      ],
+      executionRoleArn: process.env.ECS_ROLE_ARN,
+      taskRoleArn: process.env.ECS_ROLE_ARN
+    }
+  }
+  return ecs.runTask(params).promise()
 }

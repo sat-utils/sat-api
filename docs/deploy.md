@@ -54,7 +54,7 @@ To create the deployer role run:
 
      $ ./node_modules/.bin/kes cf deploy --kes-folder deployer --profile ds --region us-east-1 --showOutputs
 
-Then create a user on AWS and give it this policy permission. Replase the value of the resource with the output of the previous command:
+Then create a user on AWS and give it this policy permission. Replace the value of the resource with the output of the previous command:
 
 ```json
 {

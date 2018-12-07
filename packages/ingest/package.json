@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "description": "ingest lambda function of sat-api",
   "main": "index.js",
+  "bin": {
+    "sat-api-ingest": "bin/ingest.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sat-utils/sat-api.git"
@@ -20,8 +23,7 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.2.0",
-    "@developmentseed/task-starter": "^0.1.0"
+    "@sat-utils/api-lib": "^0.2.0"
   },
   "devDependencies": {
     "webpack": "~4.5.0",
