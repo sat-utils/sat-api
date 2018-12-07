@@ -32,18 +32,14 @@ module.exports.handler = function handler(event, context) {
   } else if (event.hasOwnProperty('url')) {
     const recursive = event.recursive || true
     const collectionsOnly = event.collectionsOnly || false
-    console.log(`Ingesting URL ${JSON.stringify(event)}`)
     satlib.ingest.ingest(event.url, recursive, collectionsOnly)
   } else if (event.hasOwnProperty('fargate')) {
     // event is URL to a catalog node - start a Fargate instance to process
     console.log('Starting Fargate task to ingest URL')
-    const envvars = {
-      "ES_HOST": process.env.ES_HOST
-    }
-    const payload = {
-      input: event.fargate, envvars,
-    }
-    runIngestTask(payload, envvars, (err) => {
+    const envvars = [
+      { 'name': 'ES_HOST', 'value': process.env.ES_HOST }
+    ]
+    runIngestTask(event.fargate, envvars, (err) => {
       if (err) { console.log(`Error: ${JSON.stringify(err)}`) }
     })
   }
@@ -61,7 +57,7 @@ const runIngestTask = async function (input, envvars, cb) {
       awsvpcConfiguration: {
         subnets: JSON.parse(process.env.SUBNETS),
         assignPublicIp: 'ENABLED',
-        securityGroups: JSON.parse(process.env.SECURITY_GROUP)
+        securityGroups: JSON.parse(process.env.SECURITY_GROUPS)
       }
     },
     overrides: {
