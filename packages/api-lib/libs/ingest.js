@@ -7,7 +7,6 @@ const util = require('util')
 const fs = require('fs')
 const { Duplex } = require('stream');
 const backend = require('./es')
-const pumpPromise = util.promisify(pump)
 
 const limiter = new Bottleneck({
   maxConcurrent: 5000
