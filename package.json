@@ -1,6 +1,5 @@
 {
   "description": "One API to search public Satellites metadata",
-  "main": "index.js",
   "repository": "https://github.com/sat-utils/sat-api",
   "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
