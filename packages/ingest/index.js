@@ -17,7 +17,7 @@ module.exports.handler = function handler(event, context) {
     msg.Records.forEach((val) => {
       // msg is link to updated file
       const url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
-      console.log(`Ingesting updated catalog file ${url}`)
+      console.log(`Ingesting catalog file ${url}`)
       satlib.ingest.ingest(url, recursive=false)
     })
   // event is a STAC Item
