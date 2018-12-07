@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+
+  base:
+    build:
+      context: .
+    image: satutils/sat-api:latest
+    env_file: .env
+    entrypoint: /bin/bash
