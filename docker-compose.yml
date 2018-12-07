@@ -8,3 +8,9 @@ services:
     image: satutils/sat-api:latest
     env_file: .env
     entrypoint: /bin/bash
+
+  deploy:
+    image: satutils/sat-api:latest
+    env_file: .env
+    working_dir: /home/satapi/example
+    entrypoint: bash -c './node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment prod --showOutputs'
