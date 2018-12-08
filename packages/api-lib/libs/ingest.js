@@ -6,6 +6,7 @@ const isUrl = require('is-url')
 const util = require('util')
 const fs = require('fs')
 const MemoryStream = require('memorystream')
+const logger = require('./logger')
 
 const limiter = new Bottleneck({
   maxConcurrent: 1000
@@ -19,7 +20,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
     count += 1
     try {
       let response
-      if (isUrl(url)) {
+      if (isUrl(urlPath)) {
         response = await limitedRequest(urlPath)
         count -= 1
       } else {
@@ -47,7 +48,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       }
     } catch (error) {
       count -= 1
-      console.log(error)
+      logger.error(error)
     }
   }
 

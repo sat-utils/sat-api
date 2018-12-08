@@ -1,6 +1,8 @@
 const test = require('ava')
 const sinon = require('sinon')
 const MemoryStream = require('memorystream')
+const proxquire = require('proxyquire')
+const fs = require('fs')
 const ingest = require('../libs/ingest').ingest
 const catalog = require('./fixtures/stac/catalog.json')
 const collection = require('./fixtures/stac/collection.json')
@@ -57,4 +59,24 @@ test('ingest only consumes collections', async (t) => {
   const { esStream, backend } = setup()
   await ingest('./fixtures/stac/catalog.json', backend, true, true)
   t.deepEqual(esStream.queue[1], collection)
+})
+
+test('ingest logs request error and continues', async (t) => {
+  const error = sinon.spy()
+  const stubFsRead = sinon.stub(fs, 'readFile')
+  stubFsRead.callThrough()
+  const errorMessage = 'errorMessage'
+  stubFsRead.withArgs('./fixtures/stac/LC80100102015050LGN00.json')
+    .throws(new Error(errorMessage))
+  const proxyIngest = proxquire('../libs/ingest', {
+    './logger': {
+      error
+    },
+    fs: stubFsRead
+  })
+  const { esStream, backend } = setup()
+  await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
+  t.is(error.firstCall.args[0].message, errorMessage,
+    'Logs error via Winston transport')
+  t.is(esStream.queue.length, 3, 'Skips errored request and continues')
 })
