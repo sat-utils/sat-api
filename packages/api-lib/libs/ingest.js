@@ -6,6 +6,7 @@ const isUrl = require('is-url')
 const util = require('util')
 const fs = require('fs')
 const MemoryStream = require('memorystream')
+const uuid = require('uuid/v4')
 const logger = require('./logger')
 
 const limiter = new Bottleneck({
@@ -80,6 +81,8 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
   await backend.prepare('collections')
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.log(`${ingestJobId} Started`)
   const promise = new Promise((resolve, reject) => {
     pump(
       duplexStream,
@@ -87,10 +90,10 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       esStream,
       (error) => {
         if (error) {
-          console.log('Error streaming: ', error)
+          logger.error(error)
           reject(error)
         } else {
-          console.log('Ingest complete')
+          logger.log(`${ingestJobId} Completed`)
           resolve(true)
         }
       }
