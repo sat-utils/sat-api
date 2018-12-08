@@ -137,17 +137,16 @@ async function _stream() {
       return
     }
     // remove any hierarchy links
-    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-    data.links = data.links.filter((link) => hlinks.indexOf(link.rel) === -1)
+    const dataNoLinks = Object.assign({}, data, { links: [] })
     // create ES record
     const record = {
       index,
       type: 'doc',
-      id: data.id,
+      id: dataNoLinks.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {
-        doc: data,
+        doc: dataNoLinks,
         doc_as_upsert: true
       }
     }
