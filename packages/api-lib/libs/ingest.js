@@ -27,9 +27,10 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
         count -= 1
       }
       const item = JSON.parse(response)
+      const isCollection = item.hasOwnProperty('extent')
       if (item) {
         const written = stream.write(item)
-        if (recursive) {
+        if (recursive && !(isCollection && collectionsOnly)) {
           if (written && item) {
             // eslint-disable-next-line
             traverseLinks(item, urlPath, stream, root)
