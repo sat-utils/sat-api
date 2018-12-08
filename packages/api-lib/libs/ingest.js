@@ -82,7 +82,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
   const ingestJobId = uuid()
-  logger.log(`${ingestJobId} Started`)
+  logger.info(`${ingestJobId} Started`)
   const promise = new Promise((resolve, reject) => {
     pump(
       duplexStream,
@@ -93,7 +93,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
           logger.error(error)
           reject(error)
         } else {
-          logger.log(`${ingestJobId} Completed`)
+          logger.info(`${ingestJobId} Completed`)
           resolve(true)
         }
       }

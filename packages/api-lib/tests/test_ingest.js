@@ -71,7 +71,7 @@ test('ingest logs request error and continues', async (t) => {
   const proxyIngest = proxquire('../libs/ingest', {
     './logger': {
       error,
-      log: () => {}
+      info: () => {}
     },
     fs: stubFsRead
   })
