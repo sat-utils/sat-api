@@ -126,7 +126,7 @@ async function prepare(index) {
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream() {
-  const toEs = through2.obj({ objectMode: true }, function (data, encoding, next) {
+  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
     let index = ''
     if (data && data.hasOwnProperty('extent')) {
       index = 'collections'
@@ -136,33 +136,34 @@ async function _stream() {
       next()
       return
     }
-    // remove any hierarchy links
-    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-    data.links = data.links.filter((link) => hlinks.indexOf(link.rel) === -1)
+    // remove any hierarchy links in a non-mutating way
+    const dataNoLinks = Object.assign({}, data, { links: [] })
     // create ES record
     const record = {
       index,
       type: 'doc',
-      id: data.id,
+      id: dataNoLinks.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {
-        doc: data,
+        doc: dataNoLinks,
         doc_as_upsert: true
       }
     }
     next(null, record)
   })
+  let esStreams
   try {
     const client = await esClient()
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
       highWaterMark: 50
     })
-    return { toEs, esStream }
+    esStreams = { toEs, esStream }
   } catch (err) {
     console.log(err)
   }
+  return esStreams
 }
 
 // Create a term query
