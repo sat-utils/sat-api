@@ -16,7 +16,13 @@
     "url": "https://github.com/sat-utils/sat-api/issues"
   },
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "test": "ava"
+  },
+  "ava": {
+    "files": "tests/*.js",
+    "verbose": true,
+    "serial": true
   },
   "publishConfig": {
     "access": "public"
@@ -26,6 +32,10 @@
     "@sat-utils/api-lib": "^0.2.0"
   },
   "devDependencies": {
+    "ava": "^0.25.0",
+    "aws-event-mocks": "^0.0.0",
+    "proxyquire": "^2.1.0",
+    "sinon": "^7.1.1",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }
