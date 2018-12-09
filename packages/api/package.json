@@ -2,9 +2,6 @@
   "name": "@sat-utils/api",
   "version": "0.2.0",
   "description": "The api lambda function for sat-api",
-  "scripts": {
-    "test": "ava"
-  },
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -21,7 +18,8 @@
     "url": "https://github.com/sat-utils/sat-api/issues"
   },
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "test": "ava"
   },
   "publishConfig": {
     "access": "public"

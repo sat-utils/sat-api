@@ -4,7 +4,7 @@
   "description": "A library for creating a search API of public Satellites metadata using Elasticsearch",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "LOG_LEVEL=3 ava"
   },
   "repository": {
     "type": "git",
