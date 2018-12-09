@@ -32,7 +32,6 @@ class ElasticSearchWritableStream extends stream.Writable {
         type: record.type,
         body: record.body
       })
-      console.log('Wrote ', record.body.doc.id)
       next()
       return
     } catch (err) {
