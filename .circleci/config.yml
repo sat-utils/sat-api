@@ -84,6 +84,6 @@ workflows:
   build_docker:
     jobs:
       - build_docker
-          filters:
-            branches:
-              only: master
+#          filters:
+#            branches:
+#              only: master
