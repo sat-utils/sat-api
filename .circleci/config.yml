@@ -46,6 +46,8 @@ jobs:
             fi
 
   build_docker:
+    machine:
+      docker_layer_caching: true
     steps:
       - *restore_repo
       - checkout
