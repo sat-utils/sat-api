@@ -109,4 +109,4 @@ workflows:
             - docker_build_and_test          
           filters:
             branches:
-              only: master
+              only: develop
