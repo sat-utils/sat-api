@@ -71,6 +71,10 @@ jobs:
       docker_layer_caching: true
     steps:
       - run:
+          name: Build Docker image
+          command: |
+            docker build -t satutils/sat-api:latest .
+      - run:
           name: Deploy Docker image
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
@@ -83,10 +87,13 @@ jobs:
       docker_layer_caching: true
     steps:
       - run:
+          name: Build Docker image
+          command: |
+            docker build -t satutils/sat-api:develop .
+      - run:
           name: Deploy Docker image
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            docker tag satutils/sat-api:latest satutils/sat-api:develop
             docker push satutils/sat-api:develop
 
 
