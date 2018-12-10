@@ -1,71 +1,134 @@
-const fs = require('fs')
-const request = require('sync-request')
-const highland = require('highland')
-const isUrl = require('is-url')
+const pump = require('pump')
+const request = require('request-promise-native')
 const path = require('path')
+const Bottleneck = require('bottleneck')
+const isUrl = require('is-url')
+const util = require('util')
+const fs = require('fs')
+const MemoryStream = require('memorystream')
+const { Readable } = require('readable-stream')
+const uuid = require('uuid/v4')
+const logger = require('./logger')
 
+const limiter = new Bottleneck({
+  maxConcurrent: 1000
+})
+const limitedRequest = limiter.wrap(request)
+const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 
-// this should be passed in as a backend parameter
-const backend = require('./es')
-
-
-function readFile(filename) {
-  if (isUrl(filename)) {
-    const data = JSON.parse(request('GET', filename).getBody('utf8'))
-    return data
-  }
-  return JSON.parse(fs.readFileSync(filename, 'utf8'))
-}
-
-
-// iterator through every node in a Catalog tree
-let nCat = 0
-let nCol = 0
-let nItem = 0
-function* readCatalog(filename, root = false) {
-  console.log(`Reading ${filename}`)
-  const fname = filename.toString()
-  const cat = readFile(fname)
-  if (cat.hasOwnProperty('extent')) {
-    nCol += 1
-  } else if (cat.hasOwnProperty('geometry')) {
-    nItem += 1
-  } else {
-    nCat += 1
-  }
-  yield cat
-  let index = 0
-  for (index = 0; index < cat.links.length; index += 1) {
-    const link = cat.links[index]
-    if (link.rel === 'child' || link.rel === 'item') {
-      if (path.isAbsolute(link.href)) {
-        yield* readCatalog(link.href)
+async function ingest(url, backend, recursive = true, collectionsOnly = false) {
+  let count = 0
+  async function traverse(urlPath, stream, root) {
+    count += 1
+    try {
+      let response
+      if (isUrl(urlPath)) {
+        response = await limitedRequest(urlPath)
+        count -= 1
       } else {
-        yield* readCatalog(`${path.dirname(fname)}/${link.href}`)
+        response = await limitedRead(urlPath)
+        count -= 1
       }
+      const item = JSON.parse(response)
+      const isCollection = item.hasOwnProperty('extent')
+      if (item) {
+        const written = stream.write(item)
+        if (recursive && !(isCollection && collectionsOnly)) {
+          if (written && item) {
+            // eslint-disable-next-line
+            traverseLinks(item, urlPath, stream, root)
+          } else {
+            stream.once('drain', () => {
+              // eslint-disable-next-line
+              traverseLinks(item, urlPath, stream, root)
+            })
+          }
+        }
+      }
+      if ((count === 0 && !root) || (count === 0 && !recursive)) {
+        stream.push(null)
+      }
+    } catch (error) {
+      count -= 1
+      logger.error(error)
     }
   }
-  if (root) {
-    console.log(`Read ${nCat} catalogs, ${nCol} collections, ${nItem} items.`)
+
+  function traverseLinks(item, parentUrl, stream, root) {
+    const { links } = item
+    let hasChildren = false
+    links.forEach(async (link) => {
+      const { rel, href } = link
+      if (rel === 'child' || rel === 'item') {
+        hasChildren = true
+        if (path.isAbsolute(href)) {
+          traverse(href, stream)
+        } else {
+          traverse(`${path.dirname(parentUrl)}/${link.href}`, stream)
+        }
+      }
+    })
+    if (!hasChildren && root) {
+      stream.push(null)
+    }
   }
-  return true
-}
 
+  const duplexStream = new MemoryStream(null, {
+    readable: true,
+    writable: true,
+    objectMode: true
+  })
 
-async function prepare() {
   await backend.prepare('collections')
   await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.info(`${ingestJobId} Started`)
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      duplexStream,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          logger.error(error)
+          reject(error)
+        } else {
+          logger.info(`${ingestJobId} Completed`)
+          resolve(true)
+        }
+      }
+    )
+  })
+  traverse(url, duplexStream, true, recursive)
+  return promise
 }
 
-
-async function ingest(url) {
-  const catStream = highland(readCatalog(url, true))
-
-  // prepare backend
-  await prepare()
-
-  await backend.stream(catStream)
+async function ingestItem(item, backend) {
+  const readable = new Readable({ objectMode: true })
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.info(`${ingestJobId} for ${item.id} Started`)
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      readable,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          logger.error(error)
+          reject(error)
+        } else {
+          logger.info(`${ingestJobId} for ${item.id} Completed`)
+          resolve(true)
+        }
+      }
+    )
+  })
+  readable.push(item)
+  readable.push(null)
+  return promise
 }
-
-
-module.exports = { ingest, prepare }
+module.exports = { ingest, ingestItem }

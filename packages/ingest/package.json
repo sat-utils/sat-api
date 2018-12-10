@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "description": "ingest lambda function of sat-api",
   "main": "index.js",
+  "bin": {
+    "sat-api-ingest": "bin/ingest.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sat-utils/sat-api.git"
@@ -13,18 +16,26 @@
     "url": "https://github.com/sat-utils/sat-api/issues"
   },
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "test": "ava"
+  },
+  "ava": {
+    "files": "tests/*.js",
+    "verbose": true,
+    "serial": true
   },
   "publishConfig": {
     "access": "public"
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.2.0",
-    "got": "^9.3.1",
-    "sync-requests": "^1.0.0"
+    "@sat-utils/api-lib": "^0.2.0"
   },
   "devDependencies": {
+    "ava": "^0.25.0",
+    "aws-event-mocks": "^0.0.0",
+    "proxyquire": "^2.1.0",
+    "sinon": "^7.1.1",
     "webpack": "~4.5.0",
     "webpack-cli": "~2.0.14"
   }

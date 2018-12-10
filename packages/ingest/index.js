@@ -1,27 +1,79 @@
 'use strict'
 
-const got = require('got')
-const readableStream = require('readable-stream')
+const AWS = require('aws-sdk')
 const satlib = require('@sat-utils/api-lib')
 
-
-// SNS message
-module.exports.handler = function handler(event) {
-  const msg = JSON.parse(event.Records[0].Sns.Message)
-  console.log('ingest message: ', JSON.stringify(msg))
-  let url
-  msg.Records.forEach((val) => {
-    url = `https://${val.s3.bucket.name}.s3.amazonaws.com/${val.s3.object.key}`
-
-    got(url, { json: true }).then((data) => {
-      // create input stream from collection record
-      const inStream = new readableStream.Readable({ objectMode: true })
-      console.log(data.body)
-      inStream.push(data.body)
-      inStream.push(null)
-      return satlib.es.stream(inStream)
-    }).catch((err) => {
-      console.log(`Error ingesting: ${err}`)
-    })
-  })
+// Runs on Fargate
+const runIngestTask = async function (input, envvars) {
+  const ecs = new AWS.ECS()
+  const params = {
+    cluster: process.env.CLUSTER_ARN,
+    taskDefinition: process.env.TASK_ARN,
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: JSON.parse(process.env.SUBNETS),
+        assignPublicIp: 'ENABLED',
+        securityGroups: JSON.parse(process.env.SECURITY_GROUPS)
+      }
+    },
+    overrides: {
+      containerOverrides: [
+        {
+          command: [
+            'node',
+            'packages/ingest/bin/ingest.js',
+            JSON.stringify(input)
+          ],
+          environment: envvars,
+          name: 'SatApi'
+        }
+      ],
+      executionRoleArn: process.env.ECS_ROLE_ARN,
+      taskRoleArn: process.env.ECS_ROLE_ARN
+    }
+  }
+  return ecs.runTask(params).promise()
 }
+
+module.exports.handler = async function handler(event) {
+  try {
+    if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
+      // event is SNS message of updated file on s3
+      const message = JSON.parse(event.Records[0].Sns.Message)
+      const { Records: s3Records } = message
+      const promises = s3Records.map((s3Record) => {
+        const {
+          s3: {
+            bucket: { name: bucketName },
+            object: { key }
+          }
+        } = s3Record
+        const url = `https://${bucketName}.s3.amazonaws.com/${key}`
+        console.log(`Ingesting catalog file ${url}`)
+        const recursive = false
+        return satlib.ingest.ingest(url, satlib.es, recursive)
+      })
+      await Promise.all(promises)
+    } else if (event.type && event.type === 'Feature') {
+      // event is a STAC Item provided as cli parameter
+      await satlib.ingest.ingestItem(event, satlib.es)
+    } else if (event.url) {
+      // event is URL to a catalog node
+      const { url, recursive, collectionsOnly } = event
+      const recurse = recursive === undefined ? true : recursive
+      const collections = collectionsOnly === undefined ? false : collectionsOnly
+      satlib.ingest.ingest(url, satlib.es, recurse, collections)
+    } else if (event.fargate) {
+      // event is URL to a catalog node - start a Fargate instance to process
+      console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
+      const envvars = [
+        { 'name': 'ES_HOST', 'value': process.env.ES_HOST }
+      ]
+      await runIngestTask(event.fargate, envvars)
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
+
