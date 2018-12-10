@@ -18,7 +18,3 @@ RUN \
     yarn bootstrap; \
     yarn build; \
     yarn linkall
-
-RUN \
-    cd example; \
-    yarn; yarn linkall

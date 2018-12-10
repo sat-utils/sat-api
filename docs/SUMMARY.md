@@ -4,6 +4,6 @@
 
 * [Home](README.md)
 * [What is STAC?](stac.md)
-* [Deployment](deploy.md)
+* [Deployment](https://github.com/sat-utils/sat-api-deployment)
 * [API Docs](api.md)
-* [Changelog](https://github.com/sat-utils/sat-api/blob/sat-api-as-library/CHANGES.md)
+* [Changelog](../CHANGELOG.md)
