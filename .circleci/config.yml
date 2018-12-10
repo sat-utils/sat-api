@@ -70,6 +70,7 @@ jobs:
     machine:
       docker_layer_caching: true
     steps:
+      - *restore_repo
       - run:
           name: Build Docker image
           command: |
@@ -86,6 +87,7 @@ jobs:
     machine:
       docker_layer_caching: true
     steps:
+      - *restore_repo
       - run:
           name: Build Docker image
           command: |
