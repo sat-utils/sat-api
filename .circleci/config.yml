@@ -60,6 +60,7 @@ jobs:
           name: Deploy Docker image
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
+              echo 'test'
               # TODO - update environment variables in lambda
             fi
 
@@ -72,8 +73,8 @@ workflows:
   docker_deploy:
     jobs:
       - docker
-          requires:
-            - test
-          filters:
-            branches:
-              only: master
+#          requires:
+#            - test
+#          filters:
+#            branches:
+#              only: master
