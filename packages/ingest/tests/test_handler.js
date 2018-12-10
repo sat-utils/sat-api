@@ -7,6 +7,14 @@ const setup = () => {
   const ingest = sinon.stub().resolves(true)
   const ingestItem = sinon.stub().resolves(true)
   const elasticsearch = 'elasticsearch'
+  const ECS = sinon.stub()
+  const runTask = sinon.stub().resolves(true).returns({
+    promise: () => (Promise.resolve(true))
+  })
+  ECS.prototype.runTask = runTask
+  const AWS = {
+    ECS
+  }
   const satlib = {
     ingest: {
       ingest,
@@ -15,13 +23,15 @@ const setup = () => {
     es: elasticsearch
   }
   const lambda = proxyquire('../index.js', {
-    '@sat-utils/api-lib': satlib
+    '@sat-utils/api-lib': satlib,
+    'aws-sdk': AWS
   })
   return {
     ingest,
     ingestItem,
     elasticsearch,
-    lambda
+    lambda,
+    runTask
   }
 }
 
@@ -88,4 +98,19 @@ test('handler call ingest when event payload contains url', async (t) => {
   await lambda.handler(event)
   t.truthy(ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
     'Calls ingest with url and correct parameters.')
+})
+
+test('ingest with fargate event creates ecs task with command', async (t) => {
+  process.env.SUBNETS = '{}'
+  process.env.SECURITY_GROUPS = '{}'
+  const { lambda, runTask } = setup()
+  const event = {
+    fargate: {
+      url: 'url'
+    }
+  }
+  await lambda.handler(event)
+  const params = runTask.firstCall.args[0]
+  const command = params.overrides.containerOverrides[0].command
+  t.is(command[2], JSON.stringify(event.fargate))
 })
