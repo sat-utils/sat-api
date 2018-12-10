@@ -8,3 +8,8 @@ services:
     image: satutils/sat-api:latest
     env_file: .env
     entrypoint: /bin/bash
+
+  test:
+    image: satutils/sat-api:latest
+    env_file: .env
+    entrypoint: yarn test

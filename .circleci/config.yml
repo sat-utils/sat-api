@@ -65,14 +65,18 @@ jobs:
       - run:
           name: Test Docker image
           command: |
-            echo 'test'
-            #docker-compose test
+            docker-compose test
       - run:
           name: Deploy Docker image
           command: |
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              echo 'test'
-              # TODO - update environment variables in lambda
+              VERSION=$(jq --raw-output .version lerna.json)
+              docker tag developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
+              docker push developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
+            elif [[  "$CIRCLE_BRANCH" == 'develop' ]]; then
+              docker tag developmentseed/sat-api:latest developmentseed/sat-api:develop
+              docker push developmentseed/sat-api:develop
             fi
 
 
