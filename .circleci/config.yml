@@ -12,7 +12,7 @@ references:
       key: v1-repo-{{ .Branch }}-{{ .Revision }}
       paths:
         - ~/project
-      
+
 
 jobs:
   build_and_test:
@@ -60,12 +60,11 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            touch .env
-            docker-compose build
+            docker build -t satutils/sat-api:latest .
       - run:
           name: Test Docker image
           command: |
-            docker-compose test
+            docker run -it satutils/sat-api:latest yarn test
       - run:
           name: Deploy Docker image
           command: |
