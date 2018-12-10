@@ -63,6 +63,11 @@ jobs:
             touch .env
             docker-compose build
       - run:
+          name: Test Docker image
+          command: |
+            echo 'test'
+            #docker-compose test
+      - run:
           name: Deploy Docker image
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
@@ -79,8 +84,6 @@ workflows:
   build_docker:
     jobs:
       - build_docker
-          requires:
-            - test
           filters:
             branches:
               only: master
