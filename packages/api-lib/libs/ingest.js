@@ -6,6 +6,7 @@ const isUrl = require('is-url')
 const util = require('util')
 const fs = require('fs')
 const MemoryStream = require('memorystream')
+const { Readable } = require('readable-stream')
 const uuid = require('uuid/v4')
 const logger = require('./logger')
 
@@ -103,4 +104,31 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
   return promise
 }
 
-module.exports = { ingest }
+async function ingestItem(item, backend) {
+  const readable = new Readable({ objectMode: true })
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.info(`${ingestJobId} for ${item.id} Started`)
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      readable,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          logger.error(error)
+          reject(error)
+        } else {
+          logger.info(`${ingestJobId} for ${item.id} Completed`)
+          resolve(true)
+        }
+      }
+    )
+  })
+  readable.push(item)
+  readable.push(null)
+  return promise
+}
+module.exports = { ingest, ingestItem }

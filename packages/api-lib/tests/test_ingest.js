@@ -3,7 +3,7 @@ const sinon = require('sinon')
 const MemoryStream = require('memorystream')
 const proxquire = require('proxyquire')
 const fs = require('fs')
-const ingest = require('../libs/ingest').ingest
+const { ingest, ingestItem } = require('../libs/ingest')
 const catalog = require('./fixtures/stac/catalog.json')
 const collection = require('./fixtures/stac/collection.json')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
@@ -80,4 +80,10 @@ test('ingest logs request error and continues', async (t) => {
   t.is(error.firstCall.args[0].message, errorMessage,
     'Logs error via Winston transport')
   t.is(esStream.queue.length, 3, 'Skips errored request and continues')
+})
+
+test('ingestItem passes item through transform stream', async (t) => {
+  const { esStream, backend } = setup()
+  await ingestItem(firstItem, backend)
+  t.deepEqual(esStream.queue[0], firstItem)
 })

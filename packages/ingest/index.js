@@ -6,11 +6,8 @@ const satlib = require('@sat-utils/api-lib')
 
 module.exports.handler = async function handler(event) {
   try {
-    //const eventObject = JSON.parse(event)
-    //console.log('Ingest message: ', JSON.stringify(event))
-
-    // event is SNS message of updated file on s3
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
+      // event is SNS message of updated file on s3
       const message = JSON.parse(event.Records[0].Sns.Message)
       const { Records: s3Records } = message
       const promises = s3Records.map((s3Record) => {
@@ -20,24 +17,18 @@ module.exports.handler = async function handler(event) {
             object: { key }
           }
         } = s3Record
-        // msg is link to updated file
         const url = `https://${bucketName}.s3.amazonaws.com/${key}`
         console.log(`Ingesting catalog file ${url}`)
         const recursive = false
         return satlib.ingest.ingest(url, satlib.es, recursive)
       })
-      const completed = await Promise.all(promises)
+      await Promise.all(promises)
+    } else if (event.type && event.type === 'Feature') {
+      // event is a STAC Item provided as cli parameter
+      await satlib.ingest.ingestItem(event, satlib.es)
     }
-      // event is a STAC Item
-    //} else if (event.hasOwnProperty('type' === 'Feature')) {
-      //// event is STAC record itself
-      //console.log(`Ingesting STAC Item ${event.id}`)
-      //const inStream = new readableStream.Readable({ objectMode: true })
-      //inStream.push(event)
-      //inStream.push(null)
-      //satlib.es.stream(inStream)
-      //// event is URL to a catalog node
     //} else if (event.hasOwnProperty('url')) {
+      //// event is URL to a catalog node
       //const recursive = event.recursive || true
       //const collectionsOnly = event.collectionsOnly || false
       //satlib.ingest.ingest(event.url, recursive, collectionsOnly)
