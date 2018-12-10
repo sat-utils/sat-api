@@ -93,7 +93,7 @@ workflows:
   docker_build_and_test:
     jobs:
       - docker_build_and_test
-      - docker_deploy
+      - docker_deploy:
           requires:
             - docker_build_and_test          
 #          filters:
