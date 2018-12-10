@@ -50,7 +50,7 @@ jobs:
               node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
             fi
 
-  build_docker:
+  docker_build_and_test:
     machine:
       docker_layer_caching: true
     steps:
@@ -65,9 +65,15 @@ jobs:
           name: Test Docker image
           command: |
             docker run -it satutils/sat-api:latest yarn test
+
+  docker_deploy:
+    machine:
+      docker_layer_caching: true
+    steps:
       - run:
           name: Deploy Docker image
           command: |
+            docker run -it satutils/sat-api:latest yarn test
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
               VERSION=$(jq --raw-output .version lerna.json)
@@ -84,9 +90,12 @@ workflows:
   build_and_test:
     jobs:
       - build_and_test
-  build_docker:
+  docker_build_and_test:
     jobs:
-      - build_docker
+      - docker_build_and_test
+      - docker_deploy
+          requires:
+            - docker_build_and_test          
 #          filters:
 #            branches:
 #              only: master
