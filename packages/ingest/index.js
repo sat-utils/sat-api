@@ -1,56 +1,10 @@
 'use strict'
 
 const AWS = require('aws-sdk')
-const readableStream = require('readable-stream')
 const satlib = require('@sat-utils/api-lib')
 
-module.exports.handler = async function handler(event) {
-  try {
-    if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
-      // event is SNS message of updated file on s3
-      const message = JSON.parse(event.Records[0].Sns.Message)
-      const { Records: s3Records } = message
-      const promises = s3Records.map((s3Record) => {
-        const {
-          s3: {
-            bucket: { name: bucketName },
-            object: { key }
-          }
-        } = s3Record
-        const url = `https://${bucketName}.s3.amazonaws.com/${key}`
-        console.log(`Ingesting catalog file ${url}`)
-        const recursive = false
-        return satlib.ingest.ingest(url, satlib.es, recursive)
-      })
-      await Promise.all(promises)
-    } else if (event.type && event.type === 'Feature') {
-      // event is a STAC Item provided as cli parameter
-      await satlib.ingest.ingestItem(event, satlib.es)
-    } else if (event.url) {
-      // event is URL to a catalog node
-      const { url, recursive, collectionsOnly } = event
-      const recurse = recursive === undefined ? true : recursive
-      const collections = collectionsOnly === undefined ? false : collectionsOnly
-      satlib.ingest.ingest(url, satlib.es, recurse, collections)
-    }
-    //} else if (event.hasOwnProperty('fargate')) {
-      //// event is URL to a catalog node - start a Fargate instance to process
-      //console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
-      //const envvars = [
-        //{ 'name': 'ES_HOST', 'value': process.env.ES_HOST }
-      //]
-      //runIngestTask(event.fargate, envvars, (err) => {
-        //if (err) { console.log(`Error: ${JSON.stringify(err)}`) }
-      //})
-    //}
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-
 // Runs on Fargate
-const runIngestTask = async function (input, envvars, cb) {
+const runIngestTask = async function (input, envvars) {
   const ecs = new AWS.ECS()
   const params = {
     cluster: process.env.CLUSTER_ARN,
@@ -80,5 +34,46 @@ const runIngestTask = async function (input, envvars, cb) {
     }
   }
   return ecs.runTask(params).promise()
+}
+
+module.exports.handler = async function handler(event) {
+  try {
+    if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
+      // event is SNS message of updated file on s3
+      const message = JSON.parse(event.Records[0].Sns.Message)
+      const { Records: s3Records } = message
+      const promises = s3Records.map((s3Record) => {
+        const {
+          s3: {
+            bucket: { name: bucketName },
+            object: { key }
+          }
+        } = s3Record
+        const url = `https://${bucketName}.s3.amazonaws.com/${key}`
+        console.log(`Ingesting catalog file ${url}`)
+        const recursive = false
+        return satlib.ingest.ingest(url, satlib.es, recursive)
+      })
+      await Promise.all(promises)
+    } else if (event.type && event.type === 'Feature') {
+      // event is a STAC Item provided as cli parameter
+      await satlib.ingest.ingestItem(event, satlib.es)
+    } else if (event.url) {
+      // event is URL to a catalog node
+      const { url, recursive, collectionsOnly } = event
+      const recurse = recursive === undefined ? true : recursive
+      const collections = collectionsOnly === undefined ? false : collectionsOnly
+      satlib.ingest.ingest(url, satlib.es, recurse, collections)
+    } else if (event.fargate) {
+      // event is URL to a catalog node - start a Fargate instance to process
+      console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
+      const envvars = [
+        { 'name': 'ES_HOST', 'value': process.env.ES_HOST }
+      ]
+      await runIngestTask(event.fargate, envvars)
+    }
+  } catch (error) {
+    console.log(error)
+  }
 }
 

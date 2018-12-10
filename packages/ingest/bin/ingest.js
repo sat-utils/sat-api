@@ -3,7 +3,6 @@
 const handler = require('../').handler
 
 // call handler
-
-event = JSON.parse(process.argv.slice(2))
+const event = JSON.parse(process.argv.slice(2))
 console.log(event)
 handler(event)
