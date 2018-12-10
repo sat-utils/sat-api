@@ -74,3 +74,18 @@ test('handler calls ingestItem when event payload is a feature', async (t) => {
   t.deepEqual(ingestItem.firstCall.args[0], event, 'Calls ingestItem with event')
   t.is(ingestItem.firstCall.args[1], elasticsearch, 'ES library passed as a parameter')
 })
+
+test('handler call ingest when event payload contains url', async (t) => {
+  const { ingest, lambda, elasticsearch } = setup()
+  const url = 'url'
+  const recursive = false
+  const collectionsOnly = true
+  const event = {
+    url,
+    recursive,
+    collectionsOnly
+  }
+  await lambda.handler(event)
+  t.truthy(ingest.calledOnceWith(url, elasticsearch, recursive, collectionsOnly),
+    'Calls ingest with url and correct parameters.')
+})

@@ -26,12 +26,13 @@ module.exports.handler = async function handler(event) {
     } else if (event.type && event.type === 'Feature') {
       // event is a STAC Item provided as cli parameter
       await satlib.ingest.ingestItem(event, satlib.es)
+    } else if (event.url) {
+      // event is URL to a catalog node
+      const { url, recursive, collectionsOnly } = event
+      const recurse = recursive === undefined ? true : recursive
+      const collections = collectionsOnly === undefined ? false : collectionsOnly
+      satlib.ingest.ingest(url, satlib.es, recurse, collections)
     }
-    //} else if (event.hasOwnProperty('url')) {
-      //// event is URL to a catalog node
-      //const recursive = event.recursive || true
-      //const collectionsOnly = event.collectionsOnly || false
-      //satlib.ingest.ingest(event.url, recursive, collectionsOnly)
     //} else if (event.hasOwnProperty('fargate')) {
       //// event is URL to a catalog node - start a Fargate instance to process
       //console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
