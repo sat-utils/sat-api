@@ -7,6 +7,12 @@ references:
         - v1-repo-{{ .Branch }}-{{ .Revision }}
         - v1-repo-{{ .Branch }}
         - v1-repo
+  save_repo: &save_repo
+    save_cache:
+      key: v1-repo-{{ .Branch }}-{{ .Revision }}
+      paths:
+        - ~/project
+      
 
 jobs:
   build_and_test:
@@ -15,8 +21,7 @@ jobs:
     steps:
       - *restore_repo
       - checkout
-      - save_cache:
-          key: v1-repo-{{ .Branch }}-{{ .Revision }}
+      - *save_repo
       - run:
           name: Install
           command: |
@@ -51,8 +56,7 @@ jobs:
     steps:
       - *restore_repo
       - checkout
-      - save_cache:
-          key: v1-repo-{{ .Branch }}-{{ .Revision }}
+      - *save_repo
       - run:
           name: Build Docker image
           command: |
@@ -75,8 +79,8 @@ workflows:
   build_docker:
     jobs:
       - build_docker
-#          requires:
-#            - test
-#          filters:
-#            branches:
-#              only: master
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
