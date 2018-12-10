@@ -104,7 +104,7 @@ workflows:
           filters:
             branches:
               only: master
-      - docker_deploy-develop:
+      - docker_deploy_develop:
           requires:
             - docker_build_and_test          
           filters:
