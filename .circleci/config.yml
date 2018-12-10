@@ -73,16 +73,21 @@ jobs:
       - run:
           name: Deploy Docker image
           command: |
-            docker run -it satutils/sat-api:latest yarn test
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              VERSION=$(jq --raw-output .version lerna.json)
-              docker tag developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
-              docker push developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
-            elif [[  "$CIRCLE_BRANCH" == 'develop' ]]; then
-              docker tag developmentseed/sat-api:latest developmentseed/sat-api:develop
-              docker push developmentseed/sat-api:develop
-            fi
+            VERSION=$(jq --raw-output .version lerna.json)
+            docker tag developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
+            docker push developmentseed/sat-api:latest developmentseed/sat-api:${VERSION}
+
+  docker_deploy_develop:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - run:
+          name: Deploy Docker image
+          command: |
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            docker tag developmentseed/sat-api:latest developmentseed/sat-api:develop
+            docker push developmentseed/sat-api:develop
 
 
 workflows:
@@ -96,6 +101,12 @@ workflows:
       - docker_deploy:
           requires:
             - docker_build_and_test          
-#          filters:
-#            branches:
-#              only: master
+          filters:
+            branches:
+              only: master
+      - docker_deploy-develop:
+          requires:
+            - docker_build_and_test          
+          filters:
+            branches:
+              only: master
