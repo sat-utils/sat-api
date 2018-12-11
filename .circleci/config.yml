@@ -66,7 +66,7 @@ jobs:
           command: |
             docker run -it satutils/sat-api:latest yarn test
 
-  docker_deploy:
+  docker_deploy_production:
     machine:
       docker_layer_caching: true
     steps:
@@ -107,7 +107,7 @@ workflows:
   docker_build_and_test:
     jobs:
       - docker_build_and_test
-      - docker_deploy:
+      - docker_deploy_production:
           requires:
             - docker_build_and_test          
           filters:

@@ -4,15 +4,18 @@
 
 FROM node:8
 
-WORKDIR /home/satapi
+ENV \
+    HOME=/home/sat-utils
 
-COPY package.json /home/satapi/
+WORKDIR ${HOME}/sat-api
+
+COPY package.json ./
 
 RUN \
     npm install -g lerna; \
     yarn;
 
-COPY . /home/satapi
+COPY . ./
 
 RUN \
     yarn bootstrap; \
