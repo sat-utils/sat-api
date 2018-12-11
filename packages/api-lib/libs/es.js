@@ -137,7 +137,10 @@ async function _stream() {
       return
     }
     // remove any hierarchy links in a non-mutating way
-    const dataNoLinks = Object.assign({}, data, { links: [] })
+    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
+    const links = data.links.filter((link) => hlinks.includes(link))
+    const dataNoLinks = Object.assign({}, data, { links })
+
     // create ES record
     const record = {
       index,
