@@ -37,7 +37,7 @@ const runIngestTask = async function (input, envvars) {
 }
 
 module.exports.handler = async function handler(event) {
-  console.log(`Ingest Event: ${event}`)
+  console.log(`Ingest Event: ${JSON.stringify(event)}`)
   try {
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
       // event is SNS message of updated file on s3
