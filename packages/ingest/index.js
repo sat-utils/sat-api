@@ -12,9 +12,9 @@ const runIngestTask = async function (input, envvars) {
     launchType: 'FARGATE',
     networkConfiguration: {
       awsvpcConfiguration: {
-        subnets: JSON.parse(process.env.SUBNETS),
+        subnets: process.env.SUBNETS.split(' '),
         assignPublicIp: 'ENABLED',
-        securityGroups: JSON.parse(process.env.SECURITY_GROUPS)
+        securityGroups: process.env.SECURITY_GROUPS.split(' ')
       }
     },
     overrides: {
@@ -37,6 +37,7 @@ const runIngestTask = async function (input, envvars) {
 }
 
 module.exports.handler = async function handler(event) {
+  console.log(`Ingest Event: ${event}`)
   try {
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
       // event is SNS message of updated file on s3

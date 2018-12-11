@@ -42,7 +42,7 @@ jobs:
               yarn docs-build
             fi
       - run:
-          name: Deploy example to aws
+          name: Deploy to NPM
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
