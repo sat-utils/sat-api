@@ -37,7 +37,7 @@ const runIngestTask = async function (input, envvars) {
 }
 
 module.exports.handler = async function handler(event) {
-  console.log(`Ingest Event: ${event}`)
+  console.log(`Ingest Event: ${JSON.stringify(event)}`)
   try {
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
       // event is SNS message of updated file on s3
@@ -64,7 +64,7 @@ module.exports.handler = async function handler(event) {
       const { url, recursive, collectionsOnly } = event
       const recurse = recursive === undefined ? true : recursive
       const collections = collectionsOnly === undefined ? false : collectionsOnly
-      satlib.ingest.ingest(url, satlib.es, recurse, collections)
+      await satlib.ingest.ingest(url, satlib.es, recurse, collections)
     } else if (event.fargate) {
       // event is URL to a catalog node - start a Fargate instance to process
       console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
