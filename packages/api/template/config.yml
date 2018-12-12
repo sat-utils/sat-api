@@ -23,7 +23,7 @@ default:
     ingest:
       source: 'node_modules/@sat-utils/ingest/dist/'
       handler: index.handler
-      timeout: 300
+      timeout: 900
       memory: 1600
       envs:
         bucket: '{{system_bucket}}'
