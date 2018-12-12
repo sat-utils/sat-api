@@ -17,6 +17,8 @@ info:
 servers:
   - url: 'https://sat-api.developmentseed.org/'
     description: Production server
+  - url: 'https://sat-api-dev.developmentseed.org/'
+    description: Development server
 paths:
   /stac:
     get:
