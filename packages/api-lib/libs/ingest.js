@@ -31,12 +31,12 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       }
       const item = JSON.parse(response)
       const isCollection = item.hasOwnProperty('extent')
-      const isCatalog = (item.hasOwnProperty('stac_version') && !isCollection)
+      //const isCatalog = (item.hasOwnProperty('stac_version') && !isCollection)
       if (item) {
         let written = true
-        if (!isCatalog) {
-          written = stream.write(item)
-        }
+        //if (!isCatalog) {
+        written = stream.write(item)
+        //}
         if (recursive && !(isCollection && collectionsOnly)) {
           if (written && item) {
             // eslint-disable-next-line
