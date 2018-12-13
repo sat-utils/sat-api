@@ -69,7 +69,8 @@ module.exports.handler = async function handler(event) {
       // event is URL to a catalog node - start a Fargate instance to process
       console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
       const envvars = [
-        { 'name': 'ES_HOST', 'value': process.env.ES_HOST }
+        { 'name': 'ES_HOST', 'value': process.env.ES_HOST },
+        { 'name': 'ES_BATCH_SIZE', 'value': process.env.ES_BATCH_SIZE }
       ]
       await runIngestTask(event.fargate, envvars)
     }

@@ -160,7 +160,7 @@ async function _stream() {
     const client = await esClient()
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
-      highWaterMark: 50
+      highWaterMark: process.env.ES_BATCH_SIZE || 500
     })
     esStreams = { toEs, esStream }
   } catch (err) {

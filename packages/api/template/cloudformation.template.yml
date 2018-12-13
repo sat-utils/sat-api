@@ -118,6 +118,12 @@ Resources:
                 Action:
                   - s3:ListAllMyBuckets
                 Resource: '*'
+                # allow access to ES
+              - Effect: Allow
+                Action:
+                - es:*
+                Resource:
+                - "arn:aws:es:*:*:domain/*"
                # Allow lambdas to call other lambdas
               - Effect: Allow
                 Action:
@@ -190,6 +196,7 @@ Resources:
       {{/each}}
     {{/if}}
       NetworkMode: awsvpc
+      Family: SatApi
       ExecutionRoleArn:
         Fn::GetAtt:
           - ECSRole
