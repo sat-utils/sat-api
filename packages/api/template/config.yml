@@ -24,7 +24,7 @@ default:
       source: 'node_modules/@sat-utils/ingest/dist/'
       handler: index.handler
       timeout: 900
-      memory: 1600
+      memory: 768
       envs:
         bucket: '{{system_bucket}}'
         prefix: '{{stackName}}'
