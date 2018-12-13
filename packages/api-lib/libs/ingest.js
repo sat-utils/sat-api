@@ -11,7 +11,7 @@ const uuid = require('uuid/v4')
 const logger = require('./logger')
 
 const limiter = new Bottleneck({
-  maxConcurrent: 1000
+  maxConcurrent: 5000
 })
 const limitedRequest = limiter.wrap(request)
 const limitedRead = limiter.wrap(util.promisify(fs.readFile))
@@ -31,8 +31,12 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       }
       const item = JSON.parse(response)
       const isCollection = item.hasOwnProperty('extent')
+      const isCatalog = (item.hasOwnProperty('stac_version') && !isCollection)
       if (item) {
-        const written = stream.write(item)
+        let written = true
+        if (!isCatalog) {
+          written = stream.write(item)
+        }
         if (recursive && !(isCollection && collectionsOnly)) {
           if (written && item) {
             // eslint-disable-next-line
