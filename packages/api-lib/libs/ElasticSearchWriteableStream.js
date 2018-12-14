@@ -48,6 +48,7 @@ class ElasticSearchWritableStream extends stream.Writable {
         type: record.type,
         body: record.body.doc
       })
+      console.log(record.body.doc.id)
       next()
     } catch (err) {
       next(err)
@@ -64,7 +65,7 @@ class ElasticSearchWritableStream extends stream.Writable {
 
     try {
       await this.client.bulk({ body })
-      console.log('Wrote ', body.length)
+      console.log('Wrote ', body.length / 2)
       next()
     } catch (err) {
       next(err)
