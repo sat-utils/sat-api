@@ -3,7 +3,7 @@ const extent = require('@mapbox/extent')
 const { feature } = require('@turf/helpers')
 const logger = require('./logger')
 
-const extractIntersectsParam = function (params) {
+const extractIntersects = function (params) {
   let returnParams
   const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
   const { intersects } = params
@@ -36,7 +36,7 @@ const extractIntersectsParam = function (params) {
   return returnParams
 }
 
-const extractBboxParam = function (params) {
+const extractBbox = function (params) {
   let returnParams
   const { bbox } = params
   if (bbox) {
@@ -49,7 +49,7 @@ const extractBboxParam = function (params) {
   return returnParams
 }
 
-const extractTimeParam = function (params) {
+const extractTime = function (params) {
   let returnParams
   const { time } = params
   if (time) {
@@ -60,6 +60,28 @@ const extractTimeParam = function (params) {
   }
   return returnParams
 }
+
+const extractStacQuery = function (params) {
+  let returnParams
+  const { query } = params
+  if (typeof query === 'string') {
+    const parsed = JSON.parse(query)
+    returnParams = Object.assign({}, params, { query: parsed })
+  } else {
+    returnParams = params
+  }
+  return returnParams
+}
+
+const extractPage = function (originalQuery) {
+  const query = Object.assign({}, originalQuery)
+  const page = parseInt(originalQuery.page) || 1
+  const limit = parseInt(originalQuery.limit) || 1
+  delete query.page
+  delete query.limit
+  return { query, page, limit }
+}
+
 
 const parsePath = function (path) {
   const searchFilters = {
@@ -171,15 +193,6 @@ const collectionsToCatalogLinks = function (results, endpoint) {
   return catalog
 }
 
-const extractPageFromQuery = function (originalQuery) {
-  const query = Object.assign({}, originalQuery)
-  const page = parseInt(originalQuery.page) || 1
-  const limit = parseInt(originalQuery.limit) || 1
-  delete query.page
-  delete query.limit
-  return { query, page, limit }
-}
-
 const wrapResponseInFeatureCollection = function (
   meta, features = [], links = []
 ) {
@@ -236,22 +249,23 @@ const search = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
-  const {
-    stac,
-    search: searchPath,
-    collections,
-    collectionId,
-    items,
-    itemId
-  } = parsePath(path)
-
-  const timeParams = extractTimeParam(queryParameters)
-  const bboxParams = extractBboxParam(timeParams)
-  const intersectsParams = extractIntersectsParam(queryParameters)
-  // Prefer intersects
-  const params = intersectsParams.intersects ? intersectsParams : bboxParams
-  const { query, page, limit } = extractPageFromQuery(params)
   try {
+    const {
+      stac,
+      search: searchPath,
+      collections,
+      collectionId,
+      items,
+      itemId
+    } = parsePath(path)
+
+    const datetime = extractTime(queryParameters)
+    const bbox = extractBbox(datetime)
+    const intersects = extractIntersects(queryParameters)
+    // Prefer intersects
+    const params = intersects.intersects ? intersects : bbox
+    const stacQuery = extractStacQuery(params)
+    const { query, page, limit } = extractPage(stacQuery)
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
@@ -308,5 +322,5 @@ module.exports = {
   search,
   parsePath,
   searchItems,
-  extractIntersectsParam
+  extractIntersects
 }
