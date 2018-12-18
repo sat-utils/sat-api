@@ -42,20 +42,26 @@ module.exports.handler = async function handler(event) {
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
       // event is SNS message of updated file on s3
       const message = JSON.parse(event.Records[0].Sns.Message)
-      const { Records: s3Records } = message
-      const promises = s3Records.map((s3Record) => {
-        const {
-          s3: {
-            bucket: { name: bucketName },
-            object: { key }
-          }
-        } = s3Record
-        const url = `https://${bucketName}.s3.amazonaws.com/${key}`
-        console.log(`Ingesting catalog file ${url}`)
-        const recursive = false
-        return satlib.ingest.ingest(url, satlib.es, recursive)
-      })
-      await Promise.all(promises)
+      if (message.type && message.type === 'Feature') {
+        // event is a STAC Item
+        await satlib.ingest.ingestItem(message, satlib.es)
+      } else {
+        // updated s3
+        const { Records: s3Records } = message
+        const promises = s3Records.map((s3Record) => {
+          const {
+            s3: {
+              bucket: { name: bucketName },
+              object: { key }
+            }
+          } = s3Record
+          const url = `https://${bucketName}.s3.amazonaws.com/${key}`
+          console.log(`Ingesting catalog file ${url}`)
+          const recursive = false
+          return satlib.ingest.ingest(url, satlib.es, recursive)
+        })
+        await Promise.all(promises)
+      }
     } else if (event.type && event.type === 'Feature') {
       // event is a STAC Item provided as cli parameter
       await satlib.ingest.ingestItem(event, satlib.es)
