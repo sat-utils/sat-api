@@ -4,7 +4,7 @@ const { feature } = require('@turf/helpers')
 const logger = require('./logger')
 
 const extractIntersects = function (params) {
-  let returnParams
+  let intersectsGeometry
   const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
   const { intersects } = params
   if (intersects) {
@@ -26,62 +26,38 @@ const extractIntersects = function (params) {
       } else if (geojson.type !== 'Feature') {
         geojson = feature(geojson)
       }
-      returnParams = Object.assign({}, params, { intersects: geojson })
+      intersectsGeometry = geojson
     } else {
       throw geojsonError
     }
-  } else {
-    returnParams = params
   }
-  return returnParams
+  return intersectsGeometry
 }
 
 const extractBbox = function (params) {
-  let returnParams
+  let intersectsGeometry
   const { bbox } = params
   if (bbox) {
     const boundingBox = extent(bbox)
     const geojson = feature(boundingBox.polygon())
-    returnParams = Object.assign({}, params, { intersects: geojson })
-  } else {
-    returnParams = params
+    intersectsGeometry = geojson
   }
-  return returnParams
-}
-
-const extractTime = function (params) {
-  let returnParams
-  const { time } = params
-  if (time) {
-    returnParams = Object.assign({}, params, { datetime: time })
-    delete returnParams.time
-  } else {
-    returnParams = params
-  }
-  return returnParams
+  return intersectsGeometry
 }
 
 const extractStacQuery = function (params) {
-  let returnParams
+  let stacQuery
   const { query } = params
-  if (typeof query === 'string') {
-    const parsed = JSON.parse(query)
-    returnParams = Object.assign({}, params, { query: parsed })
-  } else {
-    returnParams = params
+  if (query) {
+    if (typeof query === 'string') {
+      const parsed = JSON.parse(query)
+      stacQuery = parsed
+    } else {
+      stacQuery = Object.assign({}, query)
+    }
   }
-  return returnParams
+  return stacQuery
 }
-
-const extractPage = function (originalQuery) {
-  const query = Object.assign({}, originalQuery)
-  const page = parseInt(originalQuery.page) || 1
-  const limit = parseInt(originalQuery.limit) || 1
-  delete query.page
-  delete query.limit
-  return { query, page, limit }
-}
-
 
 const parsePath = function (path) {
   const searchFilters = {
@@ -259,26 +235,35 @@ const search = async function (
       itemId
     } = parsePath(path)
 
-    const datetime = extractTime(queryParameters)
-    const bbox = extractBbox(datetime)
-    const intersects = extractIntersects(queryParameters)
+    const { limit, page, time: datetime } = queryParameters
+    const bbox = extractBbox(queryParameters)
+    const hasIntersects = extractIntersects(queryParameters)
     // Prefer intersects
-    const params = intersects.intersects ? intersects : bbox
-    const stacQuery = extractStacQuery(params)
-    const { query, page, limit } = extractPage(stacQuery)
+    const intersects = hasIntersects || bbox
+    const query = extractStacQuery(queryParameters)
+    const parameters = { datetime, intersects, query }
+    const searchParameters = Object.keys(parameters)
+      .filter((key) => parameters[key])
+      .reduce((obj, key) => ({
+        ...obj,
+        [key]: parameters[key]
+      }), {})
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
         await backend.search(undefined, 'collections', page, limit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
+    // STAC Search
     if (stac && searchPath) {
-      apiResponse = await searchItems(query, page, limit, backend, endpoint)
+      apiResponse = await searchItems(
+        searchParameters, page, limit, backend, endpoint
+      )
     }
     // All collections
     if (collections && !collectionId) {
       const { results, meta } =
-        await backend.search(query, 'collections', page, limit)
+        await backend.search(undefined, 'collections', page, limit)
       const linkedCollections = addCollectionLinks(results, endpoint)
       apiResponse = { meta, collections: linkedCollections }
     }
@@ -295,9 +280,10 @@ const search = async function (
         apiResponse = new Error('Collection not found')
       }
     }
+    // Items in a collection
     if (collections && collectionId && items && !itemId) {
       const itemsQuery = Object.assign(
-        {}, query, { collection: collectionId }
+        {}, searchParameters, { collection: collectionId }
       )
       apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
     }

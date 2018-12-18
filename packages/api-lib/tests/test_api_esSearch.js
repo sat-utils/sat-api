@@ -43,18 +43,19 @@ test('search /stac', async (t) => {
 test('search /stac/search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [] })
   const backend = { search }
+  const query = { 'test': true }
   const queryParams = {
     page: 1,
     limit: 2,
-    test: 'test'
+    query
   }
   api.search('/stac/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0], { test: 'test' },
-    'Extracts limit and page from query parameters before Elasticsearch search')
+  t.deepEqual(search.firstCall.args[0], { query },
+    'Extracts query to use in search parameters')
   t.is(search.firstCall.args[2], queryParams.page,
-    'Sends extracted page query parameter to Elasticsearch')
+    'Extracts page to use as stand alone parameter')
   t.is(search.firstCall.args[3], queryParams.limit,
-    'Sends extracted limit query parameter to Elasticsearch')
+    'Extracts limit to use as stand alone parameter')
 })
 
 test('search /stac/search intersects parameter', async (t) => {
@@ -67,7 +68,7 @@ test('search /stac/search intersects parameter', async (t) => {
   }
   api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0].intersects, item,
-    'Uses valid GeoJSON as Elasticsearch intersects search parameter')
+    'Uses valid GeoJSON as intersects search parameter')
 
   search.resetHistory()
   queryParams.intersects = JSON.stringify(item)
@@ -104,7 +105,7 @@ test('search /stac/search bbox parameter', async (t) => {
   }
   await api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0].intersects, expected,
-    'Converts a [w,s,e,n] bbox to an intersects filter parameter')
+    'Converts a [w,s,e,n] bbox to an intersects search parameter')
   search.resetHistory()
 
   queryParams.intersects = JSON.stringify(item)
@@ -125,7 +126,7 @@ test('search /stac/search time parameter', async (t) => {
   await api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0], { datetime: range },
     'Extracts time query parameter and transforms it into ' +
-    'datetime Elasticsearch parameter')
+    'datetime search parameter')
 })
 
 test('search /collections', async (t) => {
@@ -169,7 +170,7 @@ test('search /collections/collectionId', async (t) => {
     `/collections/${collectionId}`, { test: 'test' }, backend, 'endpoint'
   )
   t.deepEqual(search.firstCall.args[0], { id: collectionId },
-    'Calls Elasticsearch with the collectionId path element as id parameter' +
+    'Calls search with the collectionId path element as id parameter' +
     ' and ignores other passed filter parameters')
   t.is(actual.links.length, 4, 'Returns the first found collection as object')
 
@@ -182,7 +183,7 @@ test('search /collections/collectionId', async (t) => {
     `/collections/${collectionId}`, {}, backend, 'endpoint'
   )
   t.is(actual.message, 'Collection not found',
-    'Sends error when not collections are found in Elasticsearch')
+    'Sends error when not collections are found in search')
 })
 
 test('search /collections/collectionId/items', async (t) => {
@@ -203,7 +204,7 @@ test('search /collections/collectionId/items', async (t) => {
     `/collections/${collectionId}/items`, {}, backend, 'endpoint'
   )
   t.deepEqual(search.firstCall.args[0], { collection: collectionId },
-    'Calls Elasticsearch with the collectionId path element as collection parameter')
+    'Calls search with the collectionId path element as collection parameter')
 })
 
 test('search /collections/collectionId/items/itemId', async (t) => {
@@ -224,7 +225,7 @@ test('search /collections/collectionId/items/itemId', async (t) => {
     `/collections/collectionId/items/${itemId}`, {}, backend, 'endpoint'
   )
   t.deepEqual(search.firstCall.args[0], { id: itemId },
-    'Calls Elasticsearch with the itemId path element as id parameter' +
+    'Calls search with the itemId path element as id parameter' +
     ' and ignores other passed filter parameters')
 
   t.is(actual.type, 'Feature')
