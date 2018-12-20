@@ -147,10 +147,10 @@
         ],
         "type": "Polygon"
     },
-    "id": "LC80100102015050LGN00",
+    "id": "collection2_item",
     "links": [
         {
-            "href": "LC80100102015050LGN00.json",
+            "href": "collection2_item.json",
             "rel": "self"
         },
         {
@@ -158,26 +158,26 @@
             "rel": "root"
         },
         {
-            "href": "collection.json",
+            "href": "collection2.json",
             "rel": "parent"
         },
         {
-            "href": "collection.json",
+            "href": "collection2.json",
             "rel": "collection"
         }
     ],
     "properties": {
-        "collection": "different",
+        "collection": "collection2",
         "datetime": "2015-02-19T15:06:12.565047+00:00",
         "eo:cloud_cover": 0.54,
         "eo:epsg": 32622,
         "eo:sun_azimuth": 174.10674048,
         "eo:sun_elevation": 7.85803613,
         "landsat:path": "10",
-        "landsat:processing_level": "test",
+        "landsat:processing_level": "L1T",
         "landsat:product_id": null,
         "landsat:row": "10",
-        "landsat:scene_id": "LC80100102015050LGN00"
+        "landsat:scene_id": "collection2_item"
     },
     "type": "Feature"
 }

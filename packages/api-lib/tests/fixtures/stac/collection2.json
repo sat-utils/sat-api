@@ -1,5 +1,105 @@
 {
-  "extent": {
+    "assets": {
+        "ANG": {
+            "title": "Angle coefficients file",
+            "type": "text/plain"
+        },
+        "B1": {
+            "eo:bands": [
+                0
+            ],
+            "title": "Band 1 (coastal)",
+            "type": "image/x.geotiff"
+        },
+        "B10": {
+            "eo:bands": [
+                9
+            ],
+            "title": "Band 10 (lwir)",
+            "type": "image/x.geotiff"
+        },
+        "B11": {
+            "eo:bands": [
+                10
+            ],
+            "title": "Band 11 (lwir)",
+            "type": "image/x.geotiff"
+        },
+        "B2": {
+            "eo:bands": [
+                1
+            ],
+            "title": "Band 2 (blue)",
+            "type": "image/x.geotiff"
+        },
+        "B3": {
+            "eo:bands": [
+                2
+            ],
+            "title": "Band 3 (green)",
+            "type": "image/x.geotiff"
+        },
+        "B4": {
+            "eo:bands": [
+                3
+            ],
+            "title": "Band 4 (red)",
+            "type": "image/x.geotiff"
+        },
+        "B5": {
+            "eo:bands": [
+                4
+            ],
+            "title": "Band 5 (nir)",
+            "type": "image/x.geotiff"
+        },
+        "B6": {
+            "eo:bands": [
+                5
+            ],
+            "title": "Band 6 (swir16)",
+            "type": "image/x.geotiff"
+        },
+        "B7": {
+            "eo:bands": [
+                6
+            ],
+            "title": "Band 7 (swir22)",
+            "type": "image/x.geotiff"
+        },
+        "B8": {
+            "eo:bands": [
+                7
+            ],
+            "title": "Band 8 (pan)",
+            "type": "image/x.geotiff"
+        },
+        "B9": {
+            "eo:bands": [
+                8
+            ],
+            "title": "Band 9 (cirrus)",
+            "type": "image/x.geotiff"
+        },
+        "BQA": {
+            "title": "Band quality data",
+            "type": "image/x.geotiff"
+        },
+        "MTL": {
+            "title": "original metadata file",
+            "type": "text/plain"
+        },
+        "index": {
+            "title": "HTML index page",
+            "type": "text/html"
+        },
+        "thumbnail": {
+            "title": "Thumbnail image",
+            "type": "image/jpeg"
+        }
+    },
+    "description": "Landat 8 imagery radiometrically calibrated and orthorectified using gound points and Digital Elevation Model (DEM) data to correct relief displacement.",
+    "extent": {
         "spatial": [
             -180,
             -90,
@@ -12,6 +112,12 @@
         ]
     },
     "id": "collection2",
+    "keywords": [
+        "landsat",
+        "earth observation",
+        "usgs"
+    ],
+    "license": "PDDL-1.0",
     "links": [
         {
             "href": "collection2.json",
@@ -26,20 +132,127 @@
             "rel": "parent"
         },
         {
-            "href": "LC80100102015050LGN00_collection2.json",
+            "href": "collection2_item.json",
             "rel": "item"
         }
     ],
     "properties": {
         "collection": "collection2",
+        "eo:bands": [
+            {
+                "center_wavelength": 0.44,
+                "common_name": "coastal",
+                "full_width_half_max": 0.02,
+                "gsd": 30,
+                "id": "B1"
+            },
+            {
+                "center_wavelength": 0.48,
+                "common_name": "blue",
+                "full_width_half_max": 0.06,
+                "gsd": 30,
+                "id": "B2"
+            },
+            {
+                "center_wavelength": 0.56,
+                "common_name": "green",
+                "full_width_half_max": 0.06,
+                "gsd": 30,
+                "id": "B3"
+            },
+            {
+                "center_wavelength": 0.65,
+                "common_name": "red",
+                "full_width_half_max": 0.04,
+                "gsd": 30,
+                "id": "B4"
+            },
+            {
+                "center_wavelength": 0.86,
+                "common_name": "nir",
+                "full_width_half_max": 0.03,
+                "gsd": 30,
+                "id": "B5"
+            },
+            {
+                "center_wavelength": 1.6,
+                "common_name": "swir16",
+                "full_width_half_max": 0.08,
+                "gsd": 30,
+                "id": "B6"
+            },
+            {
+                "center_wavelength": 2.2,
+                "common_name": "swir22",
+                "full_width_half_max": 0.2,
+                "gsd": 30,
+                "id": "B7"
+            },
+            {
+                "center_wavelength": 0.59,
+                "common_name": "pan",
+                "full_width_half_max": 0.18,
+                "gsd": 15,
+                "id": "B8"
+            },
+            {
+                "center_wavelength": 1.37,
+                "common_name": "cirrus",
+                "full_width_half_max": 0.02,
+                "gsd": 30,
+                "id": "B9"
+            },
+            {
+                "center_wavelength": 10.9,
+                "common_name": "lwir11",
+                "full_width_half_max": 0.8,
+                "gsd": 100,
+                "id": "B10"
+            },
+            {
+                "center_wavelength": 12,
+                "common_name": "lwir12",
+                "full_width_half_max": 1,
+                "gsd": 100,
+                "id": "B11"
+            }
+        ],
         "eo:gsd": 15,
         "eo:instrument": "OLI_TIRS",
         "eo:off_nadir": 0,
         "eo:platform": "landsat-8"
     },
     "providers": [
+        {
+            "name": "USGS",
+            "roles": [
+                "producer"
+            ],
+            "url": "https://landsat.usgs.gov/"
+        },
+        {
+            "name": "Planet Labs",
+            "roles": [
+                "processor"
+            ],
+            "url": "https://github.com/landsat-pds/landsat_ingestor"
+        },
+        {
+            "name": "AWS",
+            "roles": [
+                "host"
+            ],
+            "url": "https://landsatonaws.com/"
+        },
+        {
+            "name": "Development Seed",
+            "roles": [
+                "processor"
+            ],
+            "url": "https://github.com/sat-utils/sat-api"
+        }
     ],
     "stac_version": "0.6.0-rc2",
-    "title": "Collection 2",
+    "title": "Landsat 8 L1",
     "version": "0.1.0"
 }
