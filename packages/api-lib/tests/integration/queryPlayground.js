@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk')
 const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
+const geojson = require('../fixtures/stac/noIntersectsFeature.json')
 
 process.env.ES_HOST = 'http://192.168.99.100:4571'
 
@@ -85,22 +86,36 @@ function buildRangeQuery(accumulator, property, operators, operatorsObject) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
-  const { query, parentCollections } = parameters
-  const must = Object.keys(query).reduce((accumulator, property) => {
-    const operatorsObject = query[property]
-    const operators = Object.keys(operatorsObject)
-    if (operators.includes(eq)) {
-      const termQuery = { term: { [`properties.${property}`]: operatorsObject.eq } }
-      accumulator.push(termQuery)
-    }
-    const rangeQuery =
-      buildRangeQuery(accumulator, property, operators, operatorsObject)
-    if (rangeQuery) {
-      accumulator.push(rangeQuery)
-    }
-    return accumulator
-  }, [])
-
+  const { query, parentCollections, intersects } = parameters
+  let must = []
+  if (query) {
+    must = Object.keys(query).reduce((accumulator, property) => {
+      const operatorsObject = query[property]
+      const operators = Object.keys(operatorsObject)
+      if (operators.includes(eq)) {
+        const termQuery = {
+          term: {
+            [`properties.${property}`]: operatorsObject.eq
+          }
+        }
+        accumulator.push(termQuery)
+      }
+      const rangeQuery =
+        buildRangeQuery(accumulator, property, operators, operatorsObject)
+      if (rangeQuery) {
+        accumulator.push(rangeQuery)
+      }
+      return accumulator
+    }, must)
+  }
+  if (intersects) {
+    const { geometry } = intersects
+    must.push({
+      geo_shape: {
+        geometry: { shape: geometry }
+      }
+    })
+  }
   let filter
   if (parentCollections && parentCollections.length !== 0) {
     filter = {
@@ -120,29 +135,55 @@ function buildQuery(parameters) {
   return { query: queryBody }
 }
 
-async function search(params, index = '*', page, limit) {
+function buildIdQuery(id) {
+  return {
+    query: {
+      constant_score: {
+        filter: {
+          term: {
+            id
+          }
+        }
+      }
+    }
+  }
+}
+
+async function search(parameters, index = '*', page, limit) {
+  let body
+  if (parameters.id) {
+    const { id } = parameters
+    body = buildIdQuery(id)
+  } else {
+    body = buildQuery(parameters)
+  }
   const searchParams = {
     index,
-    body: buildQuery(params),
+    body,
     size: limit,
     from: (page - 1) * limit
   }
 
   const client = await esClient()
-  const body = await client.search(searchParams)
-  console.log(body)
+  const result = await client.search(searchParams)
+  console.log(result)
 }
 
 const parameters = {
-  //parentCollections: ['collection2'],
+  parentCollections: ['collection2'],
+  //id: 'collection2',
+  intersects: geojson,
   query: {
     collection: {
       eq: 'landsat-8-l1'
-    },
-    'eo:cloud_cover': {
-      gt: 8,
-      lt: 9
     }
+    //'eo:cloud_cover': {
+      //gt: 8,
+      //lte: 8.26
+    //},
+    //'eo:sun_azimuth': {
+      //gt: 174
+    //}
   }
 }
 search(parameters, 'items', 1, 10)
