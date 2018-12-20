@@ -74,7 +74,7 @@ async function prepare(index) {
     properties: {
       'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
-      'eo:cloud_cover': { type: 'integer' },
+      'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
       'eo:constellation': { type: 'keyword' },
       'eo:platform': { type: 'keyword' },

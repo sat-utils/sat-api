@@ -55,16 +55,49 @@ async function esClient() {
   return _esClient
 }
 
-function buildQuery(parameters) {
-  const { query, parentCollections } = parameters
-  const must = Object.keys(query).reduce((accumulator, property) => {
-    const queryOperators = query[property]
-    Object.keys(queryOperators).forEach((operator) => {
-      if (operator === 'eq') {
-        const termQuery = { term: { [`properties.${property}`]: queryOperators.eq } }
-        accumulator.push(termQuery)
+function buildRangeQuery(accumulator, property, operators, operatorsObject) {
+  const gt = 'gt'
+  const lt = 'lt'
+  const gte = 'gte'
+  const lte = 'lte'
+  const comparisons = [gt, lt, gte, lte]
+  let rangeQuery
+  if (operators.includes(gt) || operators.includes(lt) ||
+         operators.includes(gte) || operators.includes(lte)) {
+    const propertyKey = `properties.${property}`
+    rangeQuery = {
+      range: {
+        [propertyKey]: {
+        }
+      }
+    }
+    comparisons.forEach((comparison) => {
+      if (operators.includes(comparison)) {
+        const exisiting = rangeQuery.range[propertyKey]
+        rangeQuery.range[propertyKey] = Object.assign({}, exisiting, {
+          [comparison]: operatorsObject[comparison]
+        })
       }
     })
+  }
+  return rangeQuery
+}
+
+function buildQuery(parameters) {
+  const eq = 'eq'
+  const { query, parentCollections } = parameters
+  const must = Object.keys(query).reduce((accumulator, property) => {
+    const operatorsObject = query[property]
+    const operators = Object.keys(operatorsObject)
+    if (operators.includes(eq)) {
+      const termQuery = { term: { [`properties.${property}`]: operatorsObject.eq } }
+      accumulator.push(termQuery)
+    }
+    const rangeQuery =
+      buildRangeQuery(accumulator, property, operators, operatorsObject)
+    if (rangeQuery) {
+      accumulator.push(rangeQuery)
+    }
     return accumulator
   }, [])
 
@@ -84,16 +117,6 @@ function buildQuery(parameters) {
   const queryBody = {
     constant_score: { filter }
   }
-
-  //const query = {
-    //constant_score: {
-      //filter: {
-        //terms: {
-          //'properties.collection': ['landsat-8-l1', 'collection2']
-        //}
-      //}
-    //}
-  //}
   return { query: queryBody }
 }
 
@@ -108,26 +131,17 @@ async function search(params, index = '*', page, limit) {
   const client = await esClient()
   const body = await client.search(searchParams)
   console.log(body)
-  //const results = body.hits.hits.map((r) => (r._source))
-  //const response = {
-    //results,
-    //meta: {
-      //page,
-      //limit,
-      //found: body.hits.total,
-      //returned: results.length
-    //}
-  //}
 }
 
 const parameters = {
-  parentCollections: ['collection2'],
+  //parentCollections: ['collection2'],
   query: {
     collection: {
       eq: 'landsat-8-l1'
     },
-    'landsat:scene_id': {
-      eq: 'LC80100102015050LGN00'
+    'eo:cloud_cover': {
+      gt: 8,
+      lt: 9
     }
   }
 }
