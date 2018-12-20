@@ -55,7 +55,8 @@ async function esClient() {
   return _esClient
 }
 
-function buildQuery(query) {
+function buildQuery(parameters) {
+  const { query, parentCollections } = parameters
   const must = Object.keys(query).reduce((accumulator, property) => {
     const queryOperators = query[property]
     Object.keys(queryOperators).forEach((operator) => {
@@ -67,15 +68,23 @@ function buildQuery(query) {
     return accumulator
   }, [])
 
-  const queryBody = {
-      constant_score: {
-        filter: {
-          bool: {
-            must
-          }
-        }
+  let filter
+  if (parentCollections && parentCollections.length !== 0) {
+    filter = {
+      bool: {
+        should: [
+          { terms: { 'properties.collection': parentCollections } },
+          { bool: { must } }
+        ]
       }
     }
+  } else {
+    filter = { bool: { must } }
+  }
+  const queryBody = {
+    constant_score: { filter }
+  }
+
   //const query = {
     //constant_score: {
       //filter: {
@@ -111,11 +120,15 @@ async function search(params, index = '*', page, limit) {
   //}
 }
 
-const params = {
+const parameters = {
+  parentCollections: ['collection2'],
   query: {
     collection: {
       eq: 'landsat-8-l1'
+    },
+    'landsat:scene_id': {
+      eq: 'LC80100102015050LGN00'
     }
   }
 }
-search(params.query, 'items', 1, 10)
+search(parameters, 'items', 1, 10)
