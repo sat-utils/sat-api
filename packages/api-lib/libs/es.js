@@ -70,7 +70,7 @@ async function esClient() {
 async function prepare(index) {
   // TODO - different mappings for collection and item
   const props = {
-    'type': 'nested',
+    'type': 'object',
     properties: {
       'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
@@ -87,6 +87,15 @@ async function prepare(index) {
     }
   }
 
+  const dynamicTemplates = [{
+    strings: {
+      mapping: {
+        type: 'keyword'
+      },
+      match_mapping_type: 'string'
+    }
+  }]
+
   return esClient().then((client) =>
     client.indices.exists({ index }).then((exist) => {
       if (!exist) {
@@ -98,6 +107,7 @@ async function prepare(index) {
                 /*'_all': {
                   enabled: true
                 },*/
+                dynamic_templates: dynamicTemplates,
                 properties: {
                   'id': { type: 'keyword' },
                   'properties': props,
