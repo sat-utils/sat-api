@@ -56,7 +56,7 @@ async function esClient() {
   return _esClient
 }
 
-function buildRangeQuery(accumulator, property, operators, operatorsObject) {
+function buildRangeQuery(property, operators, operatorsObject) {
   const gt = 'gt'
   const lt = 'lt'
   const gte = 'gte'
@@ -82,6 +82,31 @@ function buildRangeQuery(accumulator, property, operators, operatorsObject) {
     })
   }
   return rangeQuery
+}
+
+function buildDatetimeQuery(parameters) {
+  let dateQuery
+  const { datetime } = parameters
+  if (datetime) {
+    const dataRange = datetime.split('/')
+    if (dataRange.length === 2) {
+      dateQuery = {
+        range: {
+          'properties.datetime': {
+            gt: dataRange[0],
+            lt: dataRange[1]
+          }
+        }
+      }
+    } else {
+      dateQuery = {
+        term: {
+          'properties.datetime': datetime
+        }
+      }
+    }
+  }
+  return dateQuery
 }
 
 function buildQuery(parameters) {
@@ -116,6 +141,12 @@ function buildQuery(parameters) {
       }
     })
   }
+
+  const datetimeQuery = buildDatetimeQuery(parameters)
+  if (datetimeQuery) {
+    must.push(datetimeQuery)
+  }
+
   let filter
   if (parentCollections && parentCollections.length !== 0) {
     filter = {
@@ -170,9 +201,10 @@ async function search(parameters, index = '*', page, limit) {
 }
 
 const parameters = {
-  parentCollections: ['collection2'],
+  //parentCollections: ['collection2'],
   //id: 'collection2',
-  intersects: geojson,
+  //intersects: geojson,
+  datetime: '2015-03-22/2016-01-01',
   query: {
     collection: {
       eq: 'landsat-8-l1'
