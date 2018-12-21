@@ -6,6 +6,7 @@ const fs = require('fs')
 const { ingest, ingestItem } = require('../libs/ingest')
 const catalog = require('./fixtures/stac/catalog.json')
 const collection = require('./fixtures/stac/collection.json')
+const collection2 = require('./fixtures/stac/collection2.json')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
 const secondItem = require('./fixtures/stac/LC80100102015082LGN00.json')
 
@@ -39,8 +40,9 @@ test('ingest traverses the entire STAC tree', async (t) => {
   await ingest('./fixtures/stac/catalog.json', backend)
   t.deepEqual(esStream.queue[0], catalog)
   t.deepEqual(esStream.queue[1], collection)
-  t.deepEqual(esStream.queue[2], firstItem)
-  t.deepEqual(esStream.queue[3], secondItem)
+  t.deepEqual(esStream.queue[2], collection2)
+  t.deepEqual(esStream.queue[3], firstItem)
+  t.deepEqual(esStream.queue[4], secondItem)
 })
 
 test('ingest does not recurse', async (t) => {
@@ -79,7 +81,7 @@ test('ingest logs request error and continues', async (t) => {
   await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
   t.is(error.firstCall.args[0].message, errorMessage,
     'Logs error via Winston transport')
-  t.is(esStream.queue.length, 3, 'Skips errored request and continues')
+  t.is(esStream.queue.length, 5, 'Skips errored request and continues')
 })
 
 test('ingestItem passes item through transform stream', async (t) => {
