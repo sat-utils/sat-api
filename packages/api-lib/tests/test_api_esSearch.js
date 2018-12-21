@@ -107,11 +107,6 @@ test('search /stac/search bbox parameter', async (t) => {
   t.deepEqual(search.firstCall.args[0].intersects, expected,
     'Converts a [w,s,e,n] bbox to an intersects search parameter')
   search.resetHistory()
-
-  queryParams.intersects = JSON.stringify(item)
-  await api.search('/stac/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item,
-    'Prefer intersects if both bbox and intersects parameters are provided')
 })
 
 test('search /stac/search time parameter', async (t) => {

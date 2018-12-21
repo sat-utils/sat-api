@@ -242,6 +242,7 @@ const search = async function (
     const intersects = hasIntersects || bbox
     const query = extractStacQuery(queryParameters)
     const parameters = { datetime, intersects, query }
+    // Keep only exisiting parameters
     const searchParameters = Object.keys(parameters)
       .filter((key) => parameters[key])
       .reduce((obj, key) => ({
