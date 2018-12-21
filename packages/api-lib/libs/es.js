@@ -305,7 +305,7 @@ function buildIdQuery(id) {
 }
 
 
-async function search(parameters, index = '*', page, limit) {
+async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
   if (parameters.id) {
     const { id } = parameters
@@ -329,7 +329,7 @@ async function search(parameters, index = '*', page, limit) {
       page,
       limit,
       found: resultBody.hits.total,
-      returned: resultBody.length
+      returned: results.length
     }
   }
   return response
