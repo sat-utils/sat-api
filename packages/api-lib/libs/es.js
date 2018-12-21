@@ -179,100 +179,157 @@ async function _stream() {
   return esStreams
 }
 
-// Create a term query
-const termQuery = (field, value) => {
-  // the default is to search the properties of a record
-  let _field = field
-  if (field !== 'id') {
-    _field = `properties.${field}`
-  }
-  const vals = value.split(',').filter((x) => x)
-  const terms = vals.map((v) => ({ term: { [_field]: v } }))
-  // also return if the field is absent entirely
-  terms.push({ bool: { must_not: { exists: { field: _field } } } })
-  let query = {
-    bool: {
-      should: terms
+function buildRangeQuery(property, operators, operatorsObject) {
+  const gt = 'gt'
+  const lt = 'lt'
+  const gte = 'gte'
+  const lte = 'lte'
+  const comparisons = [gt, lt, gte, lte]
+  let rangeQuery
+  if (operators.includes(gt) || operators.includes(lt) ||
+         operators.includes(gte) || operators.includes(lte)) {
+    const propertyKey = `properties.${property}`
+    rangeQuery = {
+      range: {
+        [propertyKey]: {
+        }
+      }
     }
-  }
-  if (field !== 'id') {
-    query = { nested: { path: 'properties', query: query } }
-  }
-  return query
-}
-
-// Create a range query
-const rangeQuery = (field, frm, to) => {
-  // range queries will always be on properties
-  const _field = `properties.${field}`
-  let query = {
-    bool: {
-      should: [
-        { range: { [_field]: { gte: frm, lte: to } } },
-        { bool: { must_not: { exists: { field: _field } } } }
-      ]
-    }
-  }
-  query = { nested: { path: 'properties', query: query } }
-  return query
-}
-
-function build_query(params) {
-  // no filters, return everything
-  const _params = Object.assign({}, params)
-  if (Object.keys(_params).length === 0) {
-    return {
-      query: { match_all: {} }
-    }
-  }
-
-  const queries = []
-
-  // intersects search
-  if (params.intersects) {
-    queries.push({
-      geo_shape: { 'field': { shape: params.intersects.geometry } }
+    // All operators for a property go in a single range query.
+    comparisons.forEach((comparison) => {
+      if (operators.includes(comparison)) {
+        const exisiting = rangeQuery.range[propertyKey]
+        rangeQuery.range[propertyKey] = Object.assign({}, exisiting, {
+          [comparison]: operatorsObject[comparison]
+        })
+      }
     })
-    delete _params.intersects
   }
-
-  // create range and term queries
-  let range
-  Object.keys(_params).forEach((key) => {
-    range = _params[key].split('/')
-    if (range.length > 1) {
-      queries.push(rangeQuery(key, range[0], range[1]))
-    } else {
-      queries.push(termQuery(key, _params[key]))
-    }
-  })
-
-  if (queries.length === 1) {
-    return { query: queries[0] }
-  }
-  return { query: { bool: { must: queries } } }
+  return rangeQuery
 }
 
-async function search(params, index = '*', page, limit) {
-  console.log('Search parameters: ', JSON.stringify(params))
+function buildDatetimeQuery(parameters) {
+  let dateQuery
+  const { datetime } = parameters
+  if (datetime) {
+    const dataRange = datetime.split('/')
+    if (dataRange.length === 2) {
+      dateQuery = {
+        range: {
+          'properties.datetime': {
+            gt: dataRange[0],
+            lt: dataRange[1]
+          }
+        }
+      }
+    } else {
+      dateQuery = {
+        term: {
+          'properties.datetime': datetime
+        }
+      }
+    }
+  }
+  return dateQuery
+}
 
+function buildQuery(parameters) {
+  const eq = 'eq'
+  const { query, parentCollections, intersects } = parameters
+  let must = []
+  if (query) {
+    must = Object.keys(query).reduce((accumulator, property) => {
+      const operatorsObject = query[property]
+      const operators = Object.keys(operatorsObject)
+      if (operators.includes(eq)) {
+        const termQuery = {
+          term: {
+            [`properties.${property}`]: operatorsObject.eq
+          }
+        }
+        accumulator.push(termQuery)
+      }
+      const rangeQuery =
+        buildRangeQuery(accumulator, property, operators, operatorsObject)
+      if (rangeQuery) {
+        accumulator.push(rangeQuery)
+      }
+      return accumulator
+    }, must)
+  }
+  if (intersects) {
+    const { geometry } = intersects
+    must.push({
+      geo_shape: {
+        geometry: { shape: geometry }
+      }
+    })
+  }
+
+  const datetimeQuery = buildDatetimeQuery(parameters)
+  if (datetimeQuery) {
+    must.push(datetimeQuery)
+  }
+
+  let filter
+  if (parentCollections && parentCollections.length !== 0) {
+    filter = {
+      bool: {
+        should: [
+          { terms: { 'properties.collection': parentCollections } },
+          { bool: { must } }
+        ]
+      }
+    }
+  } else {
+    filter = { bool: { must } }
+  }
+  const queryBody = {
+    constant_score: { filter }
+  }
+  return { query: queryBody }
+}
+
+function buildIdQuery(id) {
+  return {
+    query: {
+      constant_score: {
+        filter: {
+          term: {
+            id
+          }
+        }
+      }
+    }
+  }
+}
+
+
+async function search(parameters, index = '*', page, limit) {
+  let body
+  if (parameters.id) {
+    const { id } = parameters
+    body = buildIdQuery(id)
+  } else {
+    body = buildQuery(parameters)
+  }
   const searchParams = {
     index,
-    body: build_query(params),
+    body,
     size: limit,
     from: (page - 1) * limit
   }
 
   const client = await esClient()
-  const body = await client.search(searchParams)
-  const results = body.hits.hits.map((r) => (r._source))
+  const resultBody = await client.search(searchParams)
+  const results = resultBody.hits.hits.map((r) => (r._source))
   const response = {
     results,
     meta: {
       page,
       limit,
-      found: body.hits.total,
-      returned: results.length
+      found: resultBody.hits.total,
+      returned: resultBody.length
     }
   }
   return response
