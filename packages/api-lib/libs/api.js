@@ -180,7 +180,7 @@ const wrapResponseInFeatureCollection = function (
   }
 }
 
-const buildPageLinks = function (meta, query, endpoint) {
+const buildPageLinks = function (meta, parameters, endpoint) {
   const pageLinks = []
 
   const dictToURI = (dict) => (
@@ -190,7 +190,7 @@ const buildPageLinks = function (meta, query, endpoint) {
   )
   const { found, page, limit } = meta
   if ((page * limit) < found) {
-    const newParams = Object.assign({}, query, { page: page + 1, limit })
+    const newParams = Object.assign({}, parameters, { page: page + 1, limit })
     const nextQueryParameters = dictToURI(newParams)
     pageLinks.push({
       rel: 'next',
@@ -201,23 +201,19 @@ const buildPageLinks = function (meta, query, endpoint) {
   return pageLinks
 }
 
-const searchItems = async function (query, page, limit, backend, endpoint) {
-  let response
-  const { results: collectionResults, meta: collectionMeta } =
-    await backend.search(query, 'collections', page, limit)
-  const collectionList = collectionResults.map((result) => result.id).join()
+const searchItems = async function (parameters, page, limit, backend, endpoint) {
+  const arbitraryLimit = 5000
+  const { results: collectionResults } =
+    await backend.search(parameters, 'collections', 1, arbitraryLimit)
+  const collectionList = collectionResults.map((result) => result.id)
   const collectionsQuery = Object.assign(
-    {}, query, { collection: collectionList }
+    {}, parameters, { parentCollections: collectionList }
   )
-  if (!collectionList.length) {
-    response = wrapResponseInFeatureCollection(collectionMeta)
-  } else {
-    const { results: itemsResults, meta: itemsMeta } =
-      await backend.search(collectionsQuery, 'items', page, limit)
-    const pageLinks = buildPageLinks(itemsMeta, query, endpoint)
-    const items = addItemLinks(itemsResults, endpoint)
-    response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
-  }
+  const { results: itemsResults, meta: itemsMeta } =
+    await backend.search(collectionsQuery, 'items', page, limit)
+  const pageLinks = buildPageLinks(itemsMeta, parameters, endpoint)
+  const items = addItemLinks(itemsResults, endpoint)
+  const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
   return response
 }
 
@@ -270,7 +266,7 @@ const search = async function (
     }
     // Specific collection
     if (collections && collectionId && !items) {
-      const collectionQuery = { 'id': collectionId }
+      const collectionQuery = { id: collectionId }
       const { results } = await backend.search(
         collectionQuery, 'collections', page, limit
       )
@@ -283,13 +279,18 @@ const search = async function (
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      const itemsQuery = Object.assign(
-        {}, searchParameters, { collection: collectionId }
+      const updatedQuery = Object.assign({}, searchParameters.query, {
+        collection: collectionId
+      })
+      const itemIdParameters = Object.assign(
+        {}, searchParameters, { query: updatedQuery }
       )
-      apiResponse = await searchItems(itemsQuery, page, limit, backend, endpoint)
+      apiResponse = await searchItems(
+        itemIdParameters, page, limit, backend, endpoint
+      )
     }
     if (collections && collectionId && items && itemId) {
-      const itemQuery = { 'id': itemId }
+      const itemQuery = { id: itemId }
       const { results } = await backend.search(itemQuery, 'items', page, limit)
       const [item] = addItemLinks(results, endpoint)
       if (item) {
