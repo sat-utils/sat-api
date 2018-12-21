@@ -280,7 +280,9 @@ const search = async function (
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
       const updatedQuery = Object.assign({}, searchParameters.query, {
-        collection: collectionId
+        collection: {
+          eq: collectionId
+        }
       })
       const itemIdParameters = Object.assign(
         {}, searchParameters, { query: updatedQuery }

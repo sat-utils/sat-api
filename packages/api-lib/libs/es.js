@@ -61,7 +61,7 @@ async function esClient() {
     _esClient = await connect().catch((err) => console.log('Error: ', err))
     if (_esClient) console.log('connected to elasticsearch')
   } else {
-    console.log('using existing elasticsearch connection')
+    //console.log('using existing elasticsearch connection')
   }
   return _esClient
 }

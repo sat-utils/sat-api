@@ -196,7 +196,9 @@ test('search /collections/collectionId/items', async (t) => {
   )
   const expectedParameters = {
     query: {
-      collection: collectionId
+      collection: {
+        eq: collectionId
+      }
     }
   }
   t.deepEqual(search.firstCall.args[0], expectedParameters,
