@@ -41,7 +41,7 @@ test('search /stac', async (t) => {
 })
 
 test('search /stac/search query parameters', async (t) => {
-  const search = sinon.stub().resolves({ results: [] })
+  const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const query = { 'test': true }
   const queryParams = {
@@ -52,14 +52,10 @@ test('search /stac/search query parameters', async (t) => {
   api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0], { query },
     'Extracts query to use in search parameters')
-  t.is(search.firstCall.args[2], queryParams.page,
-    'Extracts page to use as stand alone parameter')
-  t.is(search.firstCall.args[3], queryParams.limit,
-    'Extracts limit to use as stand alone parameter')
 })
 
 test('search /stac/search intersects parameter', async (t) => {
-  const search = sinon.stub().resolves({ results: [] })
+  const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const queryParams = {
     intersects: item,
@@ -78,7 +74,7 @@ test('search /stac/search intersects parameter', async (t) => {
 })
 
 test('search /stac/search bbox parameter', async (t) => {
-  const search = sinon.stub().resolves({ results: [] })
+  const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const w = -10
   const s = -10
@@ -110,7 +106,7 @@ test('search /stac/search bbox parameter', async (t) => {
 })
 
 test('search /stac/search time parameter', async (t) => {
-  const search = sinon.stub().resolves({ results: [] })
+  const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const range = '2007-03-01T13:00:00Z/2008-05-11T15:30:00Z'
   const queryParams = {
@@ -198,8 +194,13 @@ test('search /collections/collectionId/items', async (t) => {
   await api.search(
     `/collections/${collectionId}/items`, {}, backend, 'endpoint'
   )
-  t.deepEqual(search.firstCall.args[0], { collection: collectionId },
-    'Calls search with the collectionId path element as collection parameter')
+  const expectedParameters = {
+    query: {
+      collection: collectionId
+    }
+  }
+  t.deepEqual(search.firstCall.args[0], expectedParameters,
+    'Calls search with the collectionId as part of the query parameter')
 })
 
 test('search /collections/collectionId/items/itemId', async (t) => {
