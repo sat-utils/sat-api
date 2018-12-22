@@ -49,3 +49,17 @@ test('collections/{collectionId}/items with bbox', async (t) => {
   }, backend, endpoint)
   t.is(response.features.length, 0)
 })
+
+test('collections/{collectionId}/items with time', async (t) => {
+  let response = await search('/collections/landsat-8-l1/items', {
+    time: '2015-02-19T15:06:12.565047+00:00'
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+
+  response = await search('/collections/landsat-8-l1/items', {
+    time: '2015-02-17/2015-02-20'
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+})
