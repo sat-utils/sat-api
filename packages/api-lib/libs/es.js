@@ -250,7 +250,7 @@ function buildQuery(parameters) {
         accumulator.push(termQuery)
       }
       const rangeQuery =
-        buildRangeQuery(accumulator, property, operators, operatorsObject)
+        buildRangeQuery(property, operators, operatorsObject)
       if (rangeQuery) {
         accumulator.push(rangeQuery)
       }

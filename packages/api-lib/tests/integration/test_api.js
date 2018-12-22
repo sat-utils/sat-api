@@ -2,6 +2,8 @@ const test = require('ava')
 process.env.ES_HOST = 'http://192.168.99.100:4571'
 const backend = require('../../libs/es')
 const api = require('../../libs/api')
+const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
+const noIntersectsFeature = require('../fixtures/stac/noIntersectsFeature.json')
 
 const { search } = api
 const endpoint = 'endpoint'
@@ -61,5 +63,52 @@ test('collections/{collectionId}/items with time', async (t) => {
     time: '2015-02-17/2015-02-20'
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+})
+
+test('collections/{collectionId}/items with limit', async (t) => {
+  const response = await search('/collections/landsat-8-l1/items', {
+    limit: 1
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features.length, 1)
+})
+
+test('collections/{collectionId}/items with intersects', async (t) => {
+  let response = await search('/collections/landsat-8-l1/items', {
+    intersects: intersectsFeature
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  response = await search('/collections/landsat-8-l1/items', {
+    intersects: noIntersectsFeature
+  }, backend, endpoint)
+  t.is(response.features.length, 0)
+})
+
+test('collections/{collectionId}/items with eq query', async (t) => {
+  const response = await search('/collections/landsat-8-l1/items', {
+    query: {
+      'eo:cloud_cover': {
+        eq: 0.54
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+  t.is(response.features[0].id, 'LC80100102015050LGN00')
+})
+
+test('collections/{collectionId}/items with gt lt query', async (t) => {
+  const response = await search('/collections/landsat-8-l1/items', {
+    query: {
+      'eo:cloud_cover': {
+        gt: 0.5,
+        lt: 0.6
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
