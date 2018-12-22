@@ -27,3 +27,25 @@ test('collections/{collectionId}/items', async (t) => {
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 })
+
+test('collections/{collectionId}/items/{itemId}', async (t) => {
+  const response =
+    await search('/collections/landsat-8-l1/items/LC80100102015082LGN00',
+      {}, backend, endpoint)
+  t.is(response.type, 'Feature')
+  t.is(response.id, 'LC80100102015082LGN00')
+})
+
+test('collections/{collectionId}/items with bbox', async (t) => {
+  let response = await search('/collections/landsat-8-l1/items', {
+    bbox: [-180, -90, 180, 90]
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  response = await search('/collections/landsat-8-l1/items', {
+    bbox: [-5, -5, 5, 5]
+  }, backend, endpoint)
+  t.is(response.features.length, 0)
+})
