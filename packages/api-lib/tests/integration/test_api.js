@@ -116,7 +116,6 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
 
 test('stac', async (t) => {
   const response = await search('/stac', {}, backend, endpoint)
-  console.log(response)
   t.deepEqual(response.links[0], {
     rel: 'child',
     href: 'endpoint/collections/landsat-8-l1'
@@ -129,4 +128,19 @@ test('stac', async (t) => {
     rel: 'self',
     href: 'endpoint/stac'
   })
+})
+
+test('stac/search bbox', async (t) => {
+  let response = await search('/stac/search', {
+    bbox: [-180, -90, 180, 90]
+  }, backend, endpoint)
+  t.is(response.type, 'FeatureCollection')
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'collection2_item')
+  t.is(response.features[2].id, 'LC80100102015050LGN00')
+
+  response = await search('/stac/search', {
+    bbox: [-5, -5, 5, 5]
+  }, backend, endpoint)
+  t.is(response.features.length, 0)
 })
