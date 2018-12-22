@@ -303,7 +303,10 @@ const search = async function (
     }
   } catch (error) {
     logger.error(error)
-    apiResponse = error
+    apiResponse = {
+      code: 500,
+      description: error.message
+    }
   }
   return apiResponse
 }

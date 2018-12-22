@@ -14,9 +14,11 @@ test('search es error', async (t) => {
   const errorMessage = 'errorMessage'
   const search = sinon.stub().throws(new Error(errorMessage))
   const backend = { search }
-  await proxyApi.search('/stac', undefined, backend, 'endpoint')
+  const response = await proxyApi.search('/stac', undefined, backend, 'endpoint')
   t.is(error.firstCall.args[0].message, errorMessage,
     'Logs Elasticsearch error via Winston transport')
+  t.is(response.description, errorMessage)
+  t.is(response.code, 500)
 })
 
 test('search /stac', async (t) => {
