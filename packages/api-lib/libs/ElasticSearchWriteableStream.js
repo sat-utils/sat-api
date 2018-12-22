@@ -44,6 +44,7 @@ class ElasticSearchWritableStream extends stream.Writable {
   async _write(record, enc, next) {
     try {
       await this.client.index({
+        id: record.id,
         index: record.index,
         type: record.type,
         body: record.body.doc
