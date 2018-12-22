@@ -1,4 +1,4 @@
-process.env.ES_HOST = 'http://192.168.99.100:4571'
+process.env.ES_HOST = `http://${process.env.DOCKER_NAME}:4571`
 const ingest = require('../../libs/ingest').ingest
 const backend = require('../../libs/es')
 
