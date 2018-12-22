@@ -112,3 +112,21 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
   t.is(response.features.length, 1)
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 })
+
+
+test('stac', async (t) => {
+  const response = await search('/stac', {}, backend, endpoint)
+  console.log(response)
+  t.deepEqual(response.links[0], {
+    rel: 'child',
+    href: 'endpoint/collections/landsat-8-l1'
+  })
+  t.deepEqual(response.links[1], {
+    rel: 'child',
+    href: 'endpoint/collections/collection2'
+  })
+  t.deepEqual(response.links[2], {
+    rel: 'self',
+    href: 'endpoint/stac'
+  })
+})
