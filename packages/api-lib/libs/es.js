@@ -304,6 +304,27 @@ function buildIdQuery(id) {
   }
 }
 
+function buildSort(parameters) {
+  const { sort } = parameters
+  let sorting
+  if (sort && sort.length > 0) {
+    sorting = sort.map((sortRule) => {
+      const { field, order } = sortRule
+      const propertyKey = `properties.${field}`
+      return {
+        [propertyKey]: {
+          order
+        }
+      }
+    })
+  } else {
+    // Default item sorting
+    sorting = [
+      { 'properties.datetime': { order: 'desc' } }
+    ]
+  }
+  return sorting
+}
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
@@ -313,6 +334,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   } else {
     body = buildQuery(parameters)
   }
+  const sort = buildSort(parameters)
+  body.sort = sort
   const searchParams = {
     index,
     body,

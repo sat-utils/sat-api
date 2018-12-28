@@ -231,13 +231,18 @@ const search = async function (
       itemId
     } = parsePath(path)
 
-    const { limit, page, time: datetime } = queryParameters
+    const { limit, page, time: datetime, sort } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
     // Prefer intersects
     const intersects = hasIntersects || bbox
     const query = extractStacQuery(queryParameters)
-    const parameters = { datetime, intersects, query }
+    const parameters = {
+      datetime,
+      intersects,
+      query,
+      sort
+    }
     // Keep only exisiting parameters
     const searchParameters = Object.keys(parameters)
       .filter((key) => parameters[key])
