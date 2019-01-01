@@ -6,7 +6,7 @@ info:
     Sat-api is a STAC compliant web API for searching and serving metadata for
     geospatial data (including but not limited to satellite imagery).
     Development Seed runs an instance of sat-api for the Landsat-8
-    and Sentinel-2 imagery that is hosted on AWS. 
+    and Sentinel-2 imagery that is hosted on AWS.
   contact:
     name: Development Seed
     email: info@developmentseed.org
@@ -52,6 +52,8 @@ paths:
         - $ref: '#/components/parameters/bbox'
         - $ref: '#/components/parameters/time'
         - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: A feature collection.
@@ -66,6 +68,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/exception'
 
+    post:
+      summary: Search STAC items by full-featured filtering.
+      description: >-
+        retrieve items matching filters. Intended as the standard, full-featured
+        query API. This method is mandatory.
+      operationId: postSearchSTAC
+      tags:
+        - STAC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/searchBody'
+      responses:
+        '200':
+          description: A feature collection.
+          content:
+            application/geo+json:
+              schema:
+                $ref: '#/components/schemas/itemCollection'
+            text/html:
+              schema:
+                type: string
+        default:
+          description: An error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/exception'
+            text/html:
+              schema:
+                type: string
+
   /collections:
     get:
       summary: describe the feature collections in the dataset
@@ -79,14 +114,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/content'
-        default:
-          description: An error occurred.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/exception'
 
-  '/collections/{collectionId}':
+	'/collections/{collectionId}':
     get:
       summary: 'describe the {collectionId} feature collection'
       operationId: describeCollection
@@ -108,7 +137,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/exception'
 
-  '/collections/{collectionId}/items':
+	'/collections/{collectionId}/items':
     get:
       summary: 'retrieve features of feature collection {collectionId}'
       description: >-
@@ -125,6 +154,8 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/bbox'
         - $ref: '#/components/parameters/time'
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/sort'
       responses:
         '200':
           description: >-
@@ -141,7 +172,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/exception'
 
-  '/collections/{collectionId}/items/{featureId}':
+	'/collections/{collectionId}/items/{featureId}':
     get:
       summary: retrieve a feature; use content negotiation to request HTML or GeoJSON
       operationId: getFeature
@@ -198,10 +229,10 @@ components:
         vertical axis (elevation or depth):
 
         * Lower left corner, coordinate axis 1
-        * Lower left corner, coordinate axis 2  
-        * Lower left corner, coordinate axis 3 (optional) 
-        * Upper right corner, coordinate axis 1 
-        * Upper right corner, coordinate axis 2 
+        * Lower left corner, coordinate axis 2
+        * Lower left corner, coordinate axis 3 (optional)
+        * Upper right corner, coordinate axis 1
+        * Upper right corner, coordinate axis 2
         * Upper right corner, coordinate axis 3 (optional)
 
         The coordinate reference system of the values is WGS84
@@ -234,8 +265,8 @@ components:
       description: >
         Either a date-time or a period string that adheres to RFC3339. Examples:
 
-        * A date-time: "2018-02-12T23:20:50Z" 
-        * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" 
+        * A date-time: "2018-02-12T23:20:50Z"
+        * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
 
         Only features that have a temporal property that intersects the value
         of `time` are selected. If a feature has multiple temporal properties, it
@@ -260,6 +291,22 @@ components:
       required: true
       schema:
         type: string
+    query:
+      name: query
+      in: query
+      description: >-
+        query for properties in items. Use the JSON form of the queryFilter used
+        in POST.
+      required: false
+      schema:
+        type: string
+    sort:
+      name: sort
+      in: query
+      description: Allows sorting results by the specified properties
+      required: false
+      schema:
+        $ref: '#/components/schemas/sort'
   schemas:
     exception:
       type: object
@@ -294,6 +341,15 @@ components:
         title:
           type: string
           example: NAIP Child Catalog
+    searchBody:
+      description: The search criteria
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/bboxFilter'
+        - $ref: '#/components/schemas/timeFilter'
+        - $ref: '#/components/schemas/intersectsFilter'
+        - $ref: '#/components/schemas/queryFilter'
+        - $ref: '#/components/schemas/sortFilter'
     bbox:
       description: |
         Only features that have a geometry that intersects the bounding box are
@@ -302,10 +358,10 @@ components:
         vertical axis (elevation or depth):
 
         * Lower left corner, coordinate axis 1
-        * Lower left corner, coordinate axis 2  
-        * Lower left corner, coordinate axis 3 (optional) 
-        * Upper right corner, coordinate axis 1 
-        * Upper right corner, coordinate axis 2 
+        * Lower left corner, coordinate axis 2
+        * Lower left corner, coordinate axis 3 (optional)
+        * Upper right corner, coordinate axis 1
+        * Upper right corner, coordinate axis 2
         * Upper right corner, coordinate axis 3 (optional)
 
         The coordinate reference system of the values is WGS84
@@ -333,13 +389,31 @@ components:
         - 39.5
         - -105
         - 40.5
+    bboxFilter:
+      type: object
+      description: Only return items that intersect the provided bounding box.
+      properties:
+        bbox:
+          $ref: '#/components/schemas/bbox'
+    timeFilter:
+      description: An object representing a time based filter.
+      type: object
+      properties:
+        time:
+          $ref: '#/components/schemas/time'
+    intersectsFilter:
+      type: object
+      description: Only returns items that intersect with the provided polygon.
+      properties:
+        intersects:
+          $ref: 'http://geojson.org/schema/Geometry.json'
     time:
       type: string
       description: >
         Either a date-time or a period string that adheres to RFC 3339.
         Examples:
 
-        * A date-time: "2018-02-12T23:20:50Z"  
+        * A date-time: "2018-02-12T23:20:50Z"
         * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
 
         Only features that have a temporal property that intersects the value of
@@ -677,6 +751,78 @@ components:
                 type: string
                 format: url
                 example: 'http://www.big-building.com'
+    queryFilter:
+      type: object
+      description: Allows users to query properties for specific values
+      properties:
+        query:
+          $ref: '#/components/schemas/query'
+    query:
+      type: object
+      description: Define which properties to query and the operatations to apply
+      additionalProperties:
+        $ref: '#/components/schemas/queryProp'
+      example:
+        'eo:cloud_cover':
+          lt: 50
+    queryProp:
+      description: Apply query operations to a specific property
+      anyOf:
+        - description: >-
+            if the object doesn't contain any of the operators, it is equivalent
+            to using the equals operator
+        - type: object
+          description: Match using an operator
+          properties:
+            eq:
+              description: >-
+                Find items with a property that is equal to the specified value.
+                For strings, a case-insensitive comparison must be performed.
+            gt:
+              type: number
+              description: >-
+                Find items with a property value greater than the specified
+                value.
+            lt:
+              type: number
+              description: Find items with a property value less than the specified value.
+            gte:
+              type: number
+              description: >-
+                Find items with a property value greater than or equal the
+                specified value.
+            lte:
+              type: number
+              description: >-
+                Find items with a property value greater than or equal the
+                specified value.
+    sortFilter:
+      type: object
+      description: Sort the results
+      properties:
+        sort:
+          $ref: '#/components/schemas/sort'
+    sort:
+      type: array
+      description: |
+        An array of objects containing a property name and sort direction.
+      minItems: 1
+      items:
+        type: object
+        required:
+          - field
+        properties:
+          field:
+            type: string
+          direction:
+            type: string
+            default: asc
+            enum:
+              - asc
+              - desc
+      example:
+        - field: 'eo:cloud_cover'
+          direction: desc
     extent:
       type: object
       properties:

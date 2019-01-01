@@ -4,18 +4,14 @@
   "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "docs-build": "gitbook build",
-    "docs-serve": "gitbook serve",
     "bootstrap": "lerna bootstrap",
     "clean": "lerna clean",
     "build": "lerna run build",
     "linkall": "lerna exec -- yarn link",
     "test": "lerna run test",
     "update": "lerna publish --skip-git --skip-npm",
-    "eslint": "eslint packages/* --ext .js"
-  },
-  "dependencies": {
-    "kes": "^2.2.2"
+    "eslint": "eslint packages/* --ext .js",
+		"build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md"
   },
   "devDependencies": {
     "eslint": "^5.7.0",
