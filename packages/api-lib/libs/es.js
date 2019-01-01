@@ -309,11 +309,11 @@ function buildSort(parameters) {
   let sorting
   if (sort && sort.length > 0) {
     sorting = sort.map((sortRule) => {
-      const { field, order } = sortRule
+      const { field, direction } = sortRule
       const propertyKey = `properties.${field}`
       return {
         [propertyKey]: {
-          order
+          order: direction
         }
       }
     })

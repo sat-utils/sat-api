@@ -141,7 +141,7 @@ test('stac/search sort', async (t) => {
   const response = await search('/stac/search', {
     sort: {
       field: 'eo:cloud_cover',
-      order: 'desc'
+      direction: 'desc'
     }
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
