@@ -231,7 +231,12 @@ const search = async function (
       itemId
     } = parsePath(path)
 
-    const { limit, page, time: datetime, sort } = queryParameters
+    const {
+      limit,
+      page,
+      time: datetime,
+      sort
+    } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
     // Prefer intersects
