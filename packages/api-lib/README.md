@@ -34,4 +34,4 @@ $ ./runIntegration.sh
 `STAC_VERSION`
 
 ### About
-Sat API Lib was made by [Development Seed](http://developmentseed.org).
+[sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).
