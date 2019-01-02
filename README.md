@@ -47,13 +47,6 @@ The latest version released is on the [master branch](https://github.com/sat-uti
     # To build API docs from the api spec
     $ yarn build-api-docs
 
-### Environment variables
-
-`STAC_VERSION`
-`STAC_ID`
-`STAC_TITLE`
-`STAC_DESCRIPTION`
-
 ### Publishing new package versions
 
 To create a new version for npm:
