@@ -18,7 +18,7 @@ $ export DOCKER_NAME=localhost
 ```
 To run the tests
 ```
-$ .tests/integration/runIntegration.sh
+$ ./runIntegration.sh
 ```
   
 ### About
