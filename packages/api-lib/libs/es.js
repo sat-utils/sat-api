@@ -5,7 +5,7 @@ const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
-//const logger = require('./logger')
+const logger = require('./logger')
 
 let _esClient
 
@@ -45,23 +45,31 @@ async function connect() {
     }
     client = new elasticsearch.Client(esConfig)
   }
-  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
-    if (err) {
-      reject('unable to connect to elasticsearch')
-    } else {
-      resolve()
-    }
-  }))
+
+  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
+    (err) => {
+      if (err) {
+        reject('Unable to connect to elasticsearch')
+      } else {
+        resolve()
+      }
+    }))
   return client
 }
 
 // get existing ES client or create a new one
 async function esClient() {
   if (!_esClient) {
-    _esClient = await connect().catch((err) => console.log('Error: ', err))
-    if (_esClient) console.log('connected to elasticsearch')
+    try {
+      _esClient = await connect()
+    } catch (error) {
+      logger.error(error)
+    }
+    if (_esClient) {
+      logger.debug('Connected to Elasticsearch')
+    }
   } else {
-    //console.log('using existing elasticsearch connection')
+    logger.debug('Using existing Elasticsearch connection')
   }
   return _esClient
 }
@@ -69,6 +77,7 @@ async function esClient() {
 // Create STAC mappings
 async function prepare(index) {
   // TODO - different mappings for collection and item
+  let ready
   const props = {
     'type': 'object',
     properties: {
@@ -95,43 +104,42 @@ async function prepare(index) {
       match_mapping_type: 'string'
     }
   }]
+  const client = await esClient()
+  const indexExists = await client.indices.exists({ index })
 
-  return esClient().then((client) =>
-    client.indices.exists({ index }).then((exist) => {
-      if (!exist) {
-        const payload = {
-          index: index,
-          body: {
-            mappings: {
-              doc: {
-                /*'_all': {
-                  enabled: true
-                },*/
-                dynamic_templates: dynamicTemplates,
-                properties: {
-                  'id': { type: 'keyword' },
-                  'properties': props,
-                  geometry: {
-                    type: 'geo_shape',
-                    tree: 'quadtree',
-                    precision: '5mi'
-                  }
-                }
+  if (!indexExists) {
+    const payload = {
+      index,
+      body: {
+        mappings: {
+          doc: {
+            /*'_all': {
+                enabled: true
+            },*/
+            dynamic_templates: dynamicTemplates,
+            properties: {
+              'id': { type: 'keyword' },
+              'properties': props,
+              geometry: {
+                type: 'geo_shape',
+                tree: 'quadtree',
+                precision: '5mi'
               }
             }
           }
         }
-        return client.indices.create(payload)
-          .then(() => {
-            console.log(`Created index: ${JSON.stringify(payload)}`)
-          })
-          .catch((err) => {
-            console.log('Error creating index, already created: ', err)
-          })
       }
-      return 0
-    }))
-    .catch((err) => console.log(`Error connecting to elasticsearch: ${JSON.stringify(err)}`))
+    }
+    try {
+      await client.indices.create(payload)
+      logger.info(`Created index: ${JSON.stringify(payload)}`)
+      ready = 0
+    } catch (error) {
+      const debugMessage = `Error creating index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+  return ready
 }
 
 // Given an input stream and a transform, write records to an elasticsearch instance
@@ -173,8 +181,8 @@ async function _stream() {
       highWaterMark: process.env.ES_BATCH_SIZE || 500
     })
     esStreams = { toEs, esStream }
-  } catch (err) {
-    console.log(err)
+  } catch (error) {
+    logger.error(error)
   }
   return esStreams
 }
