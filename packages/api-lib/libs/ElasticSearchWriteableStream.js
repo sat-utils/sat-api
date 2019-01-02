@@ -1,4 +1,5 @@
 const stream = require('stream')
+const logger = require('./logger')
 
 class ElasticSearchWritableStream extends stream.Writable {
   constructor(config, options) {
@@ -44,10 +45,12 @@ class ElasticSearchWritableStream extends stream.Writable {
   async _write(record, enc, next) {
     try {
       await this.client.index({
+        id: record.id,
         index: record.index,
         type: record.type,
         body: record.body.doc
       })
+      logger.debug(record.body.doc.id)
       next()
     } catch (err) {
       next(err)
@@ -64,7 +67,7 @@ class ElasticSearchWritableStream extends stream.Writable {
 
     try {
       await this.client.bulk({ body })
-      console.log('Wrote ', body.length)
+      logger.debug('Wrote ', body.length / 2)
       next()
     } catch (err) {
       next(err)

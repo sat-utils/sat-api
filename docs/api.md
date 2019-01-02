@@ -1,7 +1,7 @@
 ---
 title: The SAT-API
 language_tabs:
-  - javascript: JavaScript
+  - nodejs: NodeJS
   - python: Python
 toc_footers: []
 includes: []
@@ -15,11 +15,13 @@ headingLevel: 2
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
-Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is hosted on AWS. 
+Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery). Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is hosted on AWS.
 
 Base URLs:
 
 * <a href="https://sat-api.developmentseed.org/">https://sat-api.developmentseed.org/</a>
+
+* <a href="https://sat-api-dev.developmentseed.org/">https://sat-api-dev.developmentseed.org/</a>
 
 Email: <a href="mailto:info@developmentseed.org">Development Seed</a> Web: <a href="https://developmentseed.org/contacts/">Development Seed</a> 
 License: <a href="https://github.com/sat-utils/sat-api/blob/master/LICENSE">MIT License</a>
@@ -32,21 +34,25 @@ Extension to WFS3 Core to support STAC metadata model and search API
 
 > Code samples
 
-```javascript
-var headers = {
+```nodejs
+const fetch = require('node-fetch');
+
+const headers = {
   'Accept':'application/json'
 
 };
 
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/stac',
-  method: 'get',
+fetch('https://sat-api.developmentseed.org/stac',
+{
+  method: 'GET',
 
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
+  headers: headers
 })
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
 
 ```
 
@@ -105,21 +111,25 @@ This operation does not require authentication
 
 > Code samples
 
-```javascript
-var headers = {
+```nodejs
+const fetch = require('node-fetch');
+
+const headers = {
   'Accept':'application/geo+json'
 
 };
 
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/stac/search',
-  method: 'get',
+fetch('https://sat-api.developmentseed.org/stac/search',
+{
+  method: 'GET',
 
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
+  headers: headers
 })
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
 
 ```
 
@@ -148,6 +158,8 @@ Retrieve Items matching filters. Intended as a shorthand API for simple queries.
 |bbox|query|array[number]|false|Only features that have a geometry that intersects the bounding box are|
 |time|query|string|false|Either a date-time or a period string that adheres to RFC3339. Examples:|
 |limit|query|integer|false|The optional limit parameter limits the number of items that are|
+|query|query|string|false|query for properties in items. Use the JSON form of the queryFilter used in POST.|
+|sort|query|[sort](#schemasort)|false|Allows sorting results by the specified properties|
 
 #### Detailed descriptions
 
@@ -157,10 +169,10 @@ depending on whether the coordinate reference system includes a
 vertical axis (elevation or depth):
 
 * Lower left corner, coordinate axis 1
-* Lower left corner, coordinate axis 2  
-* Lower left corner, coordinate axis 3 (optional) 
-* Upper right corner, coordinate axis 1 
-* Upper right corner, coordinate axis 2 
+* Lower left corner, coordinate axis 2
+* Lower left corner, coordinate axis 3 (optional)
+* Upper right corner, coordinate axis 1
+* Upper right corner, coordinate axis 2
 * Upper right corner, coordinate axis 3 (optional)
 
 The coordinate reference system of the values is WGS84
@@ -179,7 +191,7 @@ decision of the server whether only a single spatial geometry property
 is used to determine the extent or all relevant geometries.
 
 **time**: Either a date-time or a period string that adheres to RFC3339. Examples:
-* A date-time: "2018-02-12T23:20:50Z"  * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" 
+* A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
 Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
 
 **limit**: The optional limit parameter limits the number of items that are
@@ -280,6 +292,193 @@ requested items shall not be counted.
 This operation does not require authentication
 </aside>
 
+## Search STAC items by full-featured filtering.
+
+<a id="opIdpostSearchSTAC"></a>
+
+> Code samples
+
+```nodejs
+const fetch = require('node-fetch');
+const inputBody = '{
+  "bbox": [
+    -110,
+    39.5,
+    -105,
+    40.5
+  ],
+  "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
+  "intersects": null,
+  "query": {
+    "eo:cloud_cover": {
+      "lt": 50
+    }
+  },
+  "sort": [
+    {
+      "field": "eo:cloud_cover",
+      "direction": "desc"
+    }
+  ]
+}';
+const headers = {
+  'Content-Type':'application/json',
+  'Accept':'application/geo+json'
+
+};
+
+fetch('https://sat-api.developmentseed.org/stac/search',
+{
+  method: 'POST',
+  body: inputBody,
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+```python
+import requests
+headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/geo+json'
+}
+
+r = requests.post('https://sat-api.developmentseed.org/stac/search', params={
+
+}, headers = headers)
+
+print r.json()
+
+```
+
+`POST /stac/search`
+
+retrieve items matching filters. Intended as the standard, full-featured query API. This method is mandatory.
+
+> Body parameter
+
+```json
+{
+  "bbox": [
+    -110,
+    39.5,
+    -105,
+    40.5
+  ],
+  "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
+  "intersects": null,
+  "query": {
+    "eo:cloud_cover": {
+      "lt": 50
+    }
+  },
+  "sort": [
+    {
+      "field": "eo:cloud_cover",
+      "direction": "desc"
+    }
+  ]
+}
+```
+
+<h3 id="search-stac-items-by-full-featured-filtering.-parameters">Parameters</h3>
+
+|Parameter|In|Type|Required|Description|
+|---|---|---|---|---|
+|body|body|[searchBody](#schemasearchbody)|false|none|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "CS3-20160503_132130_04",
+      "bbox": [
+        -122.59750209,
+        37.48803556,
+        -122.2880486,
+        37.613537207
+      ],
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -122.308150179,
+              37.488035566
+            ],
+            [
+              -122.597502109,
+              37.538869539
+            ],
+            [
+              -122.576687533,
+              37.613537207
+            ],
+            [
+              -122.2880486,
+              37.562818007
+            ],
+            [
+              -122.308150179,
+              37.488035566
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "datetime": "2016-05-03T13:21:30.040Z"
+      },
+      "links": [
+        {
+          "rel": "self",
+          "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
+        }
+      ],
+      "assets": {
+        "analytic": {
+          "title": "4-Band Analytic",
+          "href": "http://cool-sat.com/LC80100102015050LGN00/band4.tiff",
+          "type": "image/tiff"
+        },
+        "thumbnail": {
+          "title": "Thumbnail",
+          "href": "http://cool-sat.com/LC80100102015050LGN00/thumb.png",
+          "type": "image/png"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "rel": "next",
+      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+    }
+  ]
+}
+```
+
+<h3 id="search-stac-items-by-full-featured-filtering.-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A feature collection.|string|
+|default|Default|An error occurred.|string|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
+
 <h1 id="the-sat-api-capabilities">Capabilities</h1>
 
 ## describe the feature collections in the dataset
@@ -288,21 +487,25 @@ This operation does not require authentication
 
 > Code samples
 
-```javascript
-var headers = {
+```nodejs
+const fetch = require('node-fetch');
+
+const headers = {
   'Accept':'application/json'
 
 };
 
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/collections',
-  method: 'get',
+fetch('https://sat-api.developmentseed.org/collections',
+{
+  method: 'GET',
 
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
+  headers: headers
 })
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
 
 ```
 
@@ -416,437 +619,6 @@ print r.json()
 |Status|Meaning|Description|Schema|
 |---|---|---|---|
 |200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Metdata about the feature collections shared by this API.|[content](#schemacontent)|
-|default|Default|An error occurred.|[exception](#schemaexception)|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## describe the {collectionId} feature collection
-
-<a id="opIddescribeCollection"></a>
-
-> Code samples
-
-```javascript
-var headers = {
-  'Accept':'application/json'
-
-};
-
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/collections/{collectionId}',
-  method: 'get',
-
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
-})
-
-```
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json'
-}
-
-r = requests.get('https://sat-api.developmentseed.org/collections/{collectionId}', params={
-
-}, headers = headers)
-
-print r.json()
-
-```
-
-`GET /collections/{collectionId}`
-
-<h3 id="describe-the-{collectionid}-feature-collection-parameters">Parameters</h3>
-
-|Parameter|In|Type|Required|Description|
-|---|---|---|---|---|
-|collectionId|path|string|true|Identifier (name) of a specific collection|
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "name": "buildings",
-  "title": "Buildings",
-  "description": "Buildings in the city of Bonn.",
-  "links": [
-    {
-      "href": "http://data.example.org/collections/buildings/items",
-      "rel": "item",
-      "type": "application/geo+json",
-      "title": "Buildings"
-    },
-    {
-      "href": "http://example.org/concepts/building.html",
-      "rel": "describedBy",
-      "type": "text/html",
-      "title": "Feature catalogue for buildings"
-    }
-  ],
-  "extent": {
-    "crs": "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
-    "spatial": [
-      -180,
-      -90,
-      180,
-      90
-    ],
-    "trs": "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian",
-    "temporal": [
-      "2011-11-11T12:22:11Z",
-      "2012-11-24T12:32:43Z"
-    ]
-  },
-  "crs": [
-    "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
-  ],
-  "stac_version": "0.6.0",
-  "id": "buildings",
-  "keywords": [
-    [
-      "buildings",
-      "properties",
-      "constructions"
-    ]
-  ],
-  "version": 1,
-  "license": "Apache-2.0",
-  "providers": [
-    {
-      "name": "Big Building Corp",
-      "description": "No further processing applied.",
-      "roles": [
-        "producer",
-        "licensor"
-      ],
-      "url": "http://www.big-building.com"
-    }
-  ]
-}
-```
-
-<h3 id="describe-the-{collectionid}-feature-collection-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Metadata about the {collectionId} collection shared by this API.|[collectionInfo](#schemacollectioninfo)|
-|default|Default|An error occurred.|[exception](#schemaexception)|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-<h1 id="the-sat-api-features">Features</h1>
-
-## retrieve features of feature collection {collectionId}
-
-<a id="opIdgetFeatures"></a>
-
-> Code samples
-
-```javascript
-var headers = {
-  'Accept':'application/geo+json'
-
-};
-
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/collections/{collectionId}/items',
-  method: 'get',
-
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
-})
-
-```
-
-```python
-import requests
-headers = {
-  'Accept': 'application/geo+json'
-}
-
-r = requests.get('https://sat-api.developmentseed.org/collections/{collectionId}/items', params={
-
-}, headers = headers)
-
-print r.json()
-
-```
-
-`GET /collections/{collectionId}/items`
-
-Every feature in a dataset belongs to a collection. A dataset may consist of multiple feature collections. A feature collection is often a collection of features of a similar type, based on a common schema.\
-Use content negotiation to request HTML or GeoJSON.
-
-<h3 id="retrieve-features-of-feature-collection-{collectionid}-parameters">Parameters</h3>
-
-|Parameter|In|Type|Required|Description|
-|---|---|---|---|---|
-|collectionId|path|string|true|Identifier (name) of a specific collection|
-|limit|query|integer|false|The optional limit parameter limits the number of items that are|
-|bbox|query|array[number]|false|Only features that have a geometry that intersects the bounding box are|
-|time|query|string|false|Either a date-time or a period string that adheres to RFC3339. Examples:|
-
-#### Detailed descriptions
-
-**limit**: The optional limit parameter limits the number of items that are
-presented in the response document.
-
-Only items are counted that are on the first level of the collection in
-the response document. Nested objects contained within the explicitly
-requested items shall not be counted.
-
-* Minimum = 1
-* Maximum = 10000
-* Default = 10
-
-**bbox**: Only features that have a geometry that intersects the bounding box are
-selected. The bounding box is provided as four or six numbers,
-depending on whether the coordinate reference system includes a
-vertical axis (elevation or depth):
-
-* Lower left corner, coordinate axis 1
-* Lower left corner, coordinate axis 2  
-* Lower left corner, coordinate axis 3 (optional) 
-* Upper right corner, coordinate axis 1 
-* Upper right corner, coordinate axis 2 
-* Upper right corner, coordinate axis 3 (optional)
-
-The coordinate reference system of the values is WGS84
-longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless
-a different coordinate reference system is specified in the parameter
-`bbox-crs`.
-
-For WGS84 longitude/latitude the values are in most cases the sequence
-of minimum longitude, minimum latitude, maximum longitude and maximum
-latitude. However, in cases where the box spans the antimeridian the
-first value (west-most box edge) is larger than the third value
-(east-most box edge).
-
-If a feature has multiple spatial geometry properties, it is the
-decision of the server whether only a single spatial geometry property
-is used to determine the extent or all relevant geometries.
-
-**time**: Either a date-time or a period string that adheres to RFC3339. Examples:
-* A date-time: "2018-02-12T23:20:50Z"  * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" 
-Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "id": "CS3-20160503_132130_04",
-      "bbox": [
-        -122.59750209,
-        37.48803556,
-        -122.2880486,
-        37.613537207
-      ],
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              -122.308150179,
-              37.488035566
-            ],
-            [
-              -122.597502109,
-              37.538869539
-            ],
-            [
-              -122.576687533,
-              37.613537207
-            ],
-            [
-              -122.2880486,
-              37.562818007
-            ],
-            [
-              -122.308150179,
-              37.488035566
-            ]
-          ]
-        ]
-      },
-      "properties": {
-        "datetime": "2016-05-03T13:21:30.040Z"
-      },
-      "links": [
-        {
-          "rel": "self",
-          "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
-        }
-      ],
-      "assets": {
-        "analytic": {
-          "title": "4-Band Analytic",
-          "href": "http://cool-sat.com/LC80100102015050LGN00/band4.tiff",
-          "type": "image/tiff"
-        },
-        "thumbnail": {
-          "title": "Thumbnail",
-          "href": "http://cool-sat.com/LC80100102015050LGN00/thumb.png",
-          "type": "image/png"
-        }
-      }
-    }
-  ],
-  "links": [
-    {
-      "rel": "next",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
-    }
-  ]
-}
-```
-
-<h3 id="retrieve-features-of-feature-collection-{collectionid}-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Information about the feature collection plus the first features matching the selection parameters.|[itemCollection](#schemaitemcollection)|
-|default|Default|An error occurred.|[exception](#schemaexception)|
-
-<aside class="success">
-This operation does not require authentication
-</aside>
-
-## retrieve a feature; use content negotiation to request HTML or GeoJSON
-
-<a id="opIdgetFeature"></a>
-
-> Code samples
-
-```javascript
-var headers = {
-  'Accept':'application/geo+json'
-
-};
-
-$.ajax({
-  url: 'https://sat-api.developmentseed.org/collections/{collectionId}/items/{featureId}',
-  method: 'get',
-
-  headers: headers,
-  success: function(data) {
-    console.log(JSON.stringify(data));
-  }
-})
-
-```
-
-```python
-import requests
-headers = {
-  'Accept': 'application/geo+json'
-}
-
-r = requests.get('https://sat-api.developmentseed.org/collections/{collectionId}/items/{featureId}', params={
-
-}, headers = headers)
-
-print r.json()
-
-```
-
-`GET /collections/{collectionId}/items/{featureId}`
-
-<h3 id="retrieve-a-feature;-use-content-negotiation-to-request-html-or-geojson-parameters">Parameters</h3>
-
-|Parameter|In|Type|Required|Description|
-|---|---|---|---|---|
-|collectionId|path|string|true|Identifier (name) of a specific collection|
-|featureId|path|string|true|Local identifier of a specific feature|
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "type": "Feature",
-  "id": "CS3-20160503_132130_04",
-  "bbox": [
-    -122.59750209,
-    37.48803556,
-    -122.2880486,
-    37.613537207
-  ],
-  "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-      [
-        [
-          -122.308150179,
-          37.488035566
-        ],
-        [
-          -122.597502109,
-          37.538869539
-        ],
-        [
-          -122.576687533,
-          37.613537207
-        ],
-        [
-          -122.2880486,
-          37.562818007
-        ],
-        [
-          -122.308150179,
-          37.488035566
-        ]
-      ]
-    ]
-  },
-  "properties": {
-    "datetime": "2016-05-03T13:21:30.040Z"
-  },
-  "links": [
-    {
-      "rel": "self",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/LC80100102015050LGN00.json"
-    }
-  ],
-  "assets": {
-    "analytic": {
-      "title": "4-Band Analytic",
-      "href": "http://cool-sat.com/LC80100102015050LGN00/band4.tiff",
-      "type": "image/tiff"
-    },
-    "thumbnail": {
-      "title": "Thumbnail",
-      "href": "http://cool-sat.com/LC80100102015050LGN00/thumb.png",
-      "type": "image/png"
-    }
-  }
-}
-```
-
-<h3 id="retrieve-a-feature;-use-content-negotiation-to-request-html-or-geojson-responses">Responses</h3>
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|A feature.|[item](#schemaitem)|
-|default|Default|An error occurred.|[exception](#schemaexception)|
 
 <aside class="success">
 This operation does not require authentication
@@ -918,6 +690,69 @@ This operation does not require authentication
 |type|string|false|none|none|
 |title|string|false|none|none|
 
+<h2 id="tocSsearchbody">searchBody</h2>
+
+<a id="schemasearchbody"></a>
+
+```json
+{
+  "bbox": [
+    -110,
+    39.5,
+    -105,
+    40.5
+  ],
+  "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z",
+  "intersects": null,
+  "query": {
+    "eo:cloud_cover": {
+      "lt": 50
+    }
+  },
+  "sort": [
+    {
+      "field": "eo:cloud_cover",
+      "direction": "desc"
+    }
+  ]
+}
+
+```
+
+*The search criteria*
+
+### Properties
+
+*allOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|[bboxFilter](#schemabboxfilter)|false|none|Only return items that intersect the provided bounding box.|
+
+*and*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|[timeFilter](#schematimefilter)|false|none|An object representing a time based filter.|
+
+*and*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|[intersectsFilter](#schemaintersectsfilter)|false|none|Only returns items that intersect with the provided polygon.|
+
+*and*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|[queryFilter](#schemaqueryfilter)|false|none|Allows users to query properties for specific values|
+
+*and*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|[sortFilter](#schemasortfilter)|false|none|Sort the results|
+
 <h2 id="tocSbbox">bbox</h2>
 
 <a id="schemabbox"></a>
@@ -938,10 +773,10 @@ depending on whether the coordinate reference system includes a
 vertical axis (elevation or depth):
 
 * Lower left corner, coordinate axis 1
-* Lower left corner, coordinate axis 2  
-* Lower left corner, coordinate axis 3 (optional) 
-* Upper right corner, coordinate axis 1 
-* Upper right corner, coordinate axis 2 
+* Lower left corner, coordinate axis 2
+* Lower left corner, coordinate axis 3 (optional)
+* Upper right corner, coordinate axis 1
+* Upper right corner, coordinate axis 2
 * Upper right corner, coordinate axis 3 (optional)
 
 The coordinate reference system of the values is WGS84
@@ -964,6 +799,68 @@ is used to determine the extent or all relevant geometries.
 
 *None*
 
+<h2 id="tocSbboxfilter">bboxFilter</h2>
+
+<a id="schemabboxfilter"></a>
+
+```json
+{
+  "bbox": [
+    -110,
+    39.5,
+    -105,
+    40.5
+  ]
+}
+
+```
+
+*Only return items that intersect the provided bounding box.*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|bbox|[bbox](#schemabbox)|false|none|Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth):  * Lower left corner, coordinate axis 1 * Lower left corner, coordinate axis 2 * Lower left corner, coordinate axis 3 (optional) * Upper right corner, coordinate axis 1 * Upper right corner, coordinate axis 2 * Upper right corner, coordinate axis 3 (optional)  The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`.  For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge).   If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries.|
+
+<h2 id="tocStimefilter">timeFilter</h2>
+
+<a id="schematimefilter"></a>
+
+```json
+{
+  "time": "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
+}
+
+```
+
+*An object representing a time based filter.*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|time|[time](#schematime)|false|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+
+<h2 id="tocSintersectsfilter">intersectsFilter</h2>
+
+<a id="schemaintersectsfilter"></a>
+
+```json
+{
+  "intersects": null
+}
+
+```
+
+*Only returns items that intersect with the provided polygon.*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|intersects|[http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json)|false|none|none|
+
 <h2 id="tocStime">time</h2>
 
 <a id="schematime"></a>
@@ -974,7 +871,7 @@ is used to determine the extent or all relevant geometries.
 ```
 
 *Either a date-time or a period string that adheres to RFC 3339. Examples:
-* A date-time: "2018-02-12T23:20:50Z"   * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
+* A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S"
 Only features that have a temporal property that intersects the value of `time` are selected.
 If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.
 *
@@ -983,7 +880,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|*anonymous*|string|false|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z"   * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+|*anonymous*|string|false|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
 
 <h2 id="tocScatalogdefinition">catalogDefinition</h2>
 
@@ -1179,7 +1076,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |id|[itemId](#schemaitemid)|true|none|Provider identifier, a unique ID, potentially a link to a file.|
-|bbox|[bbox](#schemabbox)|true|none|Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth):  * Lower left corner, coordinate axis 1 * Lower left corner, coordinate axis 2   * Lower left corner, coordinate axis 3 (optional)  * Upper right corner, coordinate axis 1  * Upper right corner, coordinate axis 2  * Upper right corner, coordinate axis 3 (optional)  The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`.  For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge).   If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries.|
+|bbox|[bbox](#schemabbox)|true|none|Only features that have a geometry that intersects the bounding box are selected. The bounding box is provided as four or six numbers, depending on whether the coordinate reference system includes a vertical axis (elevation or depth):  * Lower left corner, coordinate axis 1 * Lower left corner, coordinate axis 2 * Lower left corner, coordinate axis 3 (optional) * Upper right corner, coordinate axis 1 * Upper right corner, coordinate axis 2 * Upper right corner, coordinate axis 3 (optional)  The coordinate reference system of the values is WGS84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84) unless a different coordinate reference system is specified in the parameter `bbox-crs`.  For WGS84 longitude/latitude the values are in most cases the sequence of minimum longitude, minimum latitude, maximum longitude and maximum latitude. However, in cases where the box spans the antimeridian the first value (west-most box edge) is larger than the third value (east-most box edge).   If a feature has multiple spatial geometry properties, it is the decision of the server whether only a single spatial geometry property is used to determine the extent or all relevant geometries.|
 |geometry|[http://geojson.org/schema/Geometry.json](#schemahttp://geojson.org/schema/geometry.json)|true|none|none|
 |type|[itemType](#schemaitemtype)|true|none|The GeoJSON type|
 |properties|[itemProperties](#schemaitemproperties)|true|none|provides the core metatdata fields plus extensions|
@@ -1275,7 +1172,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |**additionalProperties**|any|false|none|Any additional properties added in via extensions.|
-|datetime|[time](#schematime)|true|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z"   * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
+|datetime|[time](#schematime)|true|none|Either a date-time or a period string that adheres to RFC 3339. Examples: * A date-time: "2018-02-12T23:20:50Z" * A period: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z" or "2018-02-12T00:00:00Z/P1M6DT12H31M12S" Only features that have a temporal property that intersects the value of `time` are selected. If a feature has multiple temporal properties, it is the decision of the server whether only a single temporal property is used to determine the extent or all relevant temporal properties.|
 
 <h2 id="tocSitemcollectionlinks">itemCollectionLinks</h2>
 
@@ -1546,6 +1443,135 @@ If a feature has multiple temporal properties, it is the decision of the server 
 |» description|string|false|none|none|
 |» roles|[string]|false|none|none|
 |» url|string(url)|false|none|Homepage on which the provider describes the dataset and publishes contact information.|
+
+<h2 id="tocSqueryfilter">queryFilter</h2>
+
+<a id="schemaqueryfilter"></a>
+
+```json
+{
+  "query": {
+    "eo:cloud_cover": {
+      "lt": 50
+    }
+  }
+}
+
+```
+
+*Allows users to query properties for specific values*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|query|[query](#schemaquery)|false|none|Define which properties to query and the operatations to apply|
+
+<h2 id="tocSquery">query</h2>
+
+<a id="schemaquery"></a>
+
+```json
+{
+  "eo:cloud_cover": {
+    "lt": 50
+  }
+}
+
+```
+
+*Define which properties to query and the operatations to apply*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|**additionalProperties**|[queryProp](#schemaqueryprop)|false|none|Apply query operations to a specific property|
+
+<h2 id="tocSqueryprop">queryProp</h2>
+
+<a id="schemaqueryprop"></a>
+
+```json
+null
+
+```
+
+*Apply query operations to a specific property*
+
+### Properties
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|any|false|none|if the object doesn't contain any of the operators, it is equivalent to using the equals operator|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|*anonymous*|object|false|none|Match using an operator|
+|» eq|any|false|none|Find items with a property that is equal to the specified value. For strings, a case-insensitive comparison must be performed.|
+|» gt|number|false|none|Find items with a property value greater than the specified value.|
+|» lt|number|false|none|Find items with a property value less than the specified value.|
+|» gte|number|false|none|Find items with a property value greater than or equal the specified value.|
+|» lte|number|false|none|Find items with a property value greater than or equal the specified value.|
+
+<h2 id="tocSsortfilter">sortFilter</h2>
+
+<a id="schemasortfilter"></a>
+
+```json
+{
+  "sort": [
+    {
+      "field": "eo:cloud_cover",
+      "direction": "desc"
+    }
+  ]
+}
+
+```
+
+*Sort the results*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|sort|[sort](#schemasort)|false|none|An array of objects containing a property name and sort direction.|
+
+<h2 id="tocSsort">sort</h2>
+
+<a id="schemasort"></a>
+
+```json
+[
+  {
+    "field": "eo:cloud_cover",
+    "direction": "desc"
+  }
+]
+
+```
+
+*An array of objects containing a property name and sort direction.
+*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|field|string|true|none|none|
+|direction|string|false|none|none|
+
+#### Enumerated Values
+
+|Property|Value|
+|---|---|
+|direction|asc|
+|direction|desc|
 
 <h2 id="tocSextent">extent</h2>
 

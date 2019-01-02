@@ -16,7 +16,7 @@ The STAC version supported by a given version of sat-api is shown in the table b
 
 ## Documentation
 
-The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs) or on [gitbook](https://sat-utils.gitbook.io/sat-api/).
+The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs)
 
 
 ## Development
@@ -27,32 +27,25 @@ The latest version released is on the [master branch](https://github.com/sat-uti
 
 ### Building local version
 
-    # install dependencies in package.json
+    # Install dependencies in package.json
     $ yarn
 
-    # run lerna boostrap to link together packages and install those package dependencies
+    # Run lerna boostrap to link together packages and install those package dependencies
     $ yarn bootstrap
 
-    # run the build command in each of the packages (runs webpack)
+    # Run the build command in each of the packages (runs webpack)
     $ yarn build
 
-    # to continually watch and build source files
+    # To continually watch and build source files
     $ yarn watch
 
-### Environment variables
+    # To run tests for all packages
+    $ yarn test
 
-`STAC_VERSION`
-`STAC_ID`
-`STAC_TITLE`
-`STAC_DESCRIPTION`
+### Building API docs
 
-### Serving docs locally
-
-    $ yarn docs-serve
-
-On Linux, if you get the message "Error: watch *path*/book.json ENOSPC", issue the following command (requires sudo access).
-
-    $ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+    # To build API docs from the api spec
+    $ yarn build-api-docs
 
 ### Publishing new package versions
 
