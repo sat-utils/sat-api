@@ -33,9 +33,9 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       const isCollection = item.hasOwnProperty('extent')
       //const isCatalog = (item.hasOwnProperty('stac_version') && !isCollection)
       if (item) {
-        let written = true
+        //let written = true
         //if (!isCatalog) {
-        written = stream.write(item)
+        const written = stream.write(item)
         //}
         if (recursive && !(isCollection && collectionsOnly)) {
           if (written && item) {
