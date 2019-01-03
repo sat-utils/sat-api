@@ -59,6 +59,21 @@ const extractStacQuery = function (params) {
   return stacQuery
 }
 
+const extractSort = function (params) {
+  let sortRules
+  const { sort } = params
+  console.log(sort)
+  if (sort) {
+    if (typeof sort === 'string') {
+      sortRules = JSON.parse(sort)
+    } else {
+      sortRules = sort.slice()
+    }
+  }
+  console.log(sortRules)
+  return sortRules
+}
+
 const parsePath = function (path) {
   const searchFilters = {
     stac: false,
@@ -234,11 +249,11 @@ const search = async function (
     const {
       limit,
       page,
-      time: datetime,
-      sort
+      time: datetime
     } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
+    const sort = extractSort(queryParameters)
     // Prefer intersects
     const intersects = hasIntersects || bbox
     const query = extractStacQuery(queryParameters)
