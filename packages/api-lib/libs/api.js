@@ -62,7 +62,6 @@ const extractStacQuery = function (params) {
 const extractSort = function (params) {
   let sortRules
   const { sort } = params
-  console.log(sort)
   if (sort) {
     if (typeof sort === 'string') {
       sortRules = JSON.parse(sort)
@@ -70,7 +69,6 @@ const extractSort = function (params) {
       sortRules = sort.slice()
     }
   }
-  console.log(sortRules)
   return sortRules
 }
 
