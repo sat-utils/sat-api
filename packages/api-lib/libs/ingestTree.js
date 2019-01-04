@@ -4,9 +4,15 @@ const util = require('util')
 const path = require('path')
 const fs = require('fs')
 const isUrl = require('is-url')
+const MemoryStream = require('memorystream')
+const { Readable } = require('readable-stream')
+const pump = require('pump')
+const uuid = require('uuid/v4')
+const logger = require('./logger')
+
 
 const limiter = new Bottleneck({
-  maxConcurrent: 10
+  maxConcurrent: 1000
 })
 
 const limitedRequest = limiter.wrap(request)
@@ -40,7 +46,7 @@ async function fetchChildren(node, basePath) {
   return children
 }
 
-async function ingest(url) {
+async function visit(url, stream, recursive, collectionsOnly) {
   const visited = {}
   const stack = []
   let root
@@ -57,18 +63,81 @@ async function ingest(url) {
   visited[root.id] = true
   while (stack.length) {
     const node = stack.pop()
-    console.log(node.id)
-    // eslint-disable-next-line
-    const children = await fetchChildren(node, basePath)
-    // eslint-disable-next-line
-    for (const child of children) {
-      if (!visited[child.id]) {
-        // eslint-disable-next-line
-        stack.push(child)
+    const isCollection = node.hasOwnProperty('extent')
+    stream.write(node)
+    if (recursive && !(isCollection && collectionsOnly)) {
+      // eslint-disable-next-line
+      const children = await fetchChildren(node, basePath)
+      // eslint-disable-next-line
+      for (const child of children) {
+        if (!visited[child.id]) {
+          // eslint-disable-next-line
+          stack.push(child)
+        }
       }
     }
   }
-  console.log('Done')
+  stream.push(null)
 }
 
-module.exports = { ingest }
+async function ingest(url, backend, recursive = true, collectionsOnly = false) {
+  const duplexStream = new MemoryStream(null, {
+    readable: true,
+    writable: true,
+    objectMode: true
+  })
+
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.info(`${ingestJobId} Started`)
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      duplexStream,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          logger.error(error)
+          reject(error)
+        } else {
+          logger.info(`${ingestJobId} Completed`)
+          resolve(true)
+        }
+      }
+    )
+  })
+  visit(url, duplexStream, recursive, collectionsOnly)
+  return promise
+}
+
+async function ingestItem(item, backend) {
+  const readable = new Readable({ objectMode: true })
+  await backend.prepare('collections')
+  await backend.prepare('items')
+  const { toEs, esStream } = await backend.stream()
+  const ingestJobId = uuid()
+  logger.info(`${ingestJobId} for ${item.id} Started`)
+  const promise = new Promise((resolve, reject) => {
+    pump(
+      readable,
+      toEs,
+      esStream,
+      (error) => {
+        if (error) {
+          logger.error(error)
+          reject(error)
+        } else {
+          logger.info(`${ingestJobId} for ${item.id} Completed`)
+          resolve(true)
+        }
+      }
+    )
+  })
+  readable.push(item)
+  readable.push(null)
+  return promise
+}
+
+module.exports = { ingest, ingestItem }
