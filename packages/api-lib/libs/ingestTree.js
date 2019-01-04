@@ -40,38 +40,35 @@ async function fetchChildren(node, basePath) {
   return children
 }
 
-// eslint-disable-next-line
-async function visit(start, visited, stack, basePath) {
-  console.log(start.id)
-  stack.push(start)
-  visited[start.id] = true
-  if (stack.length) {
+async function ingest(url) {
+  const visited = {}
+  const stack = []
+  let root
+  let basePath
+  if (isUrl(url)) {
+    const rootResponse = await limitedRequest(url)
+    root = JSON.parse(rootResponse)
+  } else {
+    const rootResponse = await limitedRead(url)
+    root = JSON.parse(rootResponse)
+    basePath = url
+  }
+  stack.push(root)
+  visited[root.id] = true
+  while (stack.length) {
     const node = stack.pop()
+    console.log(node.id)
+    // eslint-disable-next-line
     const children = await fetchChildren(node, basePath)
     // eslint-disable-next-line
     for (const child of children) {
       if (!visited[child.id]) {
         // eslint-disable-next-line
-        await visit(child, visited, stack, basePath)
+        stack.push(child)
       }
     }
-  } else {
-    return Promise.resolve(true)
   }
-}
-
-async function ingest(url) {
-  const visited = {}
-  const stack = []
-  if (isUrl(url)) {
-    const rootResponse = await limitedRequest(url)
-    const root = JSON.parse(rootResponse)
-    await visit(root, visited, stack)
-  } else {
-    const rootResponse = await limitedRead(url)
-    const root = JSON.parse(rootResponse)
-    await visit(root, visited, stack, url)
-  }
+  console.log('Done')
 }
 
 module.exports = { ingest }
