@@ -30,6 +30,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
         count -= 1
       }
       const item = JSON.parse(response)
+      logger.debug(`Parsing ${item.id}`)
       const isCollection = item.hasOwnProperty('extent')
       if (item) {
         const written = stream.write(item)
@@ -109,8 +110,6 @@ async function ingestItem(item, backend) {
   await backend.prepare('collections')
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
-  const ingestJobId = uuid()
-  logger.info(`${ingestJobId} for ${item.id} Started`)
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
@@ -121,7 +120,7 @@ async function ingestItem(item, backend) {
           logger.error(error)
           reject(error)
         } else {
-          logger.info(`${ingestJobId} for ${item.id} Completed`)
+          logger.info(`Ingested item ${item.id}`)
           resolve(true)
         }
       }
