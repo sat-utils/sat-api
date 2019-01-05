@@ -122,7 +122,7 @@ const addItemLinks = function (results, endpoint) {
     // self link
     links.splice(0, 0, {
       rel: 'self',
-      href: `${endpoint}/collections/${collection}/item/${id}`
+      href: `${endpoint}/collections/${collection}/items/${id}`
     })
     // parent catalogs
     links.push({
