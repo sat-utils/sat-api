@@ -62,8 +62,8 @@ module.exports.handler = async function handler(event) {
         })
         await Promise.all(promises)
       }
-    } else if (event.type && event.type === 'Feature') {
-      // event is a STAC Item provided as cli parameter
+    } else if ((event.type && event.type === 'Feature') || (event.id && event.extent)) {
+      // event is STAC Item or Collection JSON
       await satlib.ingest.ingestItem(event, satlib.es)
     } else if (event.url) {
       // event is URL to a catalog node
