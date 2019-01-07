@@ -70,6 +70,9 @@ async function visit(url, stream, recursive, collectionsOnly) {
   visited[root.id] = true
   while (stack.length) {
     const node = stack.pop()
+    if (!node.properties) {
+      console.log(node.links[0].href)
+    }
     const isCollection = node.hasOwnProperty('extent')
     stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
@@ -80,7 +83,6 @@ async function visit(url, stream, recursive, collectionsOnly) {
         if (!visited[child.id]) {
           // eslint-disable-next-line
           stack.push(child)
-          visited[child.id] = true
         }
       }
     }
