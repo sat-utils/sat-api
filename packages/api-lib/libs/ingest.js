@@ -1,78 +1,86 @@
-const pump = require('pump')
 const request = require('request-promise-native')
-const path = require('path')
 const Bottleneck = require('bottleneck')
-const isUrl = require('is-url')
 const util = require('util')
+const path = require('path')
 const fs = require('fs')
+const isUrl = require('is-url')
 const MemoryStream = require('memorystream')
 const { Readable } = require('readable-stream')
+const pump = require('pump')
 const uuid = require('uuid/v4')
 const logger = require('./logger')
 
 const limiter = new Bottleneck({
-  maxConcurrent: 5000
+  maxConcurrent: 1000
 })
+
 const limitedRequest = limiter.wrap(request)
 const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 
-async function ingest(url, backend, recursive = true, collectionsOnly = false) {
-  let count = 0
-  async function traverse(urlPath, stream, root) {
-    count += 1
-    try {
-      let response
-      if (isUrl(urlPath)) {
-        response = await limitedRequest(urlPath)
-        count -= 1
+async function fetchChildren(node, basePath) {
+  const self = node.links.find((link) => (link.rel === 'self'))
+  const links =
+    node.links.filter((link) => (link.rel === 'child' || link.rel === 'item'))
+  const linkPromises = links.map((link) => {
+    let urlPath
+    let returnPromise
+    if (path.isAbsolute(link.href)) {
+      urlPath = link.href
+    } else {
+      // eslint-disable-next-line
+      if (basePath) {
+        urlPath = `${path.dirname(basePath)}/${link.href}`
       } else {
-        response = await limitedRead(urlPath)
-        count -= 1
+        urlPath = `${path.dirname(self.href)}/${link.href}`
       }
-      const item = JSON.parse(response)
-      const isCollection = item.hasOwnProperty('extent')
-      if (item) {
-        const written = stream.write(item)
-        if (recursive && !(isCollection && collectionsOnly)) {
-          if (written && item) {
-            // eslint-disable-next-line
-            traverseLinks(item, urlPath, stream, root)
-          } else {
-            stream.once('drain', () => {
-              // eslint-disable-next-line
-              traverseLinks(item, urlPath, stream, root)
-            })
-          }
+    }
+    if (isUrl(urlPath)) {
+      returnPromise = limitedRequest(urlPath)
+    } else {
+      returnPromise = limitedRead(urlPath)
+    }
+    return returnPromise
+  })
+  const responses = await Promise.all(linkPromises)
+  const children = responses.map((response) => (JSON.parse(response)))
+  return children
+}
+
+async function visit(url, stream, recursive, collectionsOnly) {
+  const visited = {}
+  const stack = []
+  let root
+  let basePath
+  if (isUrl(url)) {
+    const rootResponse = await limitedRequest(url)
+    root = JSON.parse(rootResponse)
+  } else {
+    const rootResponse = await limitedRead(url)
+    root = JSON.parse(rootResponse)
+    basePath = url
+  }
+  stack.push(root)
+  visited[root.id] = true
+  while (stack.length) {
+    const node = stack.pop()
+    const isCollection = node.hasOwnProperty('extent')
+    stream.write(node)
+    if (recursive && !(isCollection && collectionsOnly)) {
+      // eslint-disable-next-line
+      const children = await fetchChildren(node, basePath)
+      // eslint-disable-next-line
+      for (const child of children) {
+        if (!visited[child.id]) {
+          // eslint-disable-next-line
+          stack.push(child)
         }
       }
-      if ((count === 0 && !root) || (count === 0 && !recursive)) {
-        stream.push(null)
-      }
-    } catch (error) {
-      count -= 1
-      logger.error(error)
     }
   }
+  stream.push(null)
+}
 
-  function traverseLinks(item, parentUrl, stream, root) {
-    const { links } = item
-    let hasChildren = false
-    links.forEach(async (link) => {
-      const { rel, href } = link
-      if (rel === 'child' || rel === 'item') {
-        hasChildren = true
-        if (path.isAbsolute(href)) {
-          traverse(href, stream)
-        } else {
-          traverse(`${path.dirname(parentUrl)}/${link.href}`, stream)
-        }
-      }
-    })
-    if (!hasChildren && root) {
-      stream.push(null)
-    }
-  }
-
+async function ingest(url, backend, recursive = true, collectionsOnly = false) {
   const duplexStream = new MemoryStream(null, {
     readable: true,
     writable: true,
@@ -100,7 +108,7 @@ async function ingest(url, backend, recursive = true, collectionsOnly = false) {
       }
     )
   })
-  traverse(url, duplexStream, true, recursive)
+  visit(url, duplexStream, recursive, collectionsOnly)
   return promise
 }
 
@@ -131,4 +139,5 @@ async function ingestItem(item, backend) {
   readable.push(null)
   return promise
 }
+
 module.exports = { ingest, ingestItem }
