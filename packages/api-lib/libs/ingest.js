@@ -41,8 +41,15 @@ async function fetchChildren(node, basePath) {
     }
     return returnPromise
   })
-  const responses = await Promise.all(linkPromises)
-  const children = responses.map((response) => (JSON.parse(response)))
+  const responses = await Promise.all(linkPromises.map((p) => p.catch((e) => e)))
+  const validResponses =
+    responses.filter((response) => !(response instanceof Error))
+  const failedResponses =
+    responses.filter((response) => (response instanceof Error))
+  failedResponses.forEach((failure) => {
+    logger.error(failure)
+  })
+  const children = validResponses.map((response) => (JSON.parse(response)))
   return children
 }
 
@@ -73,6 +80,7 @@ async function visit(url, stream, recursive, collectionsOnly) {
         if (!visited[child.id]) {
           // eslint-disable-next-line
           stack.push(child)
+          visited[child.id] = true
         }
       }
     }
