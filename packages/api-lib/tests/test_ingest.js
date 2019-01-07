@@ -4,11 +4,7 @@ const MemoryStream = require('memorystream')
 const proxquire = require('proxyquire')
 const fs = require('fs')
 const { ingest, ingestItem } = require('../libs/ingest')
-const catalog = require('./fixtures/stac/catalog.json')
-const collection = require('./fixtures/stac/collection.json')
-const collection2 = require('./fixtures/stac/collection2.json')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
-const secondItem = require('./fixtures/stac/LC80100102015082LGN00.json')
 
 const setup = () => {
   const dupOptions = {
