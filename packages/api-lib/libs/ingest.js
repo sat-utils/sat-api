@@ -91,9 +91,6 @@ async function visit(url, stream, recursive, collectionsOnly) {
   visited[rootId] = true
   while (stack.length) {
     const node = stack.pop()
-    if (!node.properties) {
-      console.log(node.links[0].href)
-    }
     const isCollection = node.hasOwnProperty('extent')
     const written = stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
