@@ -134,8 +134,6 @@ async function ingestItem(item, backend) {
   await backend.prepare('collections')
   await backend.prepare('items')
   const { toEs, esStream } = await backend.stream()
-  const ingestJobId = uuid()
-  logger.info(`${ingestJobId} for ${item.id} Started`)
   const promise = new Promise((resolve, reject) => {
     pump(
       readable,
@@ -146,7 +144,7 @@ async function ingestItem(item, backend) {
           logger.error(error)
           reject(error)
         } else {
-          logger.info(`${ingestJobId} for ${item.id} Completed`)
+          logger.info(`Ingested item ${item.id}`)
           resolve(true)
         }
       }
