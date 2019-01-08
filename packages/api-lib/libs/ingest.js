@@ -53,6 +53,10 @@ async function fetchChildren(node, basePath) {
   return children
 }
 
+function getSelfRef(node) {
+  return node.links[0].href
+}
+
 async function visit(url, stream, recursive, collectionsOnly) {
   const visited = {}
   const stack = []
@@ -67,7 +71,8 @@ async function visit(url, stream, recursive, collectionsOnly) {
     basePath = url
   }
   stack.push(root)
-  visited[root.id] = true
+  const rootId = getSelfRef(root)
+  visited[rootId] = true
   while (stack.length) {
     const node = stack.pop()
     if (!node.properties) {
@@ -82,6 +87,8 @@ async function visit(url, stream, recursive, collectionsOnly) {
       for (const child of children) {
         if (!visited[child.id]) {
           // eslint-disable-next-line
+          const childId = getSelfRef(child)
+          visited[childId] = true
           stack.push(child)
         }
       }
