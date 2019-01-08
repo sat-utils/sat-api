@@ -4,11 +4,7 @@ const MemoryStream = require('memorystream')
 const proxquire = require('proxyquire')
 const fs = require('fs')
 const { ingest, ingestItem } = require('../libs/ingest')
-const catalog = require('./fixtures/stac/catalog.json')
-const collection = require('./fixtures/stac/collection.json')
-const collection2 = require('./fixtures/stac/collection2.json')
 const firstItem = require('./fixtures/stac/LC80100102015050LGN00.json')
-const secondItem = require('./fixtures/stac/LC80100102015082LGN00.json')
 
 const setup = () => {
   const dupOptions = {
@@ -38,11 +34,17 @@ const setup = () => {
 test('ingest traverses the entire STAC tree', async (t) => {
   const { esStream, backend } = setup()
   await ingest('./fixtures/stac/catalog.json', backend)
-  t.deepEqual(esStream.queue[0], catalog)
-  t.deepEqual(esStream.queue[1], collection)
-  t.deepEqual(esStream.queue[2], collection2)
-  t.deepEqual(esStream.queue[3], firstItem)
-  t.deepEqual(esStream.queue[4], secondItem)
+
+  const itemIds = [
+    'landsat-8-l1',
+    'collection2',
+    'collection2_item',
+    'LC80100102015050LGN00',
+    'LC80100102015082LGN00'
+  ]
+  const queudIds = esStream.queue.map((queued) => queued.id)
+  const hasItems = itemIds.map((itemId) => (queudIds.includes(itemId)))
+  t.falsy(hasItems.includes(false))
 })
 
 test('ingest does not recurse', async (t) => {
@@ -57,10 +59,15 @@ test('ingest consumes item with no children and closes stream', async (t) => {
   t.is(esStream.queue.length, 1)
 })
 
-test('ingest only consumes collections', async (t) => {
+test('ingest stops at collections when collectionsOnly is true', async (t) => {
   const { esStream, backend } = setup()
   await ingest('./fixtures/stac/catalog.json', backend, true, true)
-  t.deepEqual(esStream.queue[1], collection)
+  const itemIds = [
+    'LC80100102015050LGN00',
+    'LC80100102015082LGN00'
+  ]
+  const hasItems = esStream.queue.map((queued) => (itemIds.includes(queued.id)))
+  t.falsy(hasItems.includes(true))
 })
 
 test('ingest logs request error and continues', async (t) => {

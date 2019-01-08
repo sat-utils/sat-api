@@ -6,9 +6,6 @@ class ElasticSearchWritableStream extends stream.Writable {
     super(options)
     this.config = config
 
-    /**
-     * Create the ElasticSearch client:
-     */
     this.client = this.config.client
   }
 
@@ -16,6 +13,7 @@ class ElasticSearchWritableStream extends stream.Writable {
     return this.client.close()
   }
 
+  // Allows the flexibility to batch write to multiple indexes.
   transformRecords(chunks) {
     const operations = chunks.reduce((bulkOperations, chunk) => {
       const operation = {}
@@ -37,37 +35,29 @@ class ElasticSearchWritableStream extends stream.Writable {
     }, [])
     return operations
   }
-  /**
-   * When writing a single record, we use the index() method of
-   * the ES API:
-   */
-
+  // Write individual records with update/upsert
   async _write(record, enc, next) {
     try {
-      await this.client.index({
-        id: record.id,
-        index: record.index,
-        type: record.type,
-        body: record.body.doc
+      const { index, id, body } = record
+      await this.client.update({
+        index,
+        type: 'doc',
+        id,
+        body
       })
-      logger.debug(record.body.doc.id)
+      logger.debug(`Wrote document ${id}`)
       next()
     } catch (err) {
       next(err)
     }
   }
 
+  // Batch write records, use highWaterMark to set batch size.
   async _writev(records, next) {
     const body = this.transformRecords(records)
-
-    /**
-     * Push the array of actions to ES and indicate that we are ready
-     * for more data. Be sure to propagate any errors:
-     */
-
     try {
       await this.client.bulk({ body })
-      logger.debug('Wrote ', body.length / 2)
+      logger.debug(`Wrote batch of documents size ${body.length / 2}`)
       next()
     } catch (err) {
       next(err)
