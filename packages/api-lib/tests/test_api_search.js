@@ -22,6 +22,7 @@ test('search es error', async (t) => {
 })
 
 test('search /', async (t) => {
+  process.env.STAC_DOCS_URL = 'test'
   const endpoint = 'endpoint'
   const expected = {
     links: [
@@ -34,7 +35,7 @@ test('search /', async (t) => {
         rel: 'data'
       },
       {
-        href: `${endpoint}/api`,
+        href: 'test',
         rel: 'service'
       }
     ]

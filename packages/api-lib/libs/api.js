@@ -145,6 +145,7 @@ const addItemLinks = function (results, endpoint) {
 }
 
 const buildRootObject = function (endpoint) {
+  const stac_docs_url = process.env.STAC_DOCS_URL
   const root = {
     links: [
       {
@@ -156,7 +157,7 @@ const buildRootObject = function (endpoint) {
         rel: 'data'
       },
       {
-        href: `${endpoint}/api`,
+        href: stac_docs_url,
         rel: 'service'
       }
     ]
