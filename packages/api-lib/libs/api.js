@@ -144,6 +144,27 @@ const addItemLinks = function (results, endpoint) {
   return results
 }
 
+const buildRootObject = function (endpoint) {
+  const stac_docs_url = process.env.STAC_DOCS_URL
+  const root = {
+    links: [
+      {
+        href: endpoint,
+        rel: 'self'
+      },
+      {
+        href: `${endpoint}/collections`,
+        rel: 'data'
+      },
+      {
+        href: stac_docs_url,
+        rel: 'service'
+      }
+    ]
+  }
+  return root
+}
+
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stac_version = process.env.STAC_VERSION
   const stac_id = process.env.STAC_ID
@@ -222,6 +243,18 @@ const search = async function (
 ) {
   let apiResponse
   try {
+    const pathElements = parsePath(path)
+    const hasPathElement =
+      Object.keys(pathElements).reduce((accumulator, key) => {
+        let containsPathElement
+        if (accumulator) {
+          containsPathElement = true
+        } else {
+          containsPathElement = pathElements[key]
+        }
+        return containsPathElement
+      }, false)
+
     const {
       stac,
       search: searchPath,
@@ -229,7 +262,7 @@ const search = async function (
       collectionId,
       items,
       itemId
-    } = parsePath(path)
+    } = pathElements
 
     const {
       limit,
@@ -255,6 +288,10 @@ const search = async function (
         ...obj,
         [key]: parameters[key]
       }), {})
+    // Landing page url
+    if (!hasPathElement) {
+      apiResponse = buildRootObject(endpoint)
+    }
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
