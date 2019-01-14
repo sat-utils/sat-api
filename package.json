@@ -11,7 +11,7 @@
     "test": "lerna run test",
     "update": "lerna publish --skip-git --skip-npm",
     "eslint": "eslint packages/* --ext .js",
-		"build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md"
+    "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "devDependencies": {
     "eslint": "^5.7.0",
@@ -20,8 +20,8 @@
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
-    "gitbook-cli": "^2.3.2",
     "lerna": "^2.11.0",
+    "shins": "^2.3.2-3",
     "widdershins": "^3.6.6"
   }
 }

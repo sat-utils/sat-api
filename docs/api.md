@@ -275,7 +275,7 @@ requested items shall not be counted.
   "links": [
     {
       "rel": "next",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -462,7 +462,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
   "links": [
     {
       "rel": "next",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -480,6 +480,91 @@ This operation does not require authentication
 </aside>
 
 <h1 id="the-sat-api-capabilities">Capabilities</h1>
+
+## landing page of this API
+
+<a id="opIdgetLandingPage"></a>
+
+> Code samples
+
+```nodejs
+const fetch = require('node-fetch');
+
+const headers = {
+  'Accept':'application/json'
+
+};
+
+fetch('https://sat-api.developmentseed.org/',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json'
+}
+
+r = requests.get('https://sat-api.developmentseed.org/', params={
+
+}, headers = headers)
+
+print r.json()
+
+```
+
+`GET /`
+
+The landing page provides links to the API definition, the Conformance statements and the metadata about the feature data in this dataset.
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "links": [
+    {
+      "href": "http://sat-api.developmentseed.org",
+      "rel": "self",
+      "type": "application/json",
+      "title": "this document"
+    },
+    {
+      "href": "http://sat-api.developmentseed.org/api",
+      "rel": "service",
+      "type": "application/json",
+      "title": "this document"
+    },
+    {
+      "href": "http://sat-api.developmentseed.org/collections",
+      "rel": "data",
+      "type": "application/json",
+      "title": "Metadata about the feature collections"
+    }
+  ]
+}
+```
+
+<h3 id="landing-page-of-this-api-responses">Responses</h3>
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|links to the API capabilities|string|
+
+<aside class="success">
+This operation does not require authentication
+</aside>
 
 ## describe the feature collections in the dataset
 
@@ -984,7 +1069,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
   "links": [
     {
       "rel": "next",
-      "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+      "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
     }
   ]
 }
@@ -1182,7 +1267,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 [
   {
     "rel": "next",
-    "href": "http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
+    "href": "http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"
   }
 ]
 
@@ -1204,25 +1289,19 @@ If a feature has multiple temporal properties, it is the decision of the server 
 {
   "links": [
     {
-      "href": "http://data.example.org/",
+      "href": "http://sat-api.developmentseed.org",
       "rel": "self",
       "type": "application/json",
       "title": "this document"
     },
     {
-      "href": "http://data.example.org/api",
+      "href": "http://sat-api.developmentseed.org/api",
       "rel": "service",
-      "type": "application/openapi+json;version=3.0",
-      "title": "the API definition"
-    },
-    {
-      "href": "http://data.example.org/conformance",
-      "rel": "conformance",
       "type": "application/json",
-      "title": "WFS 3.0 conformance classes implemented by this server"
+      "title": "this document"
     },
     {
-      "href": "http://data.example.org/collections",
+      "href": "http://sat-api.developmentseed.org/collections",
       "rel": "data",
       "type": "application/json",
       "title": "Metadata about the feature collections"

@@ -21,6 +21,29 @@ test('search es error', async (t) => {
   t.is(response.code, 500)
 })
 
+test('search /', async (t) => {
+  process.env.STAC_DOCS_URL = 'test'
+  const endpoint = 'endpoint'
+  const expected = {
+    links: [
+      {
+        href: endpoint,
+        rel: 'self'
+      },
+      {
+        href: `${endpoint}/collections`,
+        rel: 'data'
+      },
+      {
+        href: 'test',
+        rel: 'service'
+      }
+    ]
+  }
+  const actual = await api.search('/', undefined, {}, endpoint)
+  t.deepEqual(actual, expected, 'Returns root API node')
+})
+
 test('search /stac', async (t) => {
   const collection = 'collection'
   const results = { results: [{ id: collection }] }

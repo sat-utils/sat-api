@@ -57,6 +57,21 @@ function getSelfRef(node) {
   return node.links[0].href
 }
 
+// Mutates stack and visited
+async function visitChildren(node, stack, visited, basePath) {
+  // eslint-disable-next-line
+  const children = await fetchChildren(node, basePath)
+  // eslint-disable-next-line
+  for (const child of children) {
+    if (!visited[child.id]) {
+      // eslint-disable-next-line
+      const childId = getSelfRef(child)
+      visited[childId] = true
+      stack.push(child)
+    }
+  }
+}
+
 async function visit(url, stream, recursive, collectionsOnly) {
   const visited = {}
   const stack = []
@@ -68,6 +83,7 @@ async function visit(url, stream, recursive, collectionsOnly) {
   } else {
     const rootResponse = await limitedRead(url)
     root = JSON.parse(rootResponse)
+    // Handles relative root link in file catalog.
     basePath = url
   }
   stack.push(root)
@@ -75,22 +91,16 @@ async function visit(url, stream, recursive, collectionsOnly) {
   visited[rootId] = true
   while (stack.length) {
     const node = stack.pop()
-    if (!node.properties) {
-      console.log(node.links[0].href)
-    }
     const isCollection = node.hasOwnProperty('extent')
-    stream.write(node)
+    const written = stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
-      // eslint-disable-next-line
-      const children = await fetchChildren(node, basePath)
-      // eslint-disable-next-line
-      for (const child of children) {
-        if (!visited[child.id]) {
-          // eslint-disable-next-line
-          const childId = getSelfRef(child)
-          visited[childId] = true
-          stack.push(child)
-        }
+      if (written) {
+        // eslint-disable-next-line
+        await visitChildren(node, stack, visited, basePath)
+      } else {
+        stream.once('drain', async () => {
+          await visitChildren(node, stack, visited, basePath)
+        })
       }
     }
   }

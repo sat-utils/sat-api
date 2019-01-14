@@ -100,6 +100,25 @@ paths:
             text/html:
               schema:
                 type: string
+  /:
+    get:
+      summary: landing page of this API
+      description: >-
+        The landing page provides links to the API definition, the Conformance
+        statements and the metadata about the feature data in this dataset.
+      operationId: getLandingPage
+      tags:
+        - Capabilities
+      responses:
+        '200':
+          description: links to the API capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/root'
+            text/html:
+              schema:
+                type: string
 
   /collections:
     get:
@@ -575,7 +594,7 @@ components:
       example:
         - rel: next
           href: >-
-            http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg
+            http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg
     root:
       type: object
       required:
@@ -586,19 +605,15 @@ components:
           items:
             $ref: '#/components/schemas/link'
           example:
-            - href: 'http://data.example.org/'
+            - href: 'http://sat-api.developmentseed.org'
               rel: self
               type: application/json
               title: this document
-            - href: 'http://data.example.org/api'
+            - href: 'http://sat-api.developmentseed.org/api'
               rel: service
-              type: application/openapi+json;version=3.0
-              title: the API definition
-            - href: 'http://data.example.org/conformance'
-              rel: conformance
               type: application/json
-              title: WFS 3.0 conformance classes implemented by this server
-            - href: 'http://data.example.org/collections'
+              title: this document
+            - href: 'http://sat-api.developmentseed.org/collections'
               rel: data
               type: application/json
               title: Metadata about the feature collections

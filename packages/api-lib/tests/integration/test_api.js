@@ -138,11 +138,16 @@ test('stac/search default sort', async (t) => {
 })
 
 test('stac/search sort', async (t) => {
-  const response = await search('/stac/search', {
-    sort: {
+  let response = await search('/stac/search', {
+    sort: [{
       field: 'eo:cloud_cover',
       direction: 'desc'
-    }
+    }]
+  }, backend, endpoint)
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+
+  response = await search('/stac/search', {
+    sort: '[{ "field": "eo:cloud_cover", "direction": "desc" }]'
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })

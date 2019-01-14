@@ -32,6 +32,7 @@ $ ./runIntegration.sh
 `STAC_TITLE`
 `STAC_DESCRIPTION`
 `STAC_VERSION`
+`STAC_DOCS_URL`
 
 ### About
 [sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).

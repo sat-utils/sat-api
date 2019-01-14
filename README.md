@@ -16,7 +16,7 @@ The STAC version supported by a given version of sat-api is shown in the table b
 
 ## Documentation
 
-The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs)
+The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs/docs.md)
 
 
 ## Development
