@@ -2,3 +2,5 @@
 .dockerignore
 Dockerfile
 docker-compose.yml
+node_modules
+packages/*/node_modules
