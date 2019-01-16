@@ -4,39 +4,48 @@
 
 Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 
-Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org. *An older version of sat-api can be found on the [legacy branch](https://github.com/sat-utils/sat-api/tree/legacy) and is deployed at https://api.developmentseed.org/satellites.*
+Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org. 
+
+The STAC version supported by a given version of sat-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
+
+| sat-api | STAC  |
+| -------- | ----  |
+| 0.1.0    | 0.5.0 |
+| 0.2.0    | 0.6.0 |
 
 
 ## Documentation
 
-The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs) or on [gitbook](https://sat-utils.gitbook.io/sat-api/).
+The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs/docs.md)
 
 
 ## Development
 
 Sat-api includes a number of NPM packages (in the packages/ directory) that are used to create and populate an instance of sat-api. See the [sat-utils org on NPM](https://www.npmjs.com/org/sat-utils) for the full list of packages. [Lerna](https://github.com/lerna/lerna) is used for for managing these packages.
 
+The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latet development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
+
 ### Building local version
 
-    # install dependencies in package.json
+    # Install dependencies in package.json
     $ yarn
 
-    # run lerna boostrap to link together packages and install those package dependencies
+    # Run lerna boostrap to link together packages and install those package dependencies
     $ yarn bootstrap
 
-    # run the build command in each of the packages (runs webpack)
+    # Run the build command in each of the packages (runs webpack)
     $ yarn build
 
-    # to continually watch and build source files
+    # To continually watch and build source files
     $ yarn watch
 
-### Serving docs locally
+    # To run tests for all packages
+    $ yarn test
 
-    $ yarn docs-serve
+### Building API docs
 
-On Linux, if you get the message "Error: watch *path*/book.json ENOSPC", issue the following command (requires sudo access).
-
-    $ echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+    # To build API docs from the api spec
+    $ yarn build-api-docs
 
 ### Publishing new package versions
 
@@ -45,21 +54,12 @@ To create a new version for npm:
 - create a new branch from master
 - `$ yarn update`
 - Follow the prompt and select the correct the version, then commit the changes.
-- Update [CHANGES.md](CHANGES.md).
+- Update [CHANGELOG.md](CHANGELOG.md).
 - Tag your branch with the same version number
 - Make a PR
-- When the PR is merged, the npm packages are automatically deployed to npm
-
-If you need to publish a package manually follow the steps below. **WARNING:** This is not recommended. Only use it if absolutely necessary.
-
-- create a new branch from master
-- `$ yarn update`
-- Follow the prompt and select the correct the version, then commit the changes.
-- Update [CHANGES.md](CHANGES.md).
-- Tag your branch with the same version number
-- Run: `./node_modules/.bin/lerna publish --skip-git --repo-version <replace-version> --yes --force-publish=* --npm-client=npm`
+- When the PR is merged to master, the npm packages are automatically deployed to npm
 
 
 ## About
 
-[sat-api](http://github.com/sat-utils/sat-api.git) was made by [Development Seed](http://developmentseed.org).
+[sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).

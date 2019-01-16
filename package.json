@@ -1,31 +1,27 @@
 {
   "description": "One API to search public Satellites metadata",
-  "main": "index.js",
   "repository": "https://github.com/sat-utils/sat-api",
   "author": "Alireza Jazayeri <alireza@developmentseed.org>, Matthew Hanson <matt.a.hanson@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "docs-build": "gitbook build",
-    "docs-serve": "gitbook serve",
     "bootstrap": "lerna bootstrap",
     "clean": "lerna clean",
     "build": "lerna run build",
     "linkall": "lerna exec -- yarn link",
     "test": "lerna run test",
     "update": "lerna publish --skip-git --skip-npm",
-    "eslint": "eslint packages/* --ext .js"
-  },
-  "dependencies": {
-    "kes": "^2.2.2"
+    "eslint": "eslint packages/* --ext .js",
+    "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
+    "eslint": "^5.7.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
     "eslint-plugin-jsdoc": "^3.5.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.7.0",
-    "gitbook-cli": "^2.3.2",
-    "lerna": "^2.11.0"
+    "lerna": "^2.11.0",
+    "shins": "^2.3.2-3",
+    "widdershins": "^3.6.6"
   }
 }

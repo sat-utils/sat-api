@@ -1,51 +1,88 @@
 'use strict'
 
+const AWS = require('aws-sdk')
 const satlib = require('@sat-utils/api-lib')
-const _ = require('lodash')
 
-/* Example Handler
-{
-  'satellite': 'landsat',
-  'arn': *arn of step function to do transform*,
-
-
-}
-*/
-module.exports.handler = function handler(event, context, cb) {
-  console.log('ingest event: ', JSON.stringify(event))
-  const sat = event.satellite
-  const bucket = process.env.bucket || 'sat-api'
-  let key = process.env.prefix || 'sat-api-dev'
-  key = `${key}/ingest/${sat}/`
-  const maxFiles = _.get(event, 'maxFiles', 0)
-  const linesPerFile = _.get(event, 'linesPerFile', 500)
-  const maxLambdas = _.get(event, 'maxLambdas', 30)
-  const arn = _.get(event, 'arn', '')
-
-  let url
-  let reverse = true
-  switch (sat) {
-  case 'landsat':
-    url = 'https://landsat.usgs.gov/landsat/metadata_service/bulk_metadata_files/LANDSAT_8_C1.csv'
-    reverse = false
-    break
-  case 'sentinel':
-    url = 'https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz'
-    break
-  default:
-    return cb('no match was found for satellite')
+// Runs on Fargate
+const runIngestTask = async function (input, envvars) {
+  const ecs = new AWS.ECS()
+  const params = {
+    cluster: process.env.CLUSTER_ARN,
+    taskDefinition: process.env.TASK_ARN,
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: process.env.SUBNETS.split(' '),
+        assignPublicIp: 'ENABLED',
+        securityGroups: process.env.SECURITY_GROUPS.split(' ')
+      }
+    },
+    overrides: {
+      containerOverrides: [
+        {
+          command: [
+            'node',
+            'packages/ingest/bin/ingest.js',
+            JSON.stringify(input)
+          ],
+          environment: envvars,
+          name: 'SatApi'
+        }
+      ],
+      executionRoleArn: process.env.ECS_ROLE_ARN,
+      taskRoleArn: process.env.ECS_ROLE_ARN
+    }
   }
+  return ecs.runTask(params).promise()
+}
 
-  return satlib.ingestcsv.split({
-    url,
-    bucket,
-    key,
-    arn,
-    inMaxFiles: maxFiles,
-    linesPerFile,
-    maxLambdas,
-    reverse,
-    cb
-  })
+module.exports.handler = async function handler(event) {
+  console.log(`Ingest Event: ${JSON.stringify(event)}`)
+  try {
+    if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
+      // event is SNS message of updated file on s3
+      const message = JSON.parse(event.Records[0].Sns.Message)
+      if (message.type && message.type === 'Feature') {
+        // event is a STAC Item
+        await satlib.ingest.ingestItem(message, satlib.es)
+      } else {
+        // updated s3
+        const { Records: s3Records } = message
+        const promises = s3Records.map((s3Record) => {
+          const {
+            s3: {
+              bucket: { name: bucketName },
+              object: { key }
+            }
+          } = s3Record
+          const url = `https://${bucketName}.s3.amazonaws.com/${key}`
+          console.log(`Ingesting catalog file ${url}`)
+          const recursive = false
+          return satlib.ingest.ingest(url, satlib.es, recursive)
+        })
+        await Promise.all(promises)
+      }
+    } else if ((event.type && event.type === 'Feature') || (event.id && event.extent)) {
+      // event is STAC Item or Collection JSON
+      await satlib.ingest.ingestItem(event, satlib.es)
+    } else if (event.url) {
+      // event is URL to a catalog node
+      const { url, recursive, collectionsOnly } = event
+      const recurse = recursive === undefined ? true : recursive
+      const collections = collectionsOnly === undefined ? false : collectionsOnly
+      await satlib.ingest.ingest(url, satlib.es, recurse, collections)
+    } else if (event.fargate) {
+      // event is URL to a catalog node - start a Fargate instance to process
+      console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
+      const envvars = [
+        { 'name': 'ES_HOST', 'value': process.env.ES_HOST },
+        { 'name': 'ES_BATCH_SIZE', 'value': process.env.ES_BATCH_SIZE },
+        { 'name': 'LOG_LEVEL', 'value': process.env.LOG_LEVEL || 'info' }
+      ]
+      await runIngestTask(event.fargate, envvars)
+    }
+  } catch (error) {
+    console.log(error)
+  }
 }
 

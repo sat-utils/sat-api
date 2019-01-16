@@ -1,8 +1,0 @@
-default:
-  prefix: sat-api
-  stackName: '{{prefix}}-deployer-role'
-  capabilities:
-    - CAPABILITY_IAM
-  params:
-    - name: Prefix
-      value: '{{prefix}}'

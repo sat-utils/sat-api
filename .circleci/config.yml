@@ -1,45 +1,121 @@
 version: 2
 
+references:
+  restore_repo: &restore_repo
+    restore_cache:
+      keys:
+        - v1-repo-{{ .Branch }}-{{ .Revision }}
+        - v1-repo-{{ .Branch }}
+        - v1-repo
+  save_repo: &save_repo
+    save_cache:
+      key: v1-repo-{{ .Branch }}-{{ .Revision }}
+      paths:
+        - ~/project
+
+
 jobs:
-  build:
+  build_and_test:
     docker:
       - image: circleci/node:8.11
-    working_directory: ~/project
     steps:
+      - *restore_repo
       - checkout
-
+      - *save_repo
       - run:
           name: Install
-          command: yarn
-      - run:
-          name: Bootstrap
-          command: yarn bootstrap 
+          command: |
+            yarn
+            yarn bootstrap
       - run:
           name: Lint
           command: yarn eslint
       - run:
-          name: Build 
-          command: yarn build 
-      - run:
-          name: Test
-          command: yarn test
-    
+          name: Build and test
+          command: |
+            yarn build
+            yarn test
       - run:
           name: Build Documentation
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
               yarn docs-build
             fi
-      
       - run:
-          name: Deploy example to aws
+          name: Deploy to NPM
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              #cd example
-              #yarn
-              #./node_modules/.bin/kes cf deploy --template node_modules/@sat-utils/api/template --deployment dev --region us-east-1 --role arn:aws:iam::552819999234:role/sat-api-deployer-role-DeployerRole-JBBKUABAELDR
               echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
               VERSION=$(jq --raw-output .version lerna.json)
               node_modules/.bin/lerna publish --skip-git --repo-version $VERSION --yes --force-publish=*
             fi
 
+  docker_build_and_test:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - *restore_repo
+      - checkout
+      - *save_repo
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t satutils/sat-api:latest .
+      - run:
+          name: Test Docker image
+          command: |
+            docker run -it satutils/sat-api:latest yarn test
+
+  docker_deploy_production:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - *restore_repo
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t satutils/sat-api:latest .
+      - run:
+          name: Deploy Docker image
+          command: |
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            VERSION=$(jq --raw-output .version lerna.json)
+            docker tag satutils/sat-api:latest satutils/sat-api:${VERSION}
+            docker push satutils/sat-api:latest satutils/sat-api:${VERSION}
+
+  docker_deploy_develop:
+    machine:
+      docker_layer_caching: true
+    steps:
+      - *restore_repo
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t satutils/sat-api:develop .
+      - run:
+          name: Deploy Docker image
+          command: |
+            docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            docker push satutils/sat-api:develop
+
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build_and_test
+  docker_build_and_test:
+    jobs:
+      - docker_build_and_test
+      - docker_deploy_production:
+          requires:
+            - docker_build_and_test          
+          filters:
+            branches:
+              only: master
+      - docker_deploy_develop:
+          requires:
+            - docker_build_and_test          
+          filters:
+            branches:
+              only: develop

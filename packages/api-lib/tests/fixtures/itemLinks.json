@@ -1,0 +1,8 @@
+{ 
+  "links": [
+    { "rel": "self", "href": "endpoint/collections/landsat-8-l1/items/LC80100102015082LGN00" },
+    { "rel": "parent", "href": "endpoint/collections/landsat-8-l1" },
+    { "rel": "collection", "href": "endpoint/collections/landsat-8-l1" },
+    { "rel": "root", "href": "endpoint/stac" }
+  ]
+}

@@ -4,15 +4,17 @@ const AWS = require('aws-sdk')
 const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
-const ElasticsearchWritableStream = require('elasticsearch-writable-stream')
-const pump = require('pump')
+const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
+const logger = require('./logger')
 
-let esClient
+let _esClient
 
 /*
-This module looks for the ES_HOST environment variable which is the URL to the
-elasticsearch host
+This module is used for connecting to an Elasticsearch instance, writing records,
+searching records, and managing the indexes. It looks for the ES_HOST environment
+variable which is the URL to the elasticsearch host
 */
+
 // Connect to an Elasticsearch cluster
 async function connect() {
   let esConfig
@@ -21,76 +23,103 @@ async function connect() {
   // use local client
   if (!process.env.ES_HOST) {
     client = new elasticsearch.Client({ host: 'localhost:9200' })
-  }
-  else {
+  } else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
       return resolve()
     }))
 
+    AWS.config.update({
+      credentials: new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID,
+        process.env.AWS_SECRET_ACCESS_KEY),
+      region: process.env.AWS_REGION || 'us-east-1'
+    })
+
     esConfig = {
-      host: process.env.ES_HOST,
+      hosts: [process.env.ES_HOST],
       connectionClass: httpAwsEs,
-      amazonES: {
-        region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
-        credentials: AWS.config.credentials
-      },
+      awsConfig: new AWS.Config({ region: process.env.AWS_REGION || 'us-east-1' }),
+      httpOptions: {},
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
     client = new elasticsearch.Client(esConfig)
   }
 
-  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 }, (err) => {
-    if (err) {
-      console.log('unable to connect to elasticsearch')
-      reject('unable to connect to elasticsearch')
-    }
-    else {
-      resolve()
-    }
-  }))
+  await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
+    (err) => {
+      if (err) {
+        reject('Unable to connect to elasticsearch')
+      } else {
+        resolve()
+      }
+    }))
   return client
 }
 
-async function Client() {
-  if (!esClient) {
-    esClient = await connect()
-    console.log('connected to elasticsearch')
+// get existing ES client or create a new one
+async function esClient() {
+  if (!_esClient) {
+    try {
+      _esClient = await connect()
+    } catch (error) {
+      logger.error(error)
+    }
+    if (_esClient) {
+      logger.debug('Connected to Elasticsearch')
+    }
+  } else {
+    logger.debug('Using existing Elasticsearch connection')
   }
-  else {
-    console.log('using existing elasticsearch connection')
-  }
-  return esClient
+  return _esClient
 }
 
+// Create STAC mappings
+async function prepare(index) {
+  // TODO - different mappings for collection and item
+  let ready
+  const props = {
+    'type': 'object',
+    properties: {
+      'collection': { type: 'keyword' },
+      'datetime': { type: 'date' },
+      'eo:cloud_cover': { type: 'float' },
+      'eo:gsd': { type: 'float' },
+      'eo:constellation': { type: 'keyword' },
+      'eo:platform': { type: 'keyword' },
+      'eo:instrument': { type: 'keyword' },
+      'eo:epsg': { type: 'integer' },
+      'eo:off_nadir': { type: 'float' },
+      'eo:azimuth': { type: 'float' },
+      'eo:sun_azimuth': { type: 'float' },
+      'eo:sun_elevation': { type: 'float' }
+    }
+  }
 
-async function listIndices(client, index) {
-  return client.indices.get({ index })
-}
+  const dynamicTemplates = [{
+    strings: {
+      mapping: {
+        type: 'keyword'
+      },
+      match_mapping_type: 'string'
+    }
+  }]
+  const client = await esClient()
+  const indexExists = await client.indices.exists({ index })
 
-
-async function putMapping(client, index) {
-  // make sure the index doesn't exist
-  const exist = await client.indices.exists({ index })
-  if (!exist) {
-    console.log(`Creating index: ${index}`)
-    return client.indices.create({
+  if (!indexExists) {
+    const payload = {
       index,
       body: {
         mappings: {
           doc: {
             /*'_all': {
-              enabled: true
+                enabled: true
             },*/
+            dynamic_templates: dynamicTemplates,
             properties: {
-              datetime: { type: 'date' },
-              'eo:cloud_cover': { type: 'integer' },
-              'eo:gsd': { type: 'float' },
-              'eo:off_nadir': { type: 'float' },
-              'eo:azimuth': { type: 'float' },
-              'eo:sun_azimuth': { type: 'float' },
-              'eo:sun_elevation': { type: 'float' },
+              'id': { type: 'keyword' },
+              'properties': props,
               geometry: {
                 type: 'geo_shape',
                 tree: 'quadtree',
@@ -100,129 +129,243 @@ async function putMapping(client, index) {
           }
         }
       }
-    }).catch((err) => {
-      console.log('Error creating index, already created: ', err)
-    })
-  }
-
-  return Promise.resolve()
-}
-
-
-async function reindex(client, source, dest) {
-  return client.reindex({
-    body: {
-      source: {
-        index: source
-      },
-      dest: {
-        index: dest
-      }
     }
-  })
+    try {
+      await client.indices.create(payload)
+      logger.info(`Created index: ${JSON.stringify(payload)}`)
+      ready = 0
+    } catch (error) {
+      const debugMessage = `Error creating index, already created: ${error}`
+      logger.debug(debugMessage)
+    }
+  }
+  return ready
 }
 
+// Given an input stream and a transform, write records to an elasticsearch instance
+async function _stream() {
+  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
+    let index = ''
+    if (data && data.hasOwnProperty('extent')) {
+      index = 'collections'
+    } else if (data && data.hasOwnProperty('geometry')) {
+      index = 'items'
+    } else {
+      next()
+      return
+    }
+    // remove any hierarchy links in a non-mutating way
+    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
+    const links = data.links.filter((link) => hlinks.includes(link))
+    const dataNoLinks = Object.assign({}, data, { links })
 
-async function deleteIndex(client, index) {
-  return client.indices.delete({ index })
-}
-
-
-function streamToEs(stream, transform, client, index) {
-  // Given an input stream and a transform, write records to an elasticsearch instance
-
-  let nRecords = 0
-  let nTransformed = 0
-
-  const toEs = through2({ objectMode: true, consume: true }, function (data, encoding, next) {
+    // create ES record
     const record = {
       index,
       type: 'doc',
-      id: data.id,
+      id: dataNoLinks.id,
       action: 'update',
       _retry_on_conflict: 3,
       body: {
-        doc: data,
+        doc: dataNoLinks,
         doc_as_upsert: true
       }
     }
-    this.push(record)
-    next()
+    next(null, record)
   })
-
-  const esStream = new ElasticsearchWritableStream(client, {
-    highWaterMark: 100,
-    flushTimeout: 1000
-  })
-
-  return new Promise((resolve, reject) => {
-    pump(stream, transform, toEs, esStream, (err) => {
-      if (err) {
-        console.log('error:', err)
-        reject(nTransformed)
-      }
-      else {
-        console.log(`Finished: ${nRecords} csv records, ${nTransformed} transformed, `)
-        resolve(nTransformed)
-      }
+  let esStreams
+  try {
+    const client = await esClient()
+    const esStream = new ElasticsearchWritableStream({ client: client }, {
+      objectMode: true,
+      highWaterMark: process.env.ES_BATCH_SIZE || 500
     })
-
-    // count records
-    stream.on('data', () => {
-      nRecords += 1
-    })
-    toEs.on('data', () => {
-      nTransformed += 1
-    })
-  })
+    esStreams = { toEs, esStream }
+  } catch (error) {
+    logger.error(error)
+  }
+  return esStreams
 }
 
-
-async function saveRecords(client, records, index, idfield, callback) {
-  const body = []
-
-  records.forEach((r) => {
-    body.push({
-      update: {
-        _index: index, _type: 'doc', _id: r[idfield], _retry_on_conflict: 3
+function buildRangeQuery(property, operators, operatorsObject) {
+  const gt = 'gt'
+  const lt = 'lt'
+  const gte = 'gte'
+  const lte = 'lte'
+  const comparisons = [gt, lt, gte, lte]
+  let rangeQuery
+  if (operators.includes(gt) || operators.includes(lt) ||
+         operators.includes(gte) || operators.includes(lte)) {
+    const propertyKey = `properties.${property}`
+    rangeQuery = {
+      range: {
+        [propertyKey]: {
+        }
       }
-    })
-    body.push({ doc: r, doc_as_upsert: true })
-  })
-
-  let updated = 0
-  let errors = 0
-
-  return client.bulk({ body }, (err, resp) => {
-    if (err) {
-      console.log(err)
     }
-    else {
-      if (resp.errors) {
-        resp.items.forEach((r) => {
-          if (r.update.status === 400) {
-            console.log(r.update.error.reason)
-            errors += 1
-          }
-          else {
-            updated += 1
-          }
+    // All operators for a property go in a single range query.
+    comparisons.forEach((comparison) => {
+      if (operators.includes(comparison)) {
+        const exisiting = rangeQuery.range[propertyKey]
+        rangeQuery.range[propertyKey] = Object.assign({}, exisiting, {
+          [comparison]: operatorsObject[comparison]
         })
       }
-      else {
-        updated = resp.items.length
-      }
-      //added = added + resp.items.length
-      callback(null, updated, errors)
-    }
-  })
+    })
+  }
+  return rangeQuery
 }
 
+function buildDatetimeQuery(parameters) {
+  let dateQuery
+  const { datetime } = parameters
+  if (datetime) {
+    const dataRange = datetime.split('/')
+    if (dataRange.length === 2) {
+      dateQuery = {
+        range: {
+          'properties.datetime': {
+            gt: dataRange[0],
+            lt: dataRange[1]
+          }
+        }
+      }
+    } else {
+      dateQuery = {
+        term: {
+          'properties.datetime': datetime
+        }
+      }
+    }
+  }
+  return dateQuery
+}
 
-module.exports.client = Client
-module.exports.reindex = reindex
-module.exports.listIndices = listIndices
-module.exports.putMapping = putMapping
-module.exports.deleteIndex = deleteIndex
-module.exports.streamToEs = streamToEs
-module.exports.saveRecords = saveRecords
+function buildQuery(parameters) {
+  const eq = 'eq'
+  const { query, parentCollections, intersects } = parameters
+  let must = []
+  if (query) {
+    must = Object.keys(query).reduce((accumulator, property) => {
+      const operatorsObject = query[property]
+      const operators = Object.keys(operatorsObject)
+      if (operators.includes(eq)) {
+        const termQuery = {
+          term: {
+            [`properties.${property}`]: operatorsObject.eq
+          }
+        }
+        accumulator.push(termQuery)
+      }
+      const rangeQuery =
+        buildRangeQuery(property, operators, operatorsObject)
+      if (rangeQuery) {
+        accumulator.push(rangeQuery)
+      }
+      return accumulator
+    }, must)
+  }
+  if (intersects) {
+    const { geometry } = intersects
+    must.push({
+      geo_shape: {
+        geometry: { shape: geometry }
+      }
+    })
+  }
+
+  const datetimeQuery = buildDatetimeQuery(parameters)
+  if (datetimeQuery) {
+    must.push(datetimeQuery)
+  }
+
+  let filter
+  if (parentCollections && parentCollections.length !== 0) {
+    filter = {
+      bool: {
+        should: [
+          { terms: { 'properties.collection': parentCollections } },
+          { bool: { must } }
+        ]
+      }
+    }
+  } else {
+    filter = { bool: { must } }
+  }
+  const queryBody = {
+    constant_score: { filter }
+  }
+  return { query: queryBody }
+}
+
+function buildIdQuery(id) {
+  return {
+    query: {
+      constant_score: {
+        filter: {
+          term: {
+            id
+          }
+        }
+      }
+    }
+  }
+}
+
+function buildSort(parameters) {
+  const { sort } = parameters
+  let sorting
+  if (sort && sort.length > 0) {
+    sorting = sort.map((sortRule) => {
+      const { field, direction } = sortRule
+      const propertyKey = `properties.${field}`
+      return {
+        [propertyKey]: {
+          order: direction
+        }
+      }
+    })
+  } else {
+    // Default item sorting
+    sorting = [
+      { 'properties.datetime': { order: 'desc' } }
+    ]
+  }
+  return sorting
+}
+
+async function search(parameters, index = '*', page = 1, limit = 10) {
+  let body
+  if (parameters.id) {
+    const { id } = parameters
+    body = buildIdQuery(id)
+  } else {
+    body = buildQuery(parameters)
+  }
+  const sort = buildSort(parameters)
+  body.sort = sort
+  const searchParams = {
+    index,
+    body,
+    size: limit,
+    from: (page - 1) * limit
+  }
+
+  const client = await esClient()
+  const resultBody = await client.search(searchParams)
+  const results = resultBody.hits.hits.map((r) => (r._source))
+  const response = {
+    results,
+    meta: {
+      page,
+      limit,
+      found: resultBody.hits.total,
+      returned: results.length
+    }
+  }
+  return response
+}
+
+module.exports.prepare = prepare
+module.exports.stream = _stream
+module.exports.search = search
