@@ -81,7 +81,8 @@ jobs:
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             VERSION=$(jq --raw-output .version lerna.json)
             docker tag satutils/sat-api:latest satutils/sat-api:${VERSION}
-            docker push satutils/sat-api:latest satutils/sat-api:${VERSION}
+            docker push satutils/sat-api:latest 
+            docker push satutils/sat-api:${VERSION}
 
   docker_deploy_develop:
     machine:
