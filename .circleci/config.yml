@@ -39,7 +39,7 @@ jobs:
           name: Build Documentation
           command: |
             if [[  "$CIRCLE_BRANCH" == 'master' ]]; then
-              yarn docs-build
+              yarn build-api-docs
             fi
       - run:
           name: Deploy to NPM
