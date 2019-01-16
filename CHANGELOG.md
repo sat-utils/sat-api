@@ -9,20 +9,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [v0.2.0] - 2018-11-02
 
-### Added
-- links now all connect to each other between STAC catalog, Datasets (?), and Items. STAC points to all Datasets, each Dataset points to items. items point to STAC catalog as 'root' and Dataset as 'parent'.
-
 ### Changed
-- implemented the changes in [STAC 0.6.0](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md)
-- All functionality and references relating to Elasticsearch have been moved into the es.js module, and is now abstracted enough so that it could be replaced by another backend like PostGIS.
-- All functionality relating to handling a STAC API path has been moved into a the api.js module. This greatly simplifies the API lambda handler function, which now just determines the requested endpoint from the headers, gets the payload from POST or GET, and passes it all on, along with query parameters, to the api module.
-- refactored Elasticsearch queries and ES mappings to search and share fields with the properties nested type. Now, only fields under a Collections properties are inherited by the Item.
-- Elasticsearch query parameters updated, should be faster and more accurate as all unique text fields (ID, instrument, etc.) are property mapped as keywords and exact matches are used as term queries rather than previous behavior or scoring based on text similarity.
+- Implemented the changes in [STAC 0.6.0](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md)
+- All functionality relating to handling a STAC API path and query parameters has been moved into a the api.js module. The simplified lambda handler now passes query parameters or POST body through to the `api.js` module.
+- API now only supports STAC compliant query parameters and filters.
+- All functionality and references relating to Elasticsearch have been migrated into the es.js module to faciltate separation of concerns and abstract data storage.
+- Refactored Elasticsearch queries and ES mappings to search and share fields with the properties nested type. Now, only fields under a Collections properties are inherited by the Item.
+- Elasticsearch queries have been updated to use non-scoring filters to improve performance and return more intuitive results.
+- Elasticsearch writing has been modified to use bulk updates whenever possible to improve throughput.
+- Ingest has been updated to use concurrent file requests (to a user defined limit) to improve throughput.
+- Ingest now supports a Fargate mode to run as a Fargate task rather than as a Lambda.
+- API documentation generation now uses OpenAPI definitions processed by widdershins and shins.
+- Unit and integration test coverage for all  modules.
 
 ### Removed
-- manager module: it wasn't doing much (delete an elasticsearch index and reindex elasticsearch) and was not necessary given the much better elasticsearch admin tools like Kibana, which do that and more.
-- Landsat and Sentinel lambda functions: Data is ingested via the ingest Lambda from SNS messages, or using the ingest catalog script.
-
+- Manager module: Removed in favor of Kibana for Elasticsearch administration and management tasks.
+- Landsat and Sentinel lambda functions: Data is now ingested via the ingest Lambda.  It can be invoked with individual SNS messages or run in batch mode to ingest larger catalogs.
+- Deployment files: Deployment related templates and code have been migrated to [https://github.com/sat-utils/sat-api-deployment](https://github.com/sat-utils/sat-api-deployment)
 
 ## [v0.1.0] - 2018-09-18
 
