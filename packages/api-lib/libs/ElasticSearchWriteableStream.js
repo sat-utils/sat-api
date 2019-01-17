@@ -56,8 +56,13 @@ class ElasticSearchWritableStream extends stream.Writable {
   async _writev(records, next) {
     const body = this.transformRecords(records)
     try {
-      await this.client.bulk({ body })
-      logger.debug(`Wrote batch of documents size ${body.length / 2}`)
+      const result = await this.client.bulk({ body })
+      const { errors, items } = result
+      if (errors) {
+        logger.error(items)
+      } else {
+        logger.debug(`Wrote batch of documents size ${body.length / 2}`)
+      }
       next()
     } catch (err) {
       next(err)

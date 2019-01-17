@@ -138,6 +138,10 @@
         {
             "href": "LC80100102015082LGN00.json",
             "rel": "item"
+        },
+        {
+            "href": "badGeometryItem.json",
+            "rel": "item"
         }
     ],
     "properties": {

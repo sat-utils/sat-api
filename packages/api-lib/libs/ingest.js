@@ -92,16 +92,10 @@ async function visit(url, stream, recursive, collectionsOnly) {
   while (stack.length) {
     const node = stack.pop()
     const isCollection = node.hasOwnProperty('extent')
-    const written = stream.write(node)
+    stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
-      if (written) {
-        // eslint-disable-next-line
-        await visitChildren(node, stack, visited, basePath)
-      } else {
-        stream.once('drain', async () => {
-          await visitChildren(node, stack, visited, basePath)
-        })
-      }
+      // eslint-disable-next-line
+      await visitChildren(node, stack, visited, basePath)
     }
   }
   stream.push(null)
