@@ -88,7 +88,7 @@ test('ingest logs request error and continues', async (t) => {
   await proxyIngest.ingest('./fixtures/stac/catalog.json', backend)
   t.is(error.firstCall.args[0].message, errorMessage,
     'Logs error via Winston transport')
-  t.is(esStream.queue.length, 5, 'Skips errored request and continues')
+  t.is(esStream.queue.length, 6, 'Skips errored request and continues')
 })
 
 test('ingestItem passes item through transform stream', async (t) => {

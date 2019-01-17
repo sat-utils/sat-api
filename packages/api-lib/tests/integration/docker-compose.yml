@@ -1,7 +1,7 @@
 version: '2'
 services:
   local:
-    image: localstack/localstack:0.8.6
+    image: localstack/localstack:latest
     environment:
       SERVICES: 'elasticsearch'
     ports:
