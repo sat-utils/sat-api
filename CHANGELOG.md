@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [v0.2.1] - 2019-01-17
 
 ### Fixed
-- Error handling of Items failing to get written to Elasticsearch. Now will continue traversing catalog.
+- Error handling of Items failing to get written to Elasticsearch (such as when unable to parse geometry). Now will continue traversing catalog.
 
 
 ## [v0.2.0] - 2019-01-16
