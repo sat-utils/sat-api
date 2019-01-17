@@ -6,8 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.2.1] - 2019-01-17
 
-## [v0.2.0] - 2018-11-02
+### Fixed
+- Error handling of Items failing to get written to Elasticsearch (such as when unable to parse geometry). Now will continue traversing catalog.
+
+
+## [v0.2.0] - 2019-01-16
 
 ### Changed
 - Implemented the changes in [STAC 0.6.0](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md)
@@ -64,6 +69,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor and improve splitting
 
 [Unreleased]: https://github.com/sat-utils/sat-api/compare/master...develop
+[v0.2.1]: https://github.com/sat-utils/sat-api/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/sat-utils/sat-api/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/sat-utils/sat-api/compare/v0.0.2...v0.1.0
 [v0.0.2]: https://github.com/sat-utils/sat-api/compare/legacy-v2.0.0...v0.0.2
