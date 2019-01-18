@@ -24,6 +24,9 @@ async function fetchChildren(node, basePath) {
   const linkPromises = links.map((link) => {
     let urlPath
     let returnPromise
+    if (!self || !self.href || !link.href) {
+      return Promise.reject(`${node.id} has invalid links`)
+    }
     if (path.isAbsolute(link.href)) {
       urlPath = link.href
     } else {
@@ -41,7 +44,12 @@ async function fetchChildren(node, basePath) {
     }
     return returnPromise
   })
-  const responses = await Promise.all(linkPromises.map((p) => p.catch((e) => e)))
+  let responses
+  try {
+    responses = await Promise.all(linkPromises.map((p) => p.catch((e) => e)))
+  } catch (error) {
+    logger.error(error)
+  }
   const validResponses =
     responses.filter((response) => !(response instanceof Error))
   const failedResponses =
@@ -54,20 +62,30 @@ async function fetchChildren(node, basePath) {
 }
 
 function getSelfRef(node) {
-  return node.links[0].href
+  let ref
+  const self = node.links.find((link) => (link.rel === 'self'))
+  if (self && self.href) {
+    ref = self.href
+  }
+  return ref
 }
 
 // Mutates stack and visited
 async function visitChildren(node, stack, visited, basePath) {
-  // eslint-disable-next-line
-  const children = await fetchChildren(node, basePath)
-  // eslint-disable-next-line
-  for (const child of children) {
-    if (!visited[child.id]) {
-      // eslint-disable-next-line
-      const childId = getSelfRef(child)
-      visited[childId] = true
-      stack.push(child)
+  let children
+  try {
+    children = await fetchChildren(node, basePath)
+  } catch (error) {
+    logger.error(error)
+  }
+  if (children) {
+    // eslint-disable-next-line
+    for (const child of children) {
+      if (!visited[child.id]) {
+        const childId = getSelfRef(child)
+        visited[childId] = true
+        stack.push(child)
+      }
     }
   }
 }
@@ -92,10 +110,18 @@ async function visit(url, stream, recursive, collectionsOnly) {
   while (stack.length) {
     const node = stack.pop()
     const isCollection = node.hasOwnProperty('extent')
+    const isItem = node.hasOwnProperty('geometry')
+    if (!(isCollection || isItem)) {
+      logger.debug(`catalog ${node.id}`)
+    }
     stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
-      // eslint-disable-next-line
-      await visitChildren(node, stack, visited, basePath)
+      try {
+        // eslint-disable-next-line
+        await visitChildren(node, stack, visited, basePath)
+      } catch (error) {
+        logger.error(error)
+      }
     }
   }
   stream.push(null)
