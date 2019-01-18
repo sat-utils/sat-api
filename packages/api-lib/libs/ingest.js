@@ -81,10 +81,14 @@ async function visitChildren(node, stack, visited, basePath) {
   if (children) {
     // eslint-disable-next-line
     for (const child of children) {
-      if (!visited[child.id]) {
-        const childId = getSelfRef(child)
-        visited[childId] = true
-        stack.push(child)
+      const key = getSelfRef(child)
+      if (key) {
+        if (!visited[key]) {
+          visited[key] = true
+          stack.push(child)
+        }
+      } else {
+        logger.error(`${node.id} has invalid self link`)
       }
     }
   }
@@ -112,7 +116,8 @@ async function visit(url, stream, recursive, collectionsOnly) {
     const isCollection = node.hasOwnProperty('extent')
     const isItem = node.hasOwnProperty('geometry')
     if (!(isCollection || isItem)) {
-      logger.debug(`catalog ${node.id}`)
+      const selfRef = getSelfRef(node)
+      logger.debug(`catalog ${selfRef}`)
     }
     stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
