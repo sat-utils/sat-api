@@ -25,7 +25,7 @@ async function fetchChildren(node, basePath) {
     let urlPath
     let returnPromise
     if (!self || !self.href || !link.href) {
-      return Promise.reject(`${node.id} has invalid links`)
+      return Promise.reject(new Error(`${node.id} has invalid links`))
     }
     if (path.isAbsolute(link.href)) {
       urlPath = link.href
