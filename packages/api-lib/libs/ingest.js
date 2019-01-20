@@ -11,7 +11,7 @@ const uuid = require('uuid/v4')
 const logger = require('./logger')
 
 const limiter = new Bottleneck({
-  maxConcurrent: 1000
+  maxConcurrent: 500
 })
 
 const limitedRequest = limiter.wrap(request)
@@ -55,7 +55,7 @@ async function fetchChildren(node, basePath) {
   const failedResponses =
     responses.filter((response) => (response instanceof Error))
   failedResponses.forEach((failure) => {
-    logger.error(failure)
+    logger.error(failure.message)
   })
   const children = validResponses.map((response) => (JSON.parse(response)))
   return children
