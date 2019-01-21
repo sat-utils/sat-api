@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/api",
-  "version": "0.2.2-b2",
+  "version": "0.2.2-b3",
   "description": "The api lambda function for sat-api",
   "main": "index.js",
   "repository": {
@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.2.2-b2"
+    "@sat-utils/api-lib": "^0.2.2-b3"
   },
   "devDependencies": {
     "ava": "^0.25.0",
