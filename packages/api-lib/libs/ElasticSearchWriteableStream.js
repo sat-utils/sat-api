@@ -48,7 +48,8 @@ class ElasticSearchWritableStream extends stream.Writable {
       logger.debug(`Wrote document ${id}`)
       next()
     } catch (err) {
-      next(err)
+      logger.error(err)
+      next()
     }
   }
 
@@ -65,7 +66,8 @@ class ElasticSearchWritableStream extends stream.Writable {
       }
       next()
     } catch (err) {
-      next(err)
+      logger.error(err)
+      next()
     }
   }
 }
