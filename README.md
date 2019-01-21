@@ -11,7 +11,7 @@ The STAC version supported by a given version of sat-api is shown in the table b
 | sat-api | STAC  |
 | -------- | ----  |
 | 0.1.0    | 0.5.0 |
-| 0.2.0    | 0.6.0 |
+| 0.2.x    | 0.6.0 |
 
 
 ## Documentation
