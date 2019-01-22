@@ -17,14 +17,27 @@ const limiter = new Bottleneck({
 const limitedRequest = limiter.wrap(request)
 const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 
-async function fetchChildren(node, basePath) {
+function getSelfRef(node) {
+  let ref
   const self = node.links.find((link) => (link.rel === 'self'))
+  if (self && self.href) {
+    ref = self.href
+  }
+  return ref
+}
+
+function getChildLinks(node) {
   const links =
     node.links.filter((link) => (link.rel === 'child' || link.rel === 'item'))
+  return links
+}
+
+async function fetchChildren(node, links, basePath) {
+  const selfHref = getSelfRef(node)
   const linkPromises = links.map((link) => {
     let urlPath
     let returnPromise
-    if (!self || !self.href || !link.href) {
+    if (!selfHref || !link.href) {
       return Promise.reject(new Error(`${node.id} has invalid links`))
     }
     if (path.isAbsolute(link.href)) {
@@ -34,7 +47,7 @@ async function fetchChildren(node, basePath) {
       if (basePath) {
         urlPath = `${path.dirname(basePath)}/${link.href}`
       } else {
-        urlPath = `${path.dirname(self.href)}/${link.href}`
+        urlPath = `${path.dirname(selfHref)}/${link.href}`
       }
     }
     if (isUrl(urlPath)) {
@@ -61,20 +74,12 @@ async function fetchChildren(node, basePath) {
   return children
 }
 
-function getSelfRef(node) {
-  let ref
-  const self = node.links.find((link) => (link.rel === 'self'))
-  if (self && self.href) {
-    ref = self.href
-  }
-  return ref
-}
-
 // Mutates stack and visited
 async function visitChildren(node, stack, visited, basePath) {
   let children
+  const nodeLinks = getChildLinks(node)
   try {
-    children = await fetchChildren(node, basePath)
+    children = await fetchChildren(node, nodeLinks, basePath)
   } catch (error) {
     logger.error(error)
   }
@@ -82,10 +87,13 @@ async function visitChildren(node, stack, visited, basePath) {
     // eslint-disable-next-line
     for (const child of children) {
       const key = getSelfRef(child)
+      const childLinks = getChildLinks(child)
       if (key) {
         if (!visited[key]) {
-          visited[key] = true
           stack.push(child)
+          if (childLinks.length) {
+            visited[key] = true
+          }
         }
       } else {
         logger.error(`${node.id} has invalid self link`)
