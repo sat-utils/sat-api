@@ -11,19 +11,35 @@ const uuid = require('uuid/v4')
 const logger = require('./logger')
 
 const limiter = new Bottleneck({
-  maxConcurrent: 1000
+  maxConcurrent: 500
 })
 
 const limitedRequest = limiter.wrap(request)
 const limitedRead = limiter.wrap(util.promisify(fs.readFile))
 
-async function fetchChildren(node, basePath) {
+function getSelfRef(node) {
+  let ref
   const self = node.links.find((link) => (link.rel === 'self'))
+  if (self && self.href) {
+    ref = self.href
+  }
+  return ref
+}
+
+function getChildLinks(node) {
   const links =
     node.links.filter((link) => (link.rel === 'child' || link.rel === 'item'))
+  return links
+}
+
+async function fetchChildren(node, links, basePath) {
+  const selfHref = getSelfRef(node)
   const linkPromises = links.map((link) => {
     let urlPath
     let returnPromise
+    if (!selfHref || !link.href) {
+      return Promise.reject(new Error(`${node.id} has invalid links`))
+    }
     if (path.isAbsolute(link.href)) {
       urlPath = link.href
     } else {
@@ -31,7 +47,7 @@ async function fetchChildren(node, basePath) {
       if (basePath) {
         urlPath = `${path.dirname(basePath)}/${link.href}`
       } else {
-        urlPath = `${path.dirname(self.href)}/${link.href}`
+        urlPath = `${path.dirname(selfHref)}/${link.href}`
       }
     }
     if (isUrl(urlPath)) {
@@ -41,33 +57,47 @@ async function fetchChildren(node, basePath) {
     }
     return returnPromise
   })
-  const responses = await Promise.all(linkPromises.map((p) => p.catch((e) => e)))
+  let responses
+  try {
+    responses = await Promise.all(linkPromises.map((p) => p.catch((e) => e)))
+  } catch (error) {
+    logger.error(error)
+  }
   const validResponses =
     responses.filter((response) => !(response instanceof Error))
   const failedResponses =
     responses.filter((response) => (response instanceof Error))
   failedResponses.forEach((failure) => {
-    logger.error(failure)
+    logger.error(failure.message)
   })
   const children = validResponses.map((response) => (JSON.parse(response)))
   return children
 }
 
-function getSelfRef(node) {
-  return node.links[0].href
-}
-
 // Mutates stack and visited
 async function visitChildren(node, stack, visited, basePath) {
-  // eslint-disable-next-line
-  const children = await fetchChildren(node, basePath)
-  // eslint-disable-next-line
-  for (const child of children) {
-    if (!visited[child.id]) {
-      // eslint-disable-next-line
-      const childId = getSelfRef(child)
-      visited[childId] = true
-      stack.push(child)
+  let children
+  const nodeLinks = getChildLinks(node)
+  try {
+    children = await fetchChildren(node, nodeLinks, basePath)
+  } catch (error) {
+    logger.error(error)
+  }
+  if (children) {
+    // eslint-disable-next-line
+    for (const child of children) {
+      const key = getSelfRef(child)
+      const childLinks = getChildLinks(child)
+      if (key) {
+        if (!visited[key]) {
+          stack.push(child)
+          if (childLinks.length) {
+            visited[key] = true
+          }
+        }
+      } else {
+        logger.error(`${node.id} has invalid self link`)
+      }
     }
   }
 }
@@ -92,10 +122,19 @@ async function visit(url, stream, recursive, collectionsOnly) {
   while (stack.length) {
     const node = stack.pop()
     const isCollection = node.hasOwnProperty('extent')
+    const isItem = node.hasOwnProperty('geometry')
+    if (!(isCollection || isItem)) {
+      const selfRef = getSelfRef(node)
+      logger.debug(`catalog ${selfRef}`)
+    }
     stream.write(node)
     if (recursive && !(isCollection && collectionsOnly)) {
-      // eslint-disable-next-line
-      await visitChildren(node, stack, visited, basePath)
+      try {
+        // eslint-disable-next-line
+        await visitChildren(node, stack, visited, basePath)
+      } catch (error) {
+        logger.error(error)
+      }
     }
   }
   stream.push(null)

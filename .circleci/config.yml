@@ -97,7 +97,10 @@ jobs:
           name: Deploy Docker image
           command: |
             docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            VERSION=$(jq --raw-output .version lerna.json)
+            docker tag satutils/sat-api:develop satutils/sat-api:${VERSION}
             docker push satutils/sat-api:develop
+            docker push satutils/sat-api:${VERSION}
 
 
 workflows:

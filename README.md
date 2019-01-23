@@ -11,7 +11,7 @@ The STAC version supported by a given version of sat-api is shown in the table b
 | sat-api | STAC  |
 | -------- | ----  |
 | 0.1.0    | 0.5.0 |
-| 0.2.0    | 0.6.0 |
+| 0.2.x    | 0.6.0 |
 
 
 ## Documentation
@@ -47,7 +47,7 @@ The latest version released is on the [master branch](https://github.com/sat-uti
     # To build API docs from the api spec
     $ yarn build-api-docs
 
-### Publishing new package versions
+### Creating a release
 
 To create a new version for npm:
 
@@ -58,6 +58,7 @@ To create a new version for npm:
 - Tag your branch with the same version number
 - Make a PR
 - When the PR is merged to master, the npm packages are automatically deployed to npm
+- In GitHub create a release with the version (prefixed with 'v') and paste in the CHANGELOG section. This will create a GitHub release and a tag.
 
 
 ## About
