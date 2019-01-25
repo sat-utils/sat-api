@@ -151,3 +151,15 @@ test('stac/search sort', async (t) => {
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
+
+test('stac/search collection level property', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'eo:platform': {
+        eq: 'landsat-8'
+      }
+    }
+  }, backend, endpoint)
+  console.log(response)
+  t.truthy(true)
+})

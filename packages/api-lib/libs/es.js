@@ -8,7 +8,7 @@ const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = require('./logger')
 
 let _esClient
-
+// Query constants
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
@@ -241,14 +241,44 @@ function buildDatetimeQuery(parameters) {
   return dateQuery
 }
 
+// We need to filter collections using any combination of fields they have
+function filterCollections(parameters, collections) {
+  const { query } = parameters
+  const queryProperties = Object.keys(query)
+  const filteredCollections = collections.filter((collection) => {
+    const { properties } = collection
+    const collectionPropList = Object.keys(properties)
+    const commonProps = collectionPropList
+      .filter((prop) => queryProperties.includes(prop))
+    console.log(commonProps)
+    const eq = 'eq'
+    const checks = commonProps.map((property) => {
+      let valid = false
+      const collectionProperty = properties[property]
+      const operatorsObject = query[property]
+      const operators = Object.keys(operatorsObject)
+      if (operators.includes(eq)) {
+        console.log(collectionProperty, operatorsObject.eq)
+        valid = collectionProperty === operatorsObject.eq
+      }
+      return valid
+    })
+    const allValid = !checks.includes(false)
+    return allValid
+  })
+  console.log(filteredCollections)
+  return filteredCollections
+}
+
 function buildQuery(parameters) {
-  const eq = 'eq'
   const { query, parentCollections, intersects } = parameters
   let must = []
+  const eq = 'eq'
   if (query) {
     must = Object.keys(query).reduce((accumulator, property) => {
       const operatorsObject = query[property]
       const operators = Object.keys(operatorsObject)
+
       if (operators.includes(eq)) {
         const termQuery = {
           term: {
@@ -369,3 +399,4 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
 module.exports.prepare = prepare
 module.exports.stream = _stream
 module.exports.search = search
+module.exports.filterCollections = filterCollections

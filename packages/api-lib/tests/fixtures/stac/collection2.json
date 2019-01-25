@@ -217,7 +217,7 @@
                 "id": "B11"
             }
         ],
-        "eo:gsd": 15,
+        "eo:gsd": 14,
         "eo:instrument": "OLI_TIRS",
         "eo:off_nadir": 0,
         "eo:platform": "landsat-8"
