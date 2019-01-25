@@ -8,7 +8,6 @@ const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
 const logger = require('./logger')
 
 let _esClient
-
 /*
 This module is used for connecting to an Elasticsearch instance, writing records,
 searching records, and managing the indexes. It looks for the ES_HOST environment
@@ -77,7 +76,6 @@ async function esClient() {
 // Create STAC mappings
 async function prepare(index) {
   // TODO - different mappings for collection and item
-  let ready
   const props = {
     'type': 'object',
     properties: {
@@ -106,7 +104,6 @@ async function prepare(index) {
   }]
   const client = await esClient()
   const indexExists = await client.indices.exists({ index })
-
   if (!indexExists) {
     const payload = {
       index,
@@ -133,49 +130,71 @@ async function prepare(index) {
     try {
       await client.indices.create(payload)
       logger.info(`Created index: ${JSON.stringify(payload)}`)
-      ready = 0
     } catch (error) {
       const debugMessage = `Error creating index, already created: ${error}`
       logger.debug(debugMessage)
     }
   }
-  return ready
 }
 
 // Given an input stream and a transform, write records to an elasticsearch instance
 async function _stream() {
-  const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
-    let index = ''
-    if (data && data.hasOwnProperty('extent')) {
-      index = 'collections'
-    } else if (data && data.hasOwnProperty('geometry')) {
-      index = 'items'
-    } else {
-      next()
-      return
-    }
-    // remove any hierarchy links in a non-mutating way
-    const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
-    const links = data.links.filter((link) => hlinks.includes(link))
-    const dataNoLinks = Object.assign({}, data, { links })
-
-    // create ES record
-    const record = {
-      index,
-      type: 'doc',
-      id: dataNoLinks.id,
-      action: 'update',
-      _retry_on_conflict: 3,
-      body: {
-        doc: dataNoLinks,
-        doc_as_upsert: true
-      }
-    }
-    next(null, record)
-  })
   let esStreams
   try {
+    let collections = []
     const client = await esClient()
+    const indexExists = await client.indices.exists({ index: 'collections' })
+    if (indexExists) {
+      const body = { query: { match_all: {} } }
+      const searchParams = {
+        index: 'collections',
+        body
+      }
+      const resultBody = await client.search(searchParams)
+      collections = resultBody.hits.hits.map((r) => (r._source))
+    }
+
+    const toEs = through2.obj({ objectMode: true }, (data, encoding, next) => {
+      let index = ''
+      if (data && data.hasOwnProperty('extent')) {
+        index = 'collections'
+      } else if (data && data.hasOwnProperty('geometry')) {
+        index = 'items'
+      } else {
+        next()
+        return
+      }
+      // remove any hierarchy links in a non-mutating way
+      const hlinks = ['self', 'root', 'parent', 'child', 'collection', 'item']
+      const links = data.links.filter((link) => hlinks.includes(link))
+      let esDataObject = Object.assign({}, data, { links })
+      if (index === 'items') {
+        const collectionId = data.properties.collection
+        const itemCollection =
+          collections.find((collection) => (collectionId === collection.id))
+        if (itemCollection) {
+          const flatProperties =
+            Object.assign({}, itemCollection.properties, data.properties)
+          esDataObject = Object.assign({}, esDataObject, { properties: flatProperties })
+        } else {
+          logger.error(`${data.id} has no collection`)
+        }
+      }
+
+      // create ES record
+      const record = {
+        index,
+        type: 'doc',
+        id: esDataObject.id,
+        action: 'update',
+        _retry_on_conflict: 3,
+        body: {
+          doc: esDataObject,
+          doc_as_upsert: true
+        }
+      }
+      next(null, record)
+    })
     const esStream = new ElasticsearchWritableStream({ client: client }, {
       objectMode: true,
       highWaterMark: process.env.ES_BATCH_SIZE || 500
