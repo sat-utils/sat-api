@@ -244,29 +244,46 @@ function buildDatetimeQuery(parameters) {
 // We need to filter collections using any combination of fields they have
 function filterCollections(parameters, collections) {
   const { query } = parameters
-  const queryProperties = Object.keys(query)
+  const queryPropKeys = Object.keys(query)
   const filteredCollections = collections.filter((collection) => {
     const { properties } = collection
-    const collectionPropList = Object.keys(properties)
-    const commonProps = collectionPropList
-      .filter((prop) => queryProperties.includes(prop))
-    console.log(commonProps)
+    const collectionPropKeys = Object.keys(properties)
+    const commonPropKeys = collectionPropKeys
+      .filter((prop) => queryPropKeys.includes(prop))
     const eq = 'eq'
-    const checks = commonProps.map((property) => {
-      let valid = false
+    const gt = 'gt'
+    const lt = 'lt'
+    const gte = 'gte'
+    const lte = 'lte'
+    const propertyChecks = commonPropKeys.map((property) => {
       const collectionProperty = properties[property]
       const operatorsObject = query[property]
       const operators = Object.keys(operatorsObject)
-      if (operators.includes(eq)) {
-        console.log(collectionProperty, operatorsObject.eq)
-        valid = collectionProperty === operatorsObject.eq
-      }
-      return valid
+      const operatorChecks = operators.map((operator) => {
+        let valid = false
+        if (operator === eq) {
+          valid = collectionProperty === operatorsObject[operator]
+        }
+        if (operator === gt) {
+          valid = collectionProperty > operatorsObject[operator]
+        }
+        if (operator === lt) {
+          valid = collectionProperty < operatorsObject[operator]
+        }
+        if (operator === gte) {
+          valid = collectionProperty >= operatorsObject[operator]
+        }
+        if (operator === lte) {
+          valid = collectionProperty <= operatorsObject[operator]
+        }
+        return valid
+      })
+      const allOperatorsValid = !operatorChecks.includes(false)
+      return allOperatorsValid
     })
-    const allValid = !checks.includes(false)
-    return allValid
+    const allPropertiesValid = !propertyChecks.includes(false)
+    return allPropertiesValid
   })
-  console.log(filteredCollections)
   return filteredCollections
 }
 
@@ -365,36 +382,68 @@ function buildSort(parameters) {
 }
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
-  let body
-  if (parameters.id) {
-    const { id } = parameters
-    body = buildIdQuery(id)
-  } else {
-    body = buildQuery(parameters)
-  }
-  const sort = buildSort(parameters)
-  body.sort = sort
-  const searchParams = {
-    index,
-    body,
-    size: limit,
-    from: (page - 1) * limit
-  }
-
   const client = await esClient()
-  const resultBody = await client.search(searchParams)
-  const results = resultBody.hits.hits.map((r) => (r._source))
-  const response = {
-    results,
-    meta: {
-      page,
-      limit,
-      found: resultBody.hits.total,
-      returned: results.length
+  let response
+  if (index === 'items') {
+    let body
+    const { id } = parameters
+    if (id) {
+      body = buildIdQuery(id)
+    } else {
+      body = buildQuery(parameters)
+    }
+    const sort = buildSort(parameters)
+    body.sort = sort
+    const searchParams = {
+      index,
+      body,
+      size: limit,
+      from: (page - 1) * limit
+    }
+    const resultBody = await client.search(searchParams)
+    const results = resultBody.hits.hits.map((r) => (r._source))
+    console.log(results)
+    response = {
+      results,
+      meta: {
+        page,
+        limit,
+        found: resultBody.hits.total,
+        returned: results.length
+      }
+    }
+  }
+  // We return all collections from ES and then filter them locally.
+  if (index === 'collections') {
+    const arbitraryLimit = 5000
+    const body = { query: { match_all: {} } }
+    const searchParams = {
+      index,
+      body
+    }
+    const resultBody = await client.search(searchParams)
+    const results = resultBody.hits.hits.map((r) => (r._source))
+    const { id, query } = parameters
+    let filteredResults
+    if (id) {
+      filteredResults = results.filter((result) => (result.id === id))
+    }
+    if (query) {
+      filteredResults = filterCollections(parameters, results)
+    }
+    response = {
+      results: filteredResults,
+      meta: {
+        page: 1,
+        limit: arbitraryLimit,
+        found: resultBody.hits.total,
+        returned: filteredResults.length
+      }
     }
   }
   return response
 }
+
 
 module.exports.prepare = prepare
 module.exports.stream = _stream
