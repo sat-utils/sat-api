@@ -262,9 +262,11 @@ function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
-  const { query, parentCollections, intersects } = parameters
+  const { query, intersects } = parameters
   let must = []
   if (query) {
+    // Using reduce rather than map as we don't currently support all
+    // stac query operators.
     must = Object.keys(query).reduce((accumulator, property) => {
       const operatorsObject = query[property]
       const operators = Object.keys(operatorsObject)
@@ -284,6 +286,7 @@ function buildQuery(parameters) {
       return accumulator
     }, must)
   }
+
   if (intersects) {
     const { geometry } = intersects
     must.push({
@@ -298,19 +301,7 @@ function buildQuery(parameters) {
     must.push(datetimeQuery)
   }
 
-  let filter
-  if (parentCollections && parentCollections.length !== 0) {
-    filter = {
-      bool: {
-        should: [
-          { terms: { 'properties.collection': parentCollections } },
-          { bool: { must } }
-        ]
-      }
-    }
-  } else {
-    filter = { bool: { must } }
-  }
+  const filter = { bool: { must } }
   const queryBody = {
     constant_score: { filter }
   }
