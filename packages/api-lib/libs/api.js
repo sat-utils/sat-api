@@ -38,7 +38,13 @@ const extractBbox = function (params) {
   let intersectsGeometry
   const { bbox } = params
   if (bbox) {
-    const boundingBox = extent(bbox)
+    let bboxArray
+    if (typeof bbox === 'string') {
+      bboxArray = JSON.parse(bbox)
+    } else {
+      bboxArray = bbox
+    }
+    const boundingBox = extent(bboxArray)
     const geojson = feature(boundingBox.polygon())
     intersectsGeometry = geojson
   }
