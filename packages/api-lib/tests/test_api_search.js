@@ -105,8 +105,9 @@ test('search /stac/search bbox parameter', async (t) => {
   const s = -10
   const e = 10
   const n = 10
+  const bbox = [w, s, e, n]
   const queryParams = {
-    bbox: [w, s, e, n],
+    bbox,
     page: 1,
     limit: 1
   }
@@ -128,6 +129,10 @@ test('search /stac/search bbox parameter', async (t) => {
   t.deepEqual(search.firstCall.args[0].intersects, expected,
     'Converts a [w,s,e,n] bbox to an intersects search parameter')
   search.resetHistory()
+  queryParams.bbox = `[${bbox.toString()}]`
+  await api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, expected,
+    'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
 })
 
 test('search /stac/search time parameter', async (t) => {
