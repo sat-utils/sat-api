@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.2.3] - 2019-01-29
+
 ### Fixed
 - Proper handling of bounding box passed as string
 
@@ -82,7 +84,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor and improve splitting
 
 [Unreleased]: https://github.com/sat-utils/sat-api/compare/master...develop
-[v0.2.2]: https://github.com/sat-utils/sat-api/compare/v0.2.0...v0.2.2
+[v0.2.3]: https://github.com/sat-utils/sat-api/compare/v0.2.2...v0.2.3
+[v0.2.2]: https://github.com/sat-utils/sat-api/compare/v0.2.1...v0.2.2
 [v0.2.1]: https://github.com/sat-utils/sat-api/compare/v0.2.0...v0.2.1
 [v0.2.0]: https://github.com/sat-utils/sat-api/compare/v0.1.0...v0.2.0
 [v0.1.0]: https://github.com/sat-utils/sat-api/compare/v0.0.2...v0.1.0
