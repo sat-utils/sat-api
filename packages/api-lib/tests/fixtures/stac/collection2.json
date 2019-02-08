@@ -220,7 +220,7 @@
         "eo:gsd": 15,
         "eo:instrument": "OLI_TIRS",
         "eo:off_nadir": 0,
-        "eo:platform": "landsat-8"
+        "eo:platform": "platform2"
     },
     "providers": [
         {

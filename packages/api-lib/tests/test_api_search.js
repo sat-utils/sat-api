@@ -3,6 +3,11 @@ const sinon = require('sinon')
 const proxquire = require('proxyquire')
 const api = require('../libs/api')
 const item = require('./fixtures/item.json')
+const itemLinks = require('./fixtures/itemLinks.json')
+
+function cloneMutatedItem() {
+  return Object.assign({}, item, { links: item.links.slice(0) })
+}
 
 test('search es error', async (t) => {
   const error = sinon.spy()
@@ -65,6 +70,36 @@ test('search /stac', async (t) => {
     'Returns STAC catalog with links to collections')
 })
 
+test('search /stac/search wraps results', async (t) => {
+  const limit = 10
+  const page = 1
+  const meta = {
+    limit,
+    page,
+    found: 1,
+    returned: 1
+  }
+  const clonedItem = cloneMutatedItem()
+  const results = [clonedItem]
+
+  const itemsResults = { meta, results }
+  const search = sinon.stub()
+  search.resolves(itemsResults)
+  const backend = { search }
+  const actual = await api.search('/stac/search', {}, backend, 'endpoint')
+  t.deepEqual(actual.features[0].links, itemLinks.links,
+    'Adds correct relative STAC links')
+
+  const expectedMeta = {
+    limit,
+    page,
+    found: 1,
+    returned: 1
+  }
+  t.deepEqual(actual.meta, expectedMeta, 'Adds correct response metadata fields')
+  t.is(actual.type, 'FeatureCollection', 'Wraps response as FeatureCollection')
+})
+
 test('search /stac/search query parameters', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
@@ -105,8 +140,9 @@ test('search /stac/search bbox parameter', async (t) => {
   const s = -10
   const e = 10
   const n = 10
+  const bbox = [w, s, e, n]
   const queryParams = {
-    bbox: [w, s, e, n],
+    bbox,
     page: 1,
     limit: 1
   }
@@ -128,6 +164,10 @@ test('search /stac/search bbox parameter', async (t) => {
   t.deepEqual(search.firstCall.args[0].intersects, expected,
     'Converts a [w,s,e,n] bbox to an intersects search parameter')
   search.resetHistory()
+  queryParams.bbox = `[${bbox.toString()}]`
+  await api.search('/stac/search', queryParams, backend, 'endpoint')
+  t.deepEqual(search.firstCall.args[0].intersects, expected,
+    'Converts stringified [w,s,e,n] bbox to an intersects search parameter')
 })
 
 test('search /stac/search time parameter', async (t) => {
@@ -237,10 +277,11 @@ test('search /collections/collectionId/items/itemId', async (t) => {
     found: 1,
     returned: 1
   }
-
+  const clonedItem = cloneMutatedItem()
+  const results = [clonedItem]
   const search = sinon.stub().resolves({
     meta,
-    results: [item]
+    results
   })
   const backend = { search }
   const itemId = 'itemId'

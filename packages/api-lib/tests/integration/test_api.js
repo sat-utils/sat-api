@@ -157,3 +157,27 @@ test('stac/search sort', async (t) => {
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015082LGN00')
 })
+
+test('stac/search flattened collection properties', async (t) => {
+  let response = await search('/stac/search', {
+    query: {
+      'eo:platform': {
+        eq: 'platform2'
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features[0].id, 'collection2_item')
+
+  response = await search('/stac/search', {
+    query: {
+      'eo:platform': {
+        eq: 'landsat-8'
+      }
+    }
+  }, backend, endpoint)
+  const havePlatform =
+    response.features.filter(
+      (item) => (item.properties['eo:platform'] === 'landsat-8')
+    )
+  t.is(havePlatform.length, response.features.length)
+})

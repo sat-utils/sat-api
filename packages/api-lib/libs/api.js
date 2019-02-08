@@ -38,7 +38,13 @@ const extractBbox = function (params) {
   let intersectsGeometry
   const { bbox } = params
   if (bbox) {
-    const boundingBox = extent(bbox)
+    let bboxArray
+    if (typeof bbox === 'string') {
+      bboxArray = JSON.parse(bbox)
+    } else {
+      bboxArray = bbox
+    }
+    const boundingBox = extent(bboxArray)
     const geojson = feature(boundingBox.polygon())
     intersectsGeometry = geojson
   }
@@ -236,15 +242,8 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 }
 
 const searchItems = async function (parameters, page, limit, backend, endpoint) {
-  const arbitraryLimit = 5000
-  const { results: collectionResults } =
-    await backend.search(parameters, 'collections', 1, arbitraryLimit)
-  const collectionList = collectionResults.map((result) => result.id)
-  const collectionsQuery = Object.assign(
-    {}, parameters, { parentCollections: collectionList }
-  )
   const { results: itemsResults, meta: itemsMeta } =
-    await backend.search(collectionsQuery, 'items', page, limit)
+    await backend.search(parameters, 'items', page, limit)
   const pageLinks = buildPageLinks(itemsMeta, parameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
