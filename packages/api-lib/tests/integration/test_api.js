@@ -64,6 +64,12 @@ test('collections/{collectionId}/items with time', async (t) => {
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015050LGN00')
+
+  response = await search('/collections/landsat-8-l1/items', {
+    time: '2015-02-19/2015-02-20'
+  }, backend, endpoint)
+  t.is(response.features[0].id, 'LC80100102015050LGN00',
+    'Handles date range without times inclusion issue')
 })
 
 test('collections/{collectionId}/items with limit', async (t) => {
