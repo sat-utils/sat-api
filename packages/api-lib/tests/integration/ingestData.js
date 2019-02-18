@@ -3,8 +3,12 @@ const ingest = require('../../libs/ingest').ingest
 const backend = require('../../libs/es')
 
 async function doIngest() {
-  await ingest('../fixtures/stac/catalog.json', backend)
-  console.log('Items done')
+  try {
+    await ingest('../fixtures/stac/catalog.json', backend)
+    console.log('Items done')
+  } catch (error) {
+    console.log(error.message)
+  }
 }
 //ingest('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/catalog.json', backend)
 doIngest()
