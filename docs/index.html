@@ -1528,6 +1528,11 @@ Darkula color scheme from the JetBrains family of IDEs
               <ul class="toc-list-h2">
                 
                   <li>
+                    <a href="#landing-page-of-this-api" class="toc-h2 toc-link" data-title="landing page of this API">landing page of this API</a>
+                    
+                  </li>
+                
+                  <li>
                     <a href="#describe-the-feature-collections-in-the-dataset" class="toc-h2 toc-link" data-title="describe the feature collections in the dataset">describe the feature collections in the dataset</a>
                     
                   </li>
@@ -1673,6 +1678,16 @@ Darkula color scheme from the JetBrains family of IDEs
                 
                   <li>
                     <a href="#tocsextent" class="toc-h2 toc-link" data-title="extent">extent</a>
+                    
+                  </li>
+                
+                  <li>
+                    <a href="#tocsfieldsfilter" class="toc-h2 toc-link" data-title="fieldsFilter">fieldsFilter</a>
+                    
+                  </li>
+                
+                  <li>
+                    <a href="#tocsfields" class="toc-h2 toc-link" data-title="fields">fields</a>
                     
                   </li>
                 
@@ -1833,7 +1848,7 @@ r = requests.get(<span class="hljs-string">'https://sat-api.developmentseed.org/
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Name</th>
 <th>In</th>
 <th>Type</th>
 <th>Required</th>
@@ -1875,6 +1890,13 @@ r = requests.get(<span class="hljs-string">'https://sat-api.developmentseed.org/
 <td><a href="#schemasort">sort</a></td>
 <td>false</td>
 <td>Allows sorting results by the specified properties</td>
+</tr>
+<tr>
+<td>fields</td>
+<td>query</td>
+<td><a href="#schemafields">fields</a></td>
+<td>false</td>
+<td>Determines the shape of the features in the response</td>
 </tr>
 </tbody>
 </table>
@@ -1989,7 +2011,7 @@ requested items shall not be counted.</p>
   <span class="hljs-attr">"links"</span>: [
     {
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"next"</span>,
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
     }
   ]
 }
@@ -2112,7 +2134,7 @@ r = requests.post(<span class="hljs-string">'https://sat-api.developmentseed.org
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Name</th>
 <th>In</th>
 <th>Type</th>
 <th>Required</th>
@@ -2200,7 +2222,7 @@ r = requests.post(<span class="hljs-string">'https://sat-api.developmentseed.org
   <span class="hljs-attr">"links"</span>: [
     {
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"next"</span>,
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
     }
   ]
 }
@@ -2234,6 +2256,96 @@ r = requests.post(<span class="hljs-string">'https://sat-api.developmentseed.org
 This operation does not require authentication
 </aside>
 <h1 id="the-sat-api-capabilities">Capabilities</h1>
+<h2 id="landing-page-of-this-api">landing page of this API</h2>
+<p><a id="opIdgetLandingPage"></a></p>
+<blockquote>
+<p>Code samples</p>
+</blockquote>
+<pre class="highlight"><code>const fetch = require('node-fetch');
+
+const headers = {
+  'Accept':'application/json'
+
+};
+
+fetch('https://sat-api.developmentseed.org/',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+</code></pre>
+<pre class="highlight tab tab-python"><code><span class="hljs-keyword">import</span> requests
+headers = {
+  <span class="hljs-string">'Accept'</span>: <span class="hljs-string">'application/json'</span>
+}
+
+r = requests.get(<span class="hljs-string">'https://sat-api.developmentseed.org/'</span>, params={
+
+}, headers = headers)
+
+<span class="hljs-keyword">print</span> r.json()
+
+</code></pre>
+<p><code>GET /</code></p>
+<p>The landing page provides links to the API definition, the Conformance statements and the metadata about the feature data in this dataset.</p>
+<blockquote>
+<p>Example responses</p>
+</blockquote>
+<blockquote>
+<p>200 Response</p>
+</blockquote>
+<pre class="highlight tab tab-json"><code>{
+  <span class="hljs-attr">"links"</span>: [
+    {
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org"</span>,
+      <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"self"</span>,
+      <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
+      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"this document"</span>
+    },
+    {
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/api"</span>,
+      <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"service"</span>,
+      <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
+      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"this document"</span>
+    },
+    {
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections"</span>,
+      <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"data"</span>,
+      <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
+      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Metadata about the feature collections"</span>
+    }
+  ]
+}
+</code></pre>
+<h3 id="landing-page-of-this-api-responses">Responses</h3>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>Description</th>
+<th>Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td><a href="https://tools.ietf.org/html/rfc7231#section-6.3.1">OK</a></td>
+<td>links to the API capabilities</td>
+<td>string</td>
+</tr>
+</tbody>
+</table>
+<aside class="success">
+This operation does not require authentication
+</aside>
 <h2 id="describe-the-feature-collections-in-the-dataset">describe the feature collections in the dataset</h2>
 <p><a id="opIddescribeCollections"></a></p>
 <blockquote>
@@ -2933,7 +3045,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
   <span class="hljs-attr">"links"</span>: [
     {
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"next"</span>,
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
     }
   ]
 }
@@ -3284,7 +3396,7 @@ If a feature has multiple temporal properties, it is the decision of the server 
 <pre class="highlight tab tab-json"><code>[
   {
     <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"next"</span>,
-    <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://https://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
+    <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections/landsat-8-l1/items/gasd312fsaeg"</span>
   }
 ]
 
@@ -3316,25 +3428,19 @@ If a feature has multiple temporal properties, it is the decision of the server 
 <pre class="highlight tab tab-json"><code>{
   <span class="hljs-attr">"links"</span>: [
     {
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://data.example.org/"</span>,
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org"</span>,
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"self"</span>,
       <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
       <span class="hljs-attr">"title"</span>: <span class="hljs-string">"this document"</span>
     },
     {
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://data.example.org/api"</span>,
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/api"</span>,
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"service"</span>,
-      <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/openapi+json;version=3.0"</span>,
-      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"the API definition"</span>
-    },
-    {
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://data.example.org/conformance"</span>,
-      <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"conformance"</span>,
       <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
-      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"WFS 3.0 conformance classes implemented by this server"</span>
+      <span class="hljs-attr">"title"</span>: <span class="hljs-string">"this document"</span>
     },
     {
-      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://data.example.org/collections"</span>,
+      <span class="hljs-attr">"href"</span>: <span class="hljs-string">"http://sat-api.developmentseed.org/collections"</span>,
       <span class="hljs-attr">"rel"</span>: <span class="hljs-string">"data"</span>,
       <span class="hljs-attr">"type"</span>: <span class="hljs-string">"application/json"</span>,
       <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Metadata about the feature collections"</span>
@@ -4016,6 +4122,105 @@ If a feature has multiple temporal properties, it is the decision of the server 
 <tr>
 <td>trs</td>
 <td><a href="http://www.opengis.net/def/uom/ISO-8601/0/Gregorian">http://www.opengis.net/def/uom/ISO-8601/0/Gregorian</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tocsfieldsfilter">fieldsFilter</h2>
+<p><a id="schemafieldsfilter"></a></p>
+<pre class="highlight tab tab-json"><code>{
+  <span class="hljs-attr">"fields"</span>: {
+    <span class="hljs-attr">"geometry"</span>: <span class="hljs-literal">true</span>,
+    <span class="hljs-attr">"include"</span>: [
+      [
+        <span class="hljs-string">"properties.eo:cloud_cover"</span>
+      ]
+    ],
+    <span class="hljs-attr">"exclude"</span>: [
+      [
+        <span class="hljs-string">"properties.eo:sun_azimuth"</span>
+      ]
+    ]
+  }
+}
+
+</code></pre>
+<p><em>Determines the shape of the features in the response</em></p>
+<h3 id="properties">Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Restrictions</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fields</td>
+<td><a href="#schemafields">fields</a></td>
+<td>false</td>
+<td>none</td>
+<td>The geometry member determines whether the geometry is populated or is null. The include and exclude members specify an array of property names that are either  included or excluded from the result, respectively. If both include and exclude  are specified, include takes precedence. id and links are required feature properties and cannot be excluded.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tocsfields">fields</h2>
+<p><a id="schemafields"></a></p>
+<pre class="highlight tab tab-json"><code>{
+  <span class="hljs-attr">"geometry"</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">"include"</span>: [
+    [
+      <span class="hljs-string">"properties.eo:cloud_cover"</span>
+    ]
+  ],
+  <span class="hljs-attr">"exclude"</span>: [
+    [
+      <span class="hljs-string">"properties.eo:sun_azimuth"</span>
+    ]
+  ]
+}
+
+</code></pre>
+<p>*The geometry member determines whether the geometry is populated or is null. The
+include and exclude members specify an array of property names that are either
+included or excluded from the result, respectively. If both include and exclude
+are specified, include takes precedence.
+id and links are required feature properties and cannot be excluded.
+*</p>
+<h3 id="properties">Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Required</th>
+<th>Restrictions</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>geometry</td>
+<td>boolean</td>
+<td>false</td>
+<td>none</td>
+<td>none</td>
+</tr>
+<tr>
+<td>include</td>
+<td>[string]</td>
+<td>false</td>
+<td>none</td>
+<td>none</td>
+</tr>
+<tr>
+<td>exclude</td>
+<td>[string]</td>
+<td>false</td>
+<td>none</td>
+<td>none</td>
 </tr>
 </tbody>
 </table>

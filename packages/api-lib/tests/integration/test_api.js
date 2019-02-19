@@ -208,4 +208,11 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features[0].properties.collection)
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
+
+  response = await search('/stac/search', {
+    fields: {
+      excludes: ['id', 'links']
+    }
+  }, backend, endpoint)
+  t.truthy(response.features.length, 'Does not exclude required fields')
 })

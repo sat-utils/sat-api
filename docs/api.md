@@ -153,13 +153,14 @@ Retrieve Items matching filters. Intended as a shorthand API for simple queries.
 
 <h3 id="search-stac-items-by-simple-filtering.-parameters">Parameters</h3>
 
-|Parameter|In|Type|Required|Description|
+|Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |bbox|query|array[number]|false|Only features that have a geometry that intersects the bounding box are|
 |time|query|string|false|Either a date-time or a period string that adheres to RFC3339. Examples:|
 |limit|query|integer|false|The optional limit parameter limits the number of items that are|
 |query|query|string|false|query for properties in items. Use the JSON form of the queryFilter used in POST.|
 |sort|query|[sort](#schemasort)|false|Allows sorting results by the specified properties|
+|fields|query|[fields](#schemafields)|false|Determines the shape of the features in the response|
 
 #### Detailed descriptions
 
@@ -388,7 +389,7 @@ retrieve items matching filters. Intended as the standard, full-featured query A
 
 <h3 id="search-stac-items-by-full-featured-filtering.-parameters">Parameters</h3>
 
-|Parameter|In|Type|Required|Description|
+|Name|In|Type|Required|Description|
 |---|---|---|---|---|
 |body|body|[searchBody](#schemasearchbody)|false|none|
 
@@ -1689,4 +1690,71 @@ null
 |---|---|
 |crs|http://www.opengis.net/def/crs/OGC/1.3/CRS84|
 |trs|http://www.opengis.net/def/uom/ISO-8601/0/Gregorian|
+
+<h2 id="tocSfieldsfilter">fieldsFilter</h2>
+
+<a id="schemafieldsfilter"></a>
+
+```json
+{
+  "fields": {
+    "geometry": true,
+    "include": [
+      [
+        "properties.eo:cloud_cover"
+      ]
+    ],
+    "exclude": [
+      [
+        "properties.eo:sun_azimuth"
+      ]
+    ]
+  }
+}
+
+```
+
+*Determines the shape of the features in the response*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|fields|[fields](#schemafields)|false|none|The geometry member determines whether the geometry is populated or is null. The include and exclude members specify an array of property names that are either  included or excluded from the result, respectively. If both include and exclude  are specified, include takes precedence. id and links are required feature properties and cannot be excluded.|
+
+<h2 id="tocSfields">fields</h2>
+
+<a id="schemafields"></a>
+
+```json
+{
+  "geometry": true,
+  "include": [
+    [
+      "properties.eo:cloud_cover"
+    ]
+  ],
+  "exclude": [
+    [
+      "properties.eo:sun_azimuth"
+    ]
+  ]
+}
+
+```
+
+*The geometry member determines whether the geometry is populated or is null. The
+include and exclude members specify an array of property names that are either 
+included or excluded from the result, respectively. If both include and exclude 
+are specified, include takes precedence.
+id and links are required feature properties and cannot be excluded.
+*
+
+### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|geometry|boolean|false|none|none|
+|include|[string]|false|none|none|
+|exclude|[string]|false|none|none|
 
