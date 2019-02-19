@@ -344,6 +344,28 @@ function buildSort(parameters) {
   return sorting
 }
 
+function buildFieldsFilter(parameters) {
+  const { fields } = parameters
+  const _sourceInclude = []
+  const _sourceExclude = []
+  if (fields) {
+    const { geometry, includes, excludes } = fields
+    if (typeof geometry !== 'undefined' && !geometry) {
+      _sourceExclude.push('geometry')
+    }
+    if (includes && includes.length > 0) {
+      const filteredIncludes = includes.concat(['id', 'links'])
+      _sourceInclude.push(...filteredIncludes)
+    }
+    if (excludes && excludes.length > 0) {
+      const filteredExcludes = excludes.filter((field) =>
+        (field !== 'id' && field !== 'links'))
+      _sourceExclude.push(...filteredExcludes)
+    }
+  }
+  return { _sourceExclude, _sourceInclude }
+}
+
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
   if (parameters.id) {
@@ -354,6 +376,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
+
   const searchParams = {
     index,
     body,
@@ -361,6 +384,13 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
+  const { _sourceExclude, _sourceInclude } = buildFieldsFilter(parameters)
+  if (_sourceExclude.length > 0) {
+    searchParams._sourceExclude = _sourceExclude
+  }
+  if (_sourceInclude.length > 0) {
+    searchParams._sourceInclude = _sourceInclude
+  }
   const client = await esClient()
   const resultBody = await client.search(searchParams)
   const results = resultBody.hits.hits.map((r) => (r._source))

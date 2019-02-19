@@ -1,5 +1,7 @@
 const test = require('ava')
 process.env.ES_HOST = `http://${process.env.DOCKER_NAME}:4571`
+process.env.AWS_ACCESS_KEY_ID = 'none'
+process.env.AWS_SECRET_ACCESS_KEY = 'none'
 const backend = require('../../libs/es')
 const api = require('../../libs/api')
 const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
@@ -174,4 +176,36 @@ test('stac/search flattened collection properties', async (t) => {
       (item) => (item.properties['eo:platform'] === 'landsat-8')
     )
   t.is(havePlatform.length, response.features.length)
+})
+
+test('stac/search fields filter', async (t) => {
+  let response = await search('/stac/search', {
+    fields: {
+      excludes: ['properties.collection']
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].properties.collection)
+
+  response = await search('/stac/search', {
+    fields: {
+      geometry: false
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].geometry)
+
+  response = await search('/stac/search', {
+    fields: {
+      geometry: true
+    }
+  }, backend, endpoint)
+  t.truthy(response.features[0].geometry)
+
+  response = await search('/stac/search', {
+    fields: {
+      includes: ['properties.collection', 'properties.eo:epsg']
+    }
+  }, backend, endpoint)
+  t.truthy(response.features[0].properties.collection)
+  t.truthy(response.features[0].properties['eo:epsg'])
+  t.falsy(response.features[0].properties['eo:cloud_cover'])
 })
