@@ -11,5 +11,5 @@ async function doIngest() {
     console.log(error.message)
   }
 }
-//ingest('https://landsat-stac.s3.amazonaws.com/landsat-8-l1/catalog.json', backend)
 doIngest()
+

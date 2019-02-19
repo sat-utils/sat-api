@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+- Fix datetime range to be inclusive (i.e., gte and lte)
+
 ## [v0.2.3] - 2019-01-29
 
 ### Fixed
