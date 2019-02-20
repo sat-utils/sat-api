@@ -181,7 +181,7 @@ test('stac/search flattened collection properties', async (t) => {
 test('stac/search fields filter', async (t) => {
   let response = await search('/stac/search', {
     fields: {
-      excludes: ['properties.collection']
+      excludes: ['collection']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].properties.collection)
@@ -202,7 +202,7 @@ test('stac/search fields filter', async (t) => {
 
   response = await search('/stac/search', {
     fields: {
-      includes: ['properties.collection', 'properties.eo:epsg']
+      includes: ['collection', 'eo:epsg']
     }
   }, backend, endpoint)
   t.truthy(response.features[0].properties.collection)
