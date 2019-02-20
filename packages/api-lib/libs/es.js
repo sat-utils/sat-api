@@ -244,8 +244,8 @@ function buildDatetimeQuery(parameters) {
       dateQuery = {
         range: {
           'properties.datetime': {
-            gt: dataRange[0],
-            lt: dataRange[1]
+            gte: dataRange[0],
+            lte: dataRange[1]
           }
         }
       }
