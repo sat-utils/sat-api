@@ -16,6 +16,13 @@ Normally `localhost`.
 ```
 $ export DOCKER_NAME=localhost
 ```
+The AWS-SDK library also requires fake key fields to create a connection so set.
+```
+$ export AWS_ACCESS_KEY_ID=none
+```
+```
+$ export AWS_SECRET_ACCESS_KEY=none
+```
 To run the tests
 ```
 $ ./runIntegration.sh

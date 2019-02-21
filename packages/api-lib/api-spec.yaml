@@ -54,6 +54,7 @@ paths:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/query'
         - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/fields'
       responses:
         '200':
           description: A feature collection.
@@ -326,6 +327,15 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/sort'
+    fields:
+      name: fields
+      in: query
+      description: Determines the shape of the features in the response
+      required: false
+      schema:
+        $ref: '#/components/schemas/fields'
+      style: form
+      explode: false
   schemas:
     exception:
       type: object
@@ -889,6 +899,42 @@ components:
           example:
             - '2011-11-11T12:22:11Z'
             - '2012-11-24T12:32:43Z'
+    fieldsFilter:
+      type: object
+      description: Determines the shape of the features in the response
+      properties:
+        fields:
+          $ref: '#/components/schemas/fields'
+    fields:
+      description: >
+        The geometry member determines whether the geometry is populated or is
+        null. The
+
+        include and exclude members specify an array of property names that are
+        either 
+
+        included or excluded from the result, respectively. If both include and
+        exclude 
+
+        are specified, include takes precedence.
+
+        id and links are required feature properties and cannot be excluded.
+      type: object
+      properties:
+        geometry:
+          type: boolean
+        include:
+          type: array
+          items:
+            type: string
+            example:
+              - 'eo:cloud_cover'
+        exclude:
+          type: array
+          items:
+            type: string
+            example:
+              - 'eo:sun_azimuth'
 tags:
   - name: STAC
     description: Extension to WFS3 Core to support STAC metadata model and search API
