@@ -1701,12 +1701,12 @@ null
     "geometry": true,
     "include": [
       [
-        "properties.eo:cloud_cover"
+        "eo:cloud_cover"
       ]
     ],
     "exclude": [
       [
-        "properties.eo:sun_azimuth"
+        "eo:sun_azimuth"
       ]
     ]
   }
@@ -1731,12 +1731,12 @@ null
   "geometry": true,
   "include": [
     [
-      "properties.eo:cloud_cover"
+      "eo:cloud_cover"
     ]
   ],
   "exclude": [
     [
-      "properties.eo:sun_azimuth"
+      "eo:sun_azimuth"
     ]
   ]
 }

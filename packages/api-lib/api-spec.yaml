@@ -928,13 +928,13 @@ components:
           items:
             type: string
             example:
-              - 'properties.eo:cloud_cover'
+              - 'eo:cloud_cover'
         exclude:
           type: array
           items:
             type: string
             example:
-              - 'properties.eo:sun_azimuth'
+              - 'eo:sun_azimuth'
 tags:
   - name: STAC
     description: Extension to WFS3 Core to support STAC metadata model and search API
