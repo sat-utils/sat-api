@@ -4,14 +4,14 @@
 
 Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 
-Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org. 
+Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org using the [API documentation](http://sat-utils.github.io/sat-api/) for reference and examples.
 
 The STAC version supported by a given version of sat-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
 | sat-api | STAC  |
 | -------- | ----  |
-| 0.1.0    | 0.5.0 |
-| 0.2.x    | 0.6.0 |
+| 0.1.0    | 0.5.x |
+| 0.2.x    | 0.6.x |
 
 
 ## Documentation
