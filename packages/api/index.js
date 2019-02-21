@@ -1,8 +1,11 @@
-/* eslint-disable new-cap */
+/* eslint-disable new-cap, no-lonely-if */
 
 'use strict'
 
+const zlib = require('zlib')
+const { promisify } = require('util')
 const satlib = require('@sat-utils/api-lib')
+const gzip = promisify(zlib.gzip)
 
 module.exports.handler = async (event) => {
   // determine endpoint
@@ -16,16 +19,35 @@ module.exports.handler = async (event) => {
     }
   }
 
-  const buildResponse = (statusCode, body) => ({
-    isBase64Encoded: false,
-    statusCode,
-    body,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*', // Required for CORS support to work
-      'Access-Control-Allow-Credentials': true
+  const lowerCaseHeaders = (headers) => Object.entries(headers).reduce(
+    (acc, [key, value]) => {
+      acc[typeof key === 'string' ? key.toLowerCase() : key] = value
+      return acc
+    }, {}
+  )
+
+  const buildResponse = async (statusCode, result) => {
+    const headers = lowerCaseHeaders(event.headers)
+    const acceptEncoding = headers['accept-encoding'] || ''
+    const encodings = acceptEncoding.split(',')
+    const isGzip = encodings.includes('gzip')
+    const response = {
+      statusCode,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*', // Required for CORS support to work
+        'Access-Control-Allow-Credentials': true
+      }
     }
-  })
+    if (isGzip) {
+      const zipped = await gzip(result)
+      response.body = zipped.toString('base64')
+      response.headers['Content-Encoding'] = 'gzip'
+    } else {
+      response.body = result
+    }
+    return response
+  }
 
   // get payload
   const method = event.httpMethod
