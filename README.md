@@ -14,16 +14,11 @@ The STAC version supported by a given version of sat-api is shown in the table b
 | 0.2.x    | 0.6.x |
 
 
-## Documentation
-
-The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs/docs.md)
-
-
 ## Development
 
 Sat-api includes a number of NPM packages (in the packages/ directory) that are used to create and populate an instance of sat-api. See the [sat-utils org on NPM](https://www.npmjs.com/org/sat-utils) for the full list of packages. [Lerna](https://github.com/lerna/lerna) is used for for managing these packages.
 
-The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latet development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
+The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latest development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
 
 ### Building local version
 
