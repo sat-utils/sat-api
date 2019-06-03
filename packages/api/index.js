@@ -9,13 +9,15 @@ const gzip = promisify(zlib.gzip)
 
 module.exports.handler = async (event) => {
   // determine endpoint
-  let endpoint
-  if ('X-Forwarded-Host' in event.headers) {
-    endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`
-  } else {
-    endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers.Host}`
-    if ('stage' in event.requestContext) {
-      endpoint = `${endpoint}/${event.requestContext.stage}`
+  let endpoint = process.env.SATAPI_URL
+  if (typeof endpoint === 'undefined') {
+    if ('X-Forwarded-Host' in event.headers) {
+      endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers['X-Forwarded-Host']}`
+    } else {
+      endpoint = `${event.headers['X-Forwarded-Proto']}://${event.headers.Host}`
+      if ('stage' in event.requestContext) {
+        endpoint = `${endpoint}/${event.requestContext.stage}`
+      }
     }
   }
 
