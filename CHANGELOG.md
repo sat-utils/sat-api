@@ -6,8 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-- Fix datetime range to be inclusive (i.e., gte and lte)
+## [v0.2.4] - 2019-06-02
+
+### Added
 - Add `fields` filter to return only specific fields
+- Added SATAPI_URL environment variable for defining a custom root URL used for creating hierarchical links. Otherwise, the root URL will try to be inferred from the headers.
+- Gzip compression added for clients that support it (via `Accept-Encoding`)
+
+### Fixed
+- Fix datetime range to be inclusive (i.e., gte and lte)
+- Fixed `next` links to properly stringify geometries
+
 
 ## [v0.2.3] - 2019-01-29
 
@@ -87,6 +96,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor and improve splitting
 
 [Unreleased]: https://github.com/sat-utils/sat-api/compare/master...develop
+[v0.2.4]: https://github.com/sat-utils/sat-api/compare/v0.2.3...v0.2.4
 [v0.2.3]: https://github.com/sat-utils/sat-api/compare/v0.2.2...v0.2.3
 [v0.2.2]: https://github.com/sat-utils/sat-api/compare/v0.2.1...v0.2.2
 [v0.2.1]: https://github.com/sat-utils/sat-api/compare/v0.2.0...v0.2.1
