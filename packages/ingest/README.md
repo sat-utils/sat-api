@@ -1,5 +1,8 @@
 ## @sat-utils/ingest
 
+For additional information on ingesting data into sat-api, see the README in the [sat-api-deployment repository](https://github.com/sat-utils/sat-api-deployment).
+
+
 ### Unit Tests
 ```
 $ yarn
