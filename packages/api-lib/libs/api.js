@@ -239,7 +239,7 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 
   const dictToURI = (dict) => (
     Object.keys(dict).map(
-      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(JSON.stringify(dict[p]))}`
     ).join('&')
   )
   const { found, page, limit } = meta
