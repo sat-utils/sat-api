@@ -105,7 +105,7 @@ async function prepare(index) {
   const client = await esClient()
   const indexExists = await client.indices.exists({ index })
   if (!indexExists) {
-    const precision = process.env.SATAPI_ES_PRECISION || '50m'
+    const precision = process.env.SATAPI_ES_PRECISION || '5mi'
     const payload = {
       index,
       body: {

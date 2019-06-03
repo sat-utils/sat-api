@@ -12,14 +12,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add `fields` filter to return only specific fields
 - Added SATAPI_URL environment variable for defining a custom root URL used for creating hierarchical links. Otherwise, the root URL will try to be inferred from the headers.
 - Gzip compression added for clients that support it (via `Accept-Encoding`)
-- Added SATAPI_ES_PRECISION environment variable to change the precision for underlying intersection geometry queries. 
+- Added SATAPI_ES_PRECISION environment variable to change the precision for underlying intersection geometry queries. This will have an adverse impact on performance and storage size. If changed after ingestion, a reindex operation will need to be performed. It defaults to '5mi' (5 miles).
 
 ### Fixed
 - Fix datetime range to be inclusive (i.e., gte and lte)
 - Fixed `next` links to properly stringify geometries
-
-### Changed
-- Default precision for geometry queries in the Elasticsearch backend is now 50meters rather than 5miles.  As this may have an adverse impact on performance, it can be changed by setting the SATAPI_ES_PRECISION envvar. If changed after ingestion, a reindex operation will need to be performed. Use "5mi" to keep the old value.
 
 
 ## [v0.2.3] - 2019-01-29
