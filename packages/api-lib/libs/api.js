@@ -51,6 +51,7 @@ const extractBbox = function (params) {
   return intersectsGeometry
 }
 
+
 const extractStacQuery = function (params) {
   let stacQuery
   const { query } = params
@@ -76,6 +77,19 @@ const extractSort = function (params) {
     }
   }
   return sortRules
+}
+
+const extractFields = function (params) {
+  let fieldRules
+  const { fields } = params
+  if (fields) {
+    if (typeof fields === 'string') {
+      fieldRules = JSON.parse(fields)
+    } else {
+      fieldRules = fields
+    }
+  }
+  return fieldRules
 }
 
 const parsePath = function (path) {
@@ -225,7 +239,7 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 
   const dictToURI = (dict) => (
     Object.keys(dict).map(
-      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(dict[p])}`
+      (p) => `${encodeURIComponent(p)}=${encodeURIComponent(JSON.stringify(dict[p]))}`
     ).join('&')
   )
   const { found, page, limit } = meta
@@ -287,11 +301,13 @@ const search = async function (
     // Prefer intersects
     const intersects = hasIntersects || bbox
     const query = extractStacQuery(queryParameters)
+    const fields = extractFields(queryParameters)
     const parameters = {
       datetime,
       intersects,
       query,
-      sort
+      sort,
+      fields
     }
     // Keep only exisiting parameters
     const searchParameters = Object.keys(parameters)

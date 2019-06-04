@@ -4,26 +4,21 @@
 
 Sat-api is a STAC compliant web API for searching and serving metadata for geospatial data (including but not limited to satellite imagery).
 
-Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org. 
+Development Seed runs an instance of sat-api for the Landsat-8 and Sentinel-2 imagery that is [hosted on AWS](https://aws.amazon.com/earth/). You can access this at https://sat-api.developmentseed.org using the [API documentation](http://sat-utils.github.io/sat-api/) for reference and examples.
 
 The STAC version supported by a given version of sat-api is shown in the table below. Additional information can be found in the [CHANGELOG](CHANGELOG.md)
 
 | sat-api | STAC  |
 | -------- | ----  |
-| 0.1.0    | 0.5.0 |
-| 0.2.x    | 0.6.0 |
-
-
-## Documentation
-
-The documentation includes information on the STAC spec, how to use the API, manage Elasticsearch, as well as how to deploy your own API on AWS. Access the documentation [here](docs/docs.md)
+| 0.1.0    | 0.5.x |
+| 0.2.x    | 0.6.x |
 
 
 ## Development
 
 Sat-api includes a number of NPM packages (in the packages/ directory) that are used to create and populate an instance of sat-api. See the [sat-utils org on NPM](https://www.npmjs.com/org/sat-utils) for the full list of packages. [Lerna](https://github.com/lerna/lerna) is used for for managing these packages.
 
-The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latet development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
+The latest version released is on the [master branch](https://github.com/sat-utils/sat-api/tree/master), and the latest development version is on the [develop](https://github.com/sat-utils/sat-api/tree/develop) branch.
 
 ### Building local version
 

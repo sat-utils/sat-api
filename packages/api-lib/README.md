@@ -16,6 +16,13 @@ Normally `localhost`.
 ```
 $ export DOCKER_NAME=localhost
 ```
+The AWS-SDK library also requires fake key fields to create a connection so set.
+```
+$ export AWS_ACCESS_KEY_ID=none
+```
+```
+$ export AWS_SECRET_ACCESS_KEY=none
+```
 To run the tests
 ```
 $ ./runIntegration.sh
@@ -33,6 +40,7 @@ $ ./runIntegration.sh
 `STAC_DESCRIPTION`
 `STAC_VERSION`
 `STAC_DOCS_URL`
+`SATAPI_URL`
 
 ### About
 [sat-api](https://github.com/sat-utils/sat-api) was created by [Development Seed](<http://developmentseed.org>) and is part of a collection of tools called [sat-utils](https://github.com/sat-utils).
