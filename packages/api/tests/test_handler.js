@@ -2,9 +2,6 @@ const test = require('ava')
 const sinon = require('sinon')
 const proxyquire = require('proxyquire')
 const createEvent = require('aws-event-mocks')
-const zlib = require('zlib')
-const { promisify } = require('util')
-const gunzip = promisify(zlib.gunzip)
 
 test('handler calls search with parameters', async (t) => {
   const result = { value: 'value' }
@@ -83,58 +80,4 @@ test('handler returns 404 for error', async (t) => {
   const actual = await lambda.handler(event)
   t.is(actual.statusCode, 404)
   t.is(actual.body, errorMessage)
-})
-
-test('handler gzips response', async (t) => {
-  const result = { value: 'value' }
-  const search = sinon.stub().resolves(result)
-  const satlib = {
-    api: {
-      search
-    }
-  }
-  const lambda = proxyquire('../index.js', {
-    '@sat-utils/api-lib': satlib
-  })
-  const host = 'host'
-  const httpMethod = 'GET'
-  const path = 'path'
-
-  let event = createEvent({
-    template: 'aws:apiGateway',
-    merge: {
-      headers: {
-        Host: host,
-        'accept-encoding': 'gzip, deflate'
-      },
-      requestContext: {},
-      httpMethod,
-      path
-    }
-  })
-
-  let actual = await lambda.handler(event)
-  t.is(actual.statusCode, 200)
-  let unzippedBody = await gunzip(Buffer.from(actual.body, 'base64'))
-  t.is(unzippedBody.toString(), JSON.stringify(result))
-  t.is(actual.headers['Content-Encoding'], 'gzip')
-
-  event = createEvent({
-    template: 'aws:apiGateway',
-    merge: {
-      headers: {
-        Host: host,
-        'Accept-Encoding': 'gzip, deflate'
-      },
-      requestContext: {},
-      httpMethod,
-      path
-    }
-  })
-
-  actual = await lambda.handler(event)
-  t.is(actual.statusCode, 200)
-  unzippedBody = await gunzip(Buffer.from(actual.body, 'base64'))
-  t.is(unzippedBody.toString(), JSON.stringify(result),
-    'Ignores header case sensitivity')
 })
