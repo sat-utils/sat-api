@@ -220,6 +220,10 @@ const collectionsToCatalogLinks = function (results, endpoint) {
     rel: 'self',
     href: `${endpoint}/stac`
   })
+  catalog.links.push({
+    rel: 'search',
+    href: `${endpoint}/stac/search`
+  })
   return catalog
 }
 
