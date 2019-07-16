@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- /stac/search linked to from /stac
+- New `ids` parameter added for searching by IDs
+- New `collections` parameter added for searhing list of specific collections
+
+### Changed
+- Fields parameter changed to search on any fields rather than just fields under `properties`. `property` fields must now be referenced by `property.fieldname`
+
+
 ## [v0.2.5] - 2019-06-21
 
 ### Fixed
