@@ -347,30 +347,23 @@ function buildSort(parameters) {
 
 function buildFieldsFilter(parameters) {
   const id = 'id'
-  const type = 'type'
-  const bbox = 'bbox'
-  const links = 'links'
-  const assets = 'assets'
   const { fields } = parameters
   const _sourceInclude = []
   const _sourceExclude = []
   if (fields) {
-    const { geometry, includes, excludes } = fields
-    if (typeof geometry !== 'undefined' && !geometry) {
-      _sourceExclude.push('geometry')
-    }
+    const { includes, excludes } = fields
     if (includes && includes.length > 0) {
       const propertiesIncludes = includes.map(
-        (field) => (`properties.${field}`)
+        (field) => (`${field}`)
       ).concat(
-        [id, type, bbox, links, assets]
+        [id]
       )
       _sourceInclude.push(...propertiesIncludes)
     }
     if (excludes && excludes.length > 0) {
       const filteredExcludes = excludes.filter((field) =>
-        (![id, type, bbox, links, assets].includes(field)))
-      const propertiesExcludes = filteredExcludes.map((field) => (`properties.${field}`))
+        (![id].includes(field)))
+      const propertiesExcludes = filteredExcludes.map((field) => (`${field}`))
       _sourceExclude.push(...propertiesExcludes)
     }
   }
