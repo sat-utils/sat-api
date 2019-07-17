@@ -27,6 +27,7 @@
   "dependencies": {
     "@mapbox/extent": "^0.4.0",
     "@turf/helpers": "^6.1.4",
+    "aws-sdk": "^2.382.0",
     "bottleneck": "^2.13.1",
     "elasticsearch": "^14.2.2",
     "geojson-validation": "^0.1.6",
@@ -41,7 +42,6 @@
   },
   "devDependencies": {
     "ava": "^0.16.0",
-    "aws-sdk": "^2.382.0",
     "nock": "^8.0.0",
     "proxyquire": "^2.1.0",
     "sinon": "^7.1.1"

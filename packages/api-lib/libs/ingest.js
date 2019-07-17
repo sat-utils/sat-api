@@ -9,6 +9,7 @@ const { Readable } = require('readable-stream')
 const pump = require('pump')
 const uuid = require('uuid/v4')
 const logger = require('./logger')
+const AWS = require('aws-sdk')
 
 const limiter = new Bottleneck({
   maxConcurrent: 500
@@ -32,6 +33,49 @@ function getChildLinks(node) {
   return links
 }
 
+function getS3ParamsFromUrl(url) {
+  if (!url.startsWith('s3://')) {
+    const msg = `cannot parse bucket/key from ${url}; url must start with "s3://"`
+    logger.error(msg)
+    throw new Error(msg)
+  }
+  const urlWithoutProtocol = url.replace('s3://', '')
+  const allParts = urlWithoutProtocol.split('/')
+  if (allParts.length < 2) {
+    const msg = `cannot parse bucket/key from ${url}; url does not contain bucket and key`
+    logger.error(msg)
+    throw new Error(msg)
+  }
+  const bucket = allParts[0]
+  const remainingParts = allParts.slice(1)
+  const key = remainingParts.join('/')
+  logger.debug(`parsed Bucket: ${bucket} Key: ${key} from ${url}`)
+  return {
+    RequestPayer: process.env.AWS_REQUEST_PAYER,
+    Bucket: bucket,
+    Key: key
+  }
+}
+
+function getS3Object(url) {
+  // from https://github.com/aws/aws-sdk-js/issues/1436
+  return new Promise((resolve, reject) => {
+    const s3 = new AWS.S3()
+    s3.getObject(
+      getS3ParamsFromUrl(url),
+      (err, data) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(data.Body.toString())
+        }
+      }
+    )
+  })
+}
+
+const limitedS3Request = limiter.wrap(getS3Object)
+
 async function fetchChildren(node, links, basePath) {
   const selfHref = getSelfRef(node)
   const linkPromises = links.map((link) => {
@@ -51,7 +95,11 @@ async function fetchChildren(node, links, basePath) {
       }
     }
     if (isUrl(urlPath)) {
-      returnPromise = limitedRequest(urlPath)
+      if (urlPath.startsWith('s3://')) {
+        returnPromise = limitedS3Request(urlPath)
+      } else {
+        returnPromise = limitedRequest(urlPath)
+      }
     } else {
       returnPromise = limitedRead(urlPath)
     }
@@ -108,7 +156,12 @@ async function visit(url, stream, recursive, collectionsOnly) {
   let root
   let basePath
   if (isUrl(url)) {
-    const rootResponse = await limitedRequest(url)
+    let rootResponse
+    if (url.startsWith('s3://')) {
+      rootResponse = await limitedS3Request(url)
+    } else {
+      rootResponse = await limitedRequest(url)
+    }
     root = JSON.parse(rootResponse)
   } else {
     const rootResponse = await limitedRead(url)
