@@ -263,7 +263,7 @@ function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
-  const { query, intersects } = parameters
+  const { query, intersects, collections } = parameters
   let must = []
   if (query) {
     // Using reduce rather than map as we don't currently support all
@@ -286,6 +286,14 @@ function buildQuery(parameters) {
       }
       return accumulator
     }, must)
+  }
+
+  if (collections) {
+    must.push({
+      terms: {
+        [`${property}`]: collections
+      }
+    })
   }
 
   if (intersects) {
@@ -392,6 +400,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
+  logger.info(`Elasticsearch query: ${JSON.stringify(body)}`)
 
   const searchParams = {
     index,
