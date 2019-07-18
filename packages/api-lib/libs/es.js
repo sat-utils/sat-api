@@ -323,6 +323,15 @@ function buildIdQuery(id) {
   }
 }
 
+function buildIdsQuery(ids) {
+  return {
+    query: {
+      ids: {
+        values: ids
+      }
+  }
+}
+
 function buildSort(parameters) {
   const { sort } = parameters
   let sorting
@@ -372,7 +381,10 @@ function buildFieldsFilter(parameters) {
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
-  if (parameters.id) {
+  if (parameters.ids) {
+    const { ids } = parameters
+    body = buildIdsQuery(ids)
+  } else if (parameters.id) {
     const { id } = parameters
     body = buildIdQuery(id)
   } else {
