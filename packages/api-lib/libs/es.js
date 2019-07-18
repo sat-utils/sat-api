@@ -79,7 +79,6 @@ async function prepare(index) {
   const props = {
     'type': 'object',
     properties: {
-      'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
@@ -117,6 +116,7 @@ async function prepare(index) {
             dynamic_templates: dynamicTemplates,
             properties: {
               'id': { type: 'keyword' },
+              'collection': { type: 'keyword'},
               'properties': props,
               geometry: {
                 type: 'geo_shape',
