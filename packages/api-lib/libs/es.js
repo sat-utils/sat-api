@@ -116,7 +116,7 @@ async function prepare(index) {
             dynamic_templates: dynamicTemplates,
             properties: {
               'id': { type: 'keyword' },
-              'collection': { type: 'keyword'},
+              'collection': { type: 'keyword' },
               'properties': props,
               geometry: {
                 type: 'geo_shape',
@@ -291,7 +291,7 @@ function buildQuery(parameters) {
   if (collections) {
     must.push({
       terms: {
-        [`${property}`]: collections
+        collections: collections
       }
     })
   }
