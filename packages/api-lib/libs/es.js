@@ -337,6 +337,7 @@ function buildIdsQuery(ids) {
       ids: {
         values: ids
       }
+    }
   }
 }
 
