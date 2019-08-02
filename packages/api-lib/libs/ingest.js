@@ -49,6 +49,11 @@ function getS3ParamsFromUrl(url) {
   const bucket = allParts[0]
   const remainingParts = allParts.slice(1)
   const key = remainingParts.join('/')
+  if (!key || !bucket) {
+    const msg = `cannot parse bucket/key from ${url}; url does not contain bucket and key`
+    logger.error(msg)
+    throw new Error(msg)
+  }
   logger.debug(`parsed Bucket: ${bucket} Key: ${key} from ${url}`)
   return {
     RequestPayer: process.env.AWS_REQUEST_PAYER,
@@ -61,8 +66,14 @@ function getS3Object(url) {
   // from https://github.com/aws/aws-sdk-js/issues/1436
   return new Promise((resolve, reject) => {
     const s3 = new AWS.S3()
+    let params
+    try {
+      params = getS3ParamsFromUrl(url)
+    } catch (err) {
+      reject(err)
+    }
     s3.getObject(
-      getS3ParamsFromUrl(url),
+      params,
       (err, data) => {
         if (err) {
           reject(err)
@@ -251,4 +262,4 @@ async function ingestItem(item, backend) {
   return promise
 }
 
-module.exports = { ingest, ingestItem }
+module.exports = { ingest, ingestItem, getS3ParamsFromUrl, getS3Object }
