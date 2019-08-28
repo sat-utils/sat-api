@@ -222,3 +222,14 @@ test('stac/search fields filter', async (t) => {
   }, backend, endpoint)
   t.truthy(response.features.length, 'Does not exclude required fields')
 })
+
+test('stac/search in query', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 3)
+})
