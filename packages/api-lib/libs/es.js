@@ -263,6 +263,7 @@ function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
+  const inop = 'in'
   const { query, intersects } = parameters
   let must = []
   if (query) {
@@ -278,6 +279,13 @@ function buildQuery(parameters) {
           }
         }
         accumulator.push(termQuery)
+      } else if (operators.includes(inop)) {
+        const termsQuery = {
+          terms: {
+            [`properties.${property}`]: operatorsObject.in
+          }
+        }
+        accumulator.push(termsQuery)
       }
       const rangeQuery =
         buildRangeQuery(property, operators, operatorsObject)
