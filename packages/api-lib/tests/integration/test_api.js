@@ -165,7 +165,10 @@ test('stac/search flattened collection properties', async (t) => {
     query: {
       'eo:platform': {
         eq: 'platform2'
-      }
+      },
+    fields: {
+        includes: ['links']
+    }
     }
   }, backend, endpoint)
   t.is(response.features[0].id, 'collection2_item')
@@ -194,15 +197,12 @@ test('stac/search fields filter', async (t) => {
 
   response = await search('/stac/search', {
     fields: {
-      geometry: false
+      excludes: ['geometry']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
 
   response = await search('/stac/search', {
-    fields: {
-      geometry: true
-    }
   }, backend, endpoint)
   t.truthy(response.features[0].geometry)
 

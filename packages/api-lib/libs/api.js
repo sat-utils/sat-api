@@ -150,8 +150,11 @@ const addCollectionLinks = function (results, endpoint) {
 // Impure - mutates results
 const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
-    const { id, links } = result
+    let { links } = result
+    const { id } = result
     const { collection } = result.properties
+
+    links = (links === undefined) ? [] : links
     // self link
     links.splice(0, 0, {
       rel: 'self',
