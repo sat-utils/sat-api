@@ -190,7 +190,7 @@ test('stac/search fields filter', async (t) => {
       excludes: ['collection']
     }
   }, backend, endpoint)
-  t.falsy(response.features[0].properties.collection)
+  t.falsy(response.features[0].collection)
 
   response = await search('/stac/search', {
     fields: {
@@ -208,10 +208,10 @@ test('stac/search fields filter', async (t) => {
 
   response = await search('/stac/search', {
     fields: {
-      includes: ['collection', 'eo:epsg']
+      includes: ['collection', 'properties.eo:epsg']
     }
   }, backend, endpoint)
-  t.truthy(response.features[0].properties.collection)
+  t.truthy(response.features[0].collection)
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
