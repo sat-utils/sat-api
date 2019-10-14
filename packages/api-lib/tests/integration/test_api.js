@@ -124,7 +124,7 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
 
 test('stac', async (t) => {
   const response = await search('/stac', {}, backend, endpoint)
-  t.is(response.links.length, 3)
+  t.is(response.links.length, 4)
 })
 
 test('stac/search bbox', async (t) => {
