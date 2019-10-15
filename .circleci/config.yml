@@ -52,7 +52,7 @@ jobs:
 
   docker_build_and_test:
     machine:
-      docker_layer_caching: true
+      docker_layer_caching: false
     steps:
       - *restore_repo
       - checkout
@@ -68,7 +68,7 @@ jobs:
 
   docker_deploy_production:
     machine:
-      docker_layer_caching: true
+      docker_layer_caching: false
     steps:
       - *restore_repo
       - run:
@@ -86,7 +86,7 @@ jobs:
 
   docker_deploy_develop:
     machine:
-      docker_layer_caching: true
+      docker_layer_caching: false
     steps:
       - *restore_repo
       - run:
