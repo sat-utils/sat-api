@@ -164,8 +164,7 @@ const addCollectionLinks = function (results, endpoint) {
 const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
     let { links } = result
-    const { id } = result
-    const { collection } = result.properties
+    const { id, collection } = result
 
     links = (links === undefined) ? [] : links
     // self link
