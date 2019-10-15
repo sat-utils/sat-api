@@ -124,7 +124,7 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
 
 test('stac', async (t) => {
   const response = await search('/stac', {}, backend, endpoint)
-  t.is(response.links.length, 3)
+  t.is(response.links.length, 4)
 })
 
 test('stac/search bbox', async (t) => {
@@ -187,38 +187,81 @@ test('stac/search flattened collection properties', async (t) => {
 test('stac/search fields filter', async (t) => {
   let response = await search('/stac/search', {
     fields: {
-      excludes: ['collection']
+      exclude: ['collection']
     }
   }, backend, endpoint)
-  t.falsy(response.features[0].properties.collection)
+  t.falsy(response.features[0].collection)
 
   response = await search('/stac/search', {
     fields: {
-      geometry: false
+      exclude: ['geometry']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
 
   response = await search('/stac/search', {
-    fields: {
-      geometry: true
-    }
   }, backend, endpoint)
   t.truthy(response.features[0].geometry)
 
   response = await search('/stac/search', {
     fields: {
-      includes: ['collection', 'eo:epsg']
+      include: ['collection', 'properties.eo:epsg']
     }
   }, backend, endpoint)
-  t.truthy(response.features[0].properties.collection)
+  t.truthy(response.features[0].collection)
   t.truthy(response.features[0].properties['eo:epsg'])
   t.falsy(response.features[0].properties['eo:cloud_cover'])
 
   response = await search('/stac/search', {
     fields: {
-      excludes: ['id', 'links']
+      exclude: ['id', 'links']
     }
   }, backend, endpoint)
   t.truthy(response.features.length, 'Does not exclude required fields')
+})
+
+test('stac/search in query', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 3)
+})
+
+test('stac/search ids', async (t) => {
+  const response = await search('/stac/search', {
+    ids: ['collection2_item', 'LC80100102015050LGN00']
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+  t.is(response.features[0].id, 'collection2_item')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+})
+
+test('stac/search collections', async (t) => {
+  let response = await search('/stac/search', {
+    query: {
+      collections: ['collection2']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+  t.is(response.features[0].id, 'collection2_item')
+
+  response = await search('/stac/search', {
+    query: {
+      collections: ['landsat-8-l1']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  response = await search('/stac/search', {
+    query: {
+      collections: ['collection2', 'landsat-8-l1']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 3)
 })

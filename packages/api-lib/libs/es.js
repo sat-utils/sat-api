@@ -170,7 +170,7 @@ async function _stream() {
       const links = data.links.filter((link) => hlinks.includes(link))
       let esDataObject = Object.assign({}, data, { links })
       if (index === 'items') {
-        const collectionId = data.properties.collection
+        const collectionId = data.collection
         const itemCollection =
           collections.find((collection) => (collectionId === collection.id))
         if (itemCollection) {
@@ -263,9 +263,12 @@ function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
-  const { query, intersects, collections } = parameters
+  const inop = 'in'
+  const { query, intersects } = parameters
   let must = []
+  let should = []
   if (query) {
+    const { collections } = query
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
     must = Object.keys(query).reduce((accumulator, property) => {
@@ -278,6 +281,13 @@ function buildQuery(parameters) {
           }
         }
         accumulator.push(termQuery)
+      } else if (operators.includes(inop)) {
+        const termsQuery = {
+          terms: {
+            [`properties.${property}`]: operatorsObject.in
+          }
+        }
+        accumulator.push(termsQuery)
       }
       const rangeQuery =
         buildRangeQuery(property, operators, operatorsObject)
@@ -286,15 +296,14 @@ function buildQuery(parameters) {
       }
       return accumulator
     }, must)
+
+    if (collections) {
+      collections.forEach((collection) => {
+        should.push({ term: { 'collection': collection } })
+      })
+    }
   }
 
-  if (collections) {
-    must.push({
-      terms: {
-        collections: collections
-      }
-    })
-  }
 
   if (intersects) {
     const { geometry } = intersects
@@ -310,7 +319,7 @@ function buildQuery(parameters) {
     must.push(datetimeQuery)
   }
 
-  const filter = { bool: { must } }
+  const filter = { bool: { must, should } }
   const queryBody = {
     constant_score: { filter }
   }
@@ -369,20 +378,20 @@ function buildFieldsFilter(parameters) {
   const _sourceInclude = []
   const _sourceExclude = []
   if (fields) {
-    const { includes, excludes } = fields
-    if (includes && includes.length > 0) {
-      const propertiesIncludes = includes.map(
+    const { include, exclude } = fields
+    if (include && include.length > 0) {
+      const propertiesIncludes = include.map(
         (field) => (`${field}`)
       ).concat(
         [id]
       )
       _sourceInclude.push(...propertiesIncludes)
     }
-    if (excludes && excludes.length > 0) {
-      const filteredExcludes = excludes.filter((field) =>
+    if (exclude && exclude.length > 0) {
+      const filteredExcludes = exclude.filter((field) =>
         (![id].includes(field)))
-      const propertiesExcludes = filteredExcludes.map((field) => (`${field}`))
-      _sourceExclude.push(...propertiesExcludes)
+      const propertiesExclude = filteredExcludes.map((field) => (`${field}`))
+      _sourceExclude.push(...propertiesExclude)
     }
   }
   return { _sourceExclude, _sourceInclude }

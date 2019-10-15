@@ -252,7 +252,7 @@
             "url": "https://github.com/sat-utils/sat-api"
         }
     ],
-    "stac_version": "0.6.0-rc2",
+    "stac_version": "0.7.0",
     "title": "Landsat 8 L1",
     "version": "0.1.0"
 }

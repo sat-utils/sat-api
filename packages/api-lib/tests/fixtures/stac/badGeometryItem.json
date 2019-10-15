@@ -296,8 +296,8 @@
             "rel": "collection"
         }
     ],
+    "collection": "landsat-8-l1",
     "properties": {
-        "collection": "landsat-8-l1",
         "datetime": "2014-07-04T23:56:54.593296+00:00",
         "eo:cloud_cover": 65,
         "eo:column": "096",
