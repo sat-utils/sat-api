@@ -63,6 +63,10 @@ test('search /stac', async (t) => {
     {
       rel: 'self',
       href: 'endpoint/stac'
+    },
+    {
+      rel: 'search',
+      href: 'endpoint/stac/search'
     }
   ]
   t.is(search.firstCall.args[1], 'collections')
@@ -261,9 +265,7 @@ test('search /collections/collectionId/items', async (t) => {
   )
   const expectedParameters = {
     query: {
-      collection: {
-        eq: collectionId
-      }
+      collections: [collectionId]
     }
   }
   t.deepEqual(search.firstCall.args[0], expectedParameters,

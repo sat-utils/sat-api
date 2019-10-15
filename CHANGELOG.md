@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Support for `in` operator on property fields
 
+### Added
+- /stac/search linked to from /stac
+- New `ids` parameter added for searching by IDs
+- New `collections` parameter added for searching list of specific collections
+
+### Changed
+- Fields parameter changed to search on any fields rather than just fields under `properties`. `property` fields must now be referenced by `property.fieldname`
+- `collection` now a top level field rather than a property
+
+
 ## [v0.2.5] - 2019-06-21
 
 ### Fixed
