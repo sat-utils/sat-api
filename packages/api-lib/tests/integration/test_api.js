@@ -230,3 +230,12 @@ test('stac/search in query', async (t) => {
   }, backend, endpoint)
   t.is(response.features.length, 3)
 })
+
+test('stac/search ids', async (t) => {
+  const response = await search('/stac/search', {
+    ids: ['collection2_item', 'LC80100102015050LGN00']
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+  t.is(response.features[0].id, 'collection2_item')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+})
