@@ -263,6 +263,7 @@ function buildDatetimeQuery(parameters) {
 
 function buildQuery(parameters) {
   const eq = 'eq'
+  const inop = 'in'
   const { query, intersects } = parameters
   let must = []
   let should = []
@@ -280,6 +281,13 @@ function buildQuery(parameters) {
           }
         }
         accumulator.push(termQuery)
+      } else if (operators.includes(inop)) {
+        const termsQuery = {
+          terms: {
+            [`properties.${property}`]: operatorsObject.in
+          }
+        }
+        accumulator.push(termsQuery)
       }
       const rangeQuery =
         buildRangeQuery(property, operators, operatorsObject)
@@ -370,20 +378,20 @@ function buildFieldsFilter(parameters) {
   const _sourceInclude = []
   const _sourceExclude = []
   if (fields) {
-    const { includes, excludes } = fields
-    if (includes && includes.length > 0) {
-      const propertiesIncludes = includes.map(
+    const { include, exclude } = fields
+    if (include && include.length > 0) {
+      const propertiesIncludes = include.map(
         (field) => (`${field}`)
       ).concat(
         [id]
       )
       _sourceInclude.push(...propertiesIncludes)
     }
-    if (excludes && excludes.length > 0) {
-      const filteredExcludes = excludes.filter((field) =>
+    if (exclude && exclude.length > 0) {
+      const filteredExcludes = exclude.filter((field) =>
         (![id].includes(field)))
-      const propertiesExcludes = filteredExcludes.map((field) => (`${field}`))
-      _sourceExclude.push(...propertiesExcludes)
+      const propertiesExclude = filteredExcludes.map((field) => (`${field}`))
+      _sourceExclude.push(...propertiesExclude)
     }
   }
   return { _sourceExclude, _sourceInclude }

@@ -165,10 +165,7 @@ test('stac/search flattened collection properties', async (t) => {
     query: {
       'eo:platform': {
         eq: 'platform2'
-      },
-    fields: {
-        includes: ['links']
-    }
+      }
     }
   }, backend, endpoint)
   t.is(response.features[0].id, 'collection2_item')
@@ -190,14 +187,14 @@ test('stac/search flattened collection properties', async (t) => {
 test('stac/search fields filter', async (t) => {
   let response = await search('/stac/search', {
     fields: {
-      excludes: ['collection']
+      exclude: ['collection']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].collection)
 
   response = await search('/stac/search', {
     fields: {
-      excludes: ['geometry']
+      exclude: ['geometry']
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
@@ -208,7 +205,7 @@ test('stac/search fields filter', async (t) => {
 
   response = await search('/stac/search', {
     fields: {
-      includes: ['collection', 'properties.eo:epsg']
+      include: ['collection', 'properties.eo:epsg']
     }
   }, backend, endpoint)
   t.truthy(response.features[0].collection)
@@ -217,8 +214,19 @@ test('stac/search fields filter', async (t) => {
 
   response = await search('/stac/search', {
     fields: {
-      excludes: ['id', 'links']
+      exclude: ['id', 'links']
     }
   }, backend, endpoint)
   t.truthy(response.features.length, 'Does not exclude required fields')
+})
+
+test('stac/search in query', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 3)
 })
