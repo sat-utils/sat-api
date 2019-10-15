@@ -170,7 +170,7 @@ async function _stream() {
       const links = data.links.filter((link) => hlinks.includes(link))
       let esDataObject = Object.assign({}, data, { links })
       if (index === 'items') {
-        const collectionId = data.properties.collection
+        const collectionId = data.collection
         const itemCollection =
           collections.find((collection) => (collectionId === collection.id))
         if (itemCollection) {
