@@ -266,7 +266,7 @@ function buildQuery(parameters) {
   const inop = 'in'
   const { query, intersects } = parameters
   let must = []
-  let should = []
+  const should = []
   if (query) {
     const { collections } = query
     // Using reduce rather than map as we don't currently support all
