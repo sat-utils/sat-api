@@ -239,3 +239,29 @@ test('stac/search ids', async (t) => {
   t.is(response.features[0].id, 'collection2_item')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 })
+
+test('stac/search collections', async (t) => {
+  let response = await search('/stac/search', {
+    query: {
+      collections: ['collection2']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
+  t.is(response.features[0].id, 'collection2_item')
+
+  response = await search('/stac/search', {
+    query: {
+      collections: ['landsat-8-l1']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+  t.is(response.features[0].id, 'LC80100102015082LGN00')
+  t.is(response.features[1].id, 'LC80100102015050LGN00')
+
+  response = await search('/stac/search', {
+    query: {
+      collections: ['collection2', 'landsat-8-l1']
+    }
+  }, backend, endpoint)
+  t.is(response.features.length, 3)
+})
