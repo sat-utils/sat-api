@@ -363,23 +363,23 @@ function buildFieldsFilter(parameters) {
   const _sourceInclude = []
   const _sourceExclude = []
   if (fields) {
-    const { geometry, includes, excludes } = fields
+    const { geometry, include, exclude } = fields
     if (typeof geometry !== 'undefined' && !geometry) {
       _sourceExclude.push('geometry')
     }
-    if (includes && includes.length > 0) {
-      const propertiesIncludes = includes.map(
+    if (include && include.length > 0) {
+      const propertiesIncludes = include.map(
         (field) => (`properties.${field}`)
       ).concat(
         [id, type, bbox, links, assets]
       )
       _sourceInclude.push(...propertiesIncludes)
     }
-    if (excludes && excludes.length > 0) {
-      const filteredExcludes = excludes.filter((field) =>
-        (![id, type, bbox, links, assets].includes(field)))
-      const propertiesExcludes = filteredExcludes.map((field) => (`properties.${field}`))
-      _sourceExclude.push(...propertiesExcludes)
+    if (exclude && exclude.length > 0) {
+      const filteredExcludes = exclude.filter((field) =>
+        (![id, type, bbox, links, assets].include(field)))
+      const propertiesExclude = filteredExcludes.map((field) => (`properties.${field}`))
+      _sourceExclude.push(...propertiesExclude)
     }
   }
   return { _sourceExclude, _sourceInclude }
