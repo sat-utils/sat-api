@@ -80,6 +80,8 @@ async function prepare(index) {
     'type': 'object',
     properties: {
       'datetime': { type: 'date' },
+      'created': { type: 'date' },
+      'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
       'eo:constellation': { type: 'keyword' },
