@@ -330,7 +330,8 @@ const search = async function (
       fields,
       ids
     }
-    // Keep only exisiting parameters
+    const colLimit = process.env.SATAPI_COLLECTION_LIMIT || 100
+    // Keep only existing parameters
     const searchParameters = Object.keys(parameters)
       .filter((key) => parameters[key])
       .reduce((obj, key) => ({
@@ -344,7 +345,7 @@ const search = async function (
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
-        await backend.search({}, 'collections', page, limit)
+        await backend.search({}, 'collections', page, colLimit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
     // STAC Search
@@ -356,7 +357,7 @@ const search = async function (
     // All collections
     if (collections && !collectionId) {
       const { results, meta } =
-        await backend.search({}, 'collections', page, limit)
+        await backend.search({}, 'collections', page, colLimit)
       const linkedCollections = addCollectionLinks(results, endpoint)
       apiResponse = { meta, collections: linkedCollections }
     }

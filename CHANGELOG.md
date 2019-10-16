@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Support for `in` operator on property fields
+- SATAPI_COLLECTION_LIMIT environment variable added for the number of collections to return at the /stac and /collections endpoints. Since pagination is not supported at these endpoints this should be set higher than the number of collections available. Defaults to 100.
 
 ### Added
 - /stac/search linked to from /stac
