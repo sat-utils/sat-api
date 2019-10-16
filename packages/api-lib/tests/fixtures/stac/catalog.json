@@ -19,5 +19,9 @@
             "rel": "child"
         }
     ],
-    "stac_version": "0.7.0"
+    "stac_extensions": [
+        "eo",
+        "landsat"
+    ],
+    "stac_version": "0.8.0"
 }
