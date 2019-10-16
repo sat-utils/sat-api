@@ -13,7 +13,7 @@ const endpoint = 'endpoint'
 test('collections', async (t) => {
   const response = await search('/collections', {}, backend, endpoint)
   t.is(response.collections.length, 2)
-  t.is(response.meta.returned, 2)
+  t.is(response['search:metadata'].returned, 2)
 })
 
 test('collections/{collectionId}', async (t) => {
@@ -229,6 +229,29 @@ test('stac/search in query', async (t) => {
     }
   }, backend, endpoint)
   t.is(response.features.length, 3)
+})
+
+test('stac/search limit next query', async (t) => {
+  let response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    },
+    limit: 2
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+
+  response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    },
+    limit: 2,
+    next: response['search:metadata'].next
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
 })
 
 test('stac/search ids', async (t) => {

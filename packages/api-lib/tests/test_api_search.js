@@ -76,17 +76,16 @@ test('search /stac', async (t) => {
 
 test('search /stac/search wraps results', async (t) => {
   const limit = 10
-  const page = 1
   const meta = {
     limit,
-    page,
-    found: 1,
+    next: null,
+    matched: 1,
     returned: 1
   }
   const clonedItem = cloneMutatedItem()
   const results = [clonedItem]
 
-  const itemsResults = { meta, results }
+  const itemsResults = { 'search:metadata': meta, results }
   const search = sinon.stub()
   search.resolves(itemsResults)
   const backend = { search }
@@ -96,11 +95,11 @@ test('search /stac/search wraps results', async (t) => {
 
   const expectedMeta = {
     limit,
-    page,
-    found: 1,
+    next: null,
+    matched: 1,
     returned: 1
   }
-  t.deepEqual(actual.meta, expectedMeta, 'Adds correct response metadata fields')
+  t.deepEqual(actual['search:metadata'], expectedMeta, 'Adds correct response metadata fields')
   t.is(actual.type, 'FeatureCollection', 'Wraps response as FeatureCollection')
 })
 

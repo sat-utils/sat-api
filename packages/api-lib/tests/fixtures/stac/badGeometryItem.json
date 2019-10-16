@@ -76,7 +76,7 @@
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B7.TIF",
             "title": "Band 7 (swir22)",
             "type": "image/tiff; application=geotiff"
-        ,
+        },
         "B8": {
             "eo:bands": [
                 7

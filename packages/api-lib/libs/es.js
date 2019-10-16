@@ -431,10 +431,10 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   const results = resultBody.hits.hits.map((r) => (r._source))
   const response = {
     results,
-    meta: {
-      page,
+    'search:metadata': {
+      next: (((page * limit) < resultBody.hits.total) ? page + 1 : null),
       limit,
-      found: resultBody.hits.total,
+      matched: resultBody.hits.total,
       returned: results.length
     }
   }
