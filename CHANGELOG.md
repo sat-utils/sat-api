@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - SATAPI_COLLECTION_LIMIT environment variable added for the number of collections to return at the /stac and /collections endpoints. Since pagination is not supported at these endpoints this should be set higher than the number of collections available. Defaults to 100.
 
 ### Changed
-- Fields parameter changed to search on any fields rather than just fields under `properties`. `property` fields must now be referenced by `property.fieldname`
+- Fields parameter changed to search on any fields rather than just fields under `properties`. Field under `properties` must now be referenced by `properties.<fieldname>`
 - `collection` now a top level field rather than a property
 
 
