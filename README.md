@@ -12,6 +12,26 @@ The STAC version supported by a given version of sat-api is shown in the table b
 | -------- | ----  |
 | 0.1.0    | 0.5.x |
 | 0.2.x    | 0.6.x |
+| 0.3.x    | 0.7.x |
+
+## Usage
+
+This repository contains just the Node libraries for running the API. The [sat-api-deployment](https://github.com/sat-utils/sat-api-deployment) repository is for deploying sat-api to AWS.
+
+### Environment variables
+
+There are some environment variables used in the code. Some do not have defaults and must be set.
+
+| Name | Description | Default Value |
+| ---- | ----------- | ------------- |
+| STAC_ID | ID of this catalog | - |
+| STAC_TITLE | Title of this catalog | - |
+| STAC_DESCRIPTION | Description of this catalog | - |
+| STAC_DOCS_URL | URL to documentation | - |
+| SATAPI_URL | The root endpoint of this API to use for links | Inferred from request |
+| ES_BATCH_SIZE | Number of records to ingest in single batch | 500 |
+| SATAPI_ES_PRECISION | Precision to use for geometry queries, see [ES documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html) | '5mi' |
+| LOG_LEVEL | Level for logging | 'info' |
 
 
 ## Development

@@ -92,6 +92,19 @@ const extractFields = function (params) {
   return fieldRules
 }
 
+const extractIds = function (params) {
+  let idsRules
+  const { ids } = params
+  if (ids) {
+    if (typeof ids === 'string') {
+      idsRules = JSON.parse(ids)
+    } else {
+      idsRules = ids.slice()
+    }
+  }
+  return idsRules
+}
+
 const parsePath = function (path) {
   const searchFilters = {
     stac: false,
@@ -150,8 +163,10 @@ const addCollectionLinks = function (results, endpoint) {
 // Impure - mutates results
 const addItemLinks = function (results, endpoint) {
   results.forEach((result) => {
-    const { id, links } = result
-    const { collection } = result.properties
+    let { links } = result
+    const { id, collection } = result
+
+    links = (links === undefined) ? [] : links
     // self link
     links.splice(0, 0, {
       rel: 'self',
@@ -219,6 +234,10 @@ const collectionsToCatalogLinks = function (results, endpoint) {
   catalog.links.push({
     rel: 'self',
     href: `${endpoint}/stac`
+  })
+  catalog.links.push({
+    rel: 'search',
+    href: `${endpoint}/stac/search`
   })
   return catalog
 }
@@ -302,14 +321,17 @@ const search = async function (
     const intersects = hasIntersects || bbox
     const query = extractStacQuery(queryParameters)
     const fields = extractFields(queryParameters)
+    const ids = extractIds(queryParameters)
     const parameters = {
       datetime,
       intersects,
       query,
       sort,
-      fields
+      fields,
+      ids
     }
-    // Keep only exisiting parameters
+    const colLimit = process.env.SATAPI_COLLECTION_LIMIT || 100
+    // Keep only existing parameters
     const searchParameters = Object.keys(parameters)
       .filter((key) => parameters[key])
       .reduce((obj, key) => ({
@@ -323,7 +345,7 @@ const search = async function (
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
-        await backend.search({}, 'collections', page, limit)
+        await backend.search({}, 'collections', page, colLimit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
     // STAC Search
@@ -335,7 +357,7 @@ const search = async function (
     // All collections
     if (collections && !collectionId) {
       const { results, meta } =
-        await backend.search({}, 'collections', page, limit)
+        await backend.search({}, 'collections', page, colLimit)
       const linkedCollections = addCollectionLinks(results, endpoint)
       apiResponse = { meta, collections: linkedCollections }
     }
@@ -355,9 +377,9 @@ const search = async function (
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
       const updatedQuery = Object.assign({}, searchParameters.query, {
-        collection: {
-          eq: collectionId
-        }
+        collections: [
+          collectionId
+        ]
       })
       const itemIdParameters = Object.assign(
         {}, searchParameters, { query: updatedQuery }

@@ -79,7 +79,6 @@ async function prepare(index) {
   const props = {
     'type': 'object',
     properties: {
-      'collection': { type: 'keyword' },
       'datetime': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
@@ -117,6 +116,7 @@ async function prepare(index) {
             dynamic_templates: dynamicTemplates,
             properties: {
               'id': { type: 'keyword' },
+              'collection': { type: 'keyword' },
               'properties': props,
               geometry: {
                 type: 'geo_shape',
@@ -170,7 +170,7 @@ async function _stream() {
       const links = data.links.filter((link) => hlinks.includes(link))
       let esDataObject = Object.assign({}, data, { links })
       if (index === 'items') {
-        const collectionId = data.properties.collection
+        const collectionId = data.collection
         const itemCollection =
           collections.find((collection) => (collectionId === collection.id))
         if (itemCollection) {
@@ -266,7 +266,9 @@ function buildQuery(parameters) {
   const inop = 'in'
   const { query, intersects } = parameters
   let must = []
+  const should = []
   if (query) {
+    const { collections } = query
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
     must = Object.keys(query).reduce((accumulator, property) => {
@@ -294,7 +296,14 @@ function buildQuery(parameters) {
       }
       return accumulator
     }, must)
+
+    if (collections) {
+      collections.forEach((collection) => {
+        should.push({ term: { 'collection': collection } })
+      })
+    }
   }
+
 
   if (intersects) {
     const { geometry } = intersects
@@ -310,7 +319,7 @@ function buildQuery(parameters) {
     must.push(datetimeQuery)
   }
 
-  const filter = { bool: { must } }
+  const filter = { bool: { must, should } }
   const queryBody = {
     constant_score: { filter }
   }
@@ -326,6 +335,16 @@ function buildIdQuery(id) {
             id
           }
         }
+      }
+    }
+  }
+}
+
+function buildIdsQuery(ids) {
+  return {
+    query: {
+      ids: {
+        values: ids
       }
     }
   }
@@ -355,31 +374,24 @@ function buildSort(parameters) {
 
 function buildFieldsFilter(parameters) {
   const id = 'id'
-  const type = 'type'
-  const bbox = 'bbox'
-  const links = 'links'
-  const assets = 'assets'
   const { fields } = parameters
   const _sourceInclude = []
   const _sourceExclude = []
   if (fields) {
-    const { geometry, includes, excludes } = fields
-    if (typeof geometry !== 'undefined' && !geometry) {
-      _sourceExclude.push('geometry')
-    }
-    if (includes && includes.length > 0) {
-      const propertiesIncludes = includes.map(
-        (field) => (`properties.${field}`)
+    const { include, exclude } = fields
+    if (include && include.length > 0) {
+      const propertiesIncludes = include.map(
+        (field) => (`${field}`)
       ).concat(
-        [id, type, bbox, links, assets]
+        [id]
       )
       _sourceInclude.push(...propertiesIncludes)
     }
-    if (excludes && excludes.length > 0) {
-      const filteredExcludes = excludes.filter((field) =>
-        (![id, type, bbox, links, assets].includes(field)))
-      const propertiesExcludes = filteredExcludes.map((field) => (`properties.${field}`))
-      _sourceExclude.push(...propertiesExcludes)
+    if (exclude && exclude.length > 0) {
+      const filteredExcludes = exclude.filter((field) =>
+        (![id].includes(field)))
+      const propertiesExclude = filteredExcludes.map((field) => (`${field}`))
+      _sourceExclude.push(...propertiesExclude)
     }
   }
   return { _sourceExclude, _sourceInclude }
@@ -387,7 +399,10 @@ function buildFieldsFilter(parameters) {
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
-  if (parameters.id) {
+  if (parameters.ids) {
+    const { ids } = parameters
+    body = buildIdsQuery(ids)
+  } else if (parameters.id) {
     const { id } = parameters
     body = buildIdQuery(id)
   } else {
@@ -395,6 +410,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   }
   const sort = buildSort(parameters)
   body.sort = sort
+  logger.info(`Elasticsearch query: ${JSON.stringify(body)}`)
 
   const searchParams = {
     index,
