@@ -316,6 +316,9 @@ const search = async function (
     } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
+    if (bbox && hasIntersects) {
+      throw new Error('Expected bbox OR intersects, not both')
+    }
     const sort = extractSort(queryParameters)
     // Prefer intersects
     const intersects = hasIntersects || bbox

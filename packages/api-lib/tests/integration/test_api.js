@@ -55,6 +55,14 @@ test('collections/{collectionId}/items with bbox', async (t) => {
   t.is(response.features.length, 0)
 })
 
+test('collections/{collectionId}/items with bbox and intersects', async (t) => {
+  const response = await search('/collections/landsat-8-l1/items', {
+    bbox: [-180, -90, 180, 90],
+    intersects: intersectsGeometry
+  }, backend, endpoint)
+  t.truthy(response.code)
+})
+
 test('collections/{collectionId}/items with time', async (t) => {
   let response = await search('/collections/landsat-8-l1/items', {
     datetime: '2015-02-19T15:06:12.565047+00:00'
