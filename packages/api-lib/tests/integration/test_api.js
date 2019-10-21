@@ -5,7 +5,8 @@ process.env.AWS_SECRET_ACCESS_KEY = 'none'
 const backend = require('../../libs/es')
 const api = require('../../libs/api')
 const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
-const noIntersectsFeature = require('../fixtures/stac/noIntersectsFeature.json')
+const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
+const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
 
 const { search } = api
 const endpoint = 'endpoint'
@@ -84,14 +85,19 @@ test('collections/{collectionId}/items with limit', async (t) => {
 
 test('collections/{collectionId}/items with intersects', async (t) => {
   let response = await search('/collections/landsat-8-l1/items', {
-    intersects: intersectsFeature
+    intersects: intersectsGeometry
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
   response = await search('/collections/landsat-8-l1/items', {
-    intersects: noIntersectsFeature
+    intersects: intersectsFeature
+  }, backend, endpoint)
+  t.truthy(response.code)
+
+  response = await search('/collections/landsat-8-l1/items', {
+    intersects: noIntersectsGeometry
   }, backend, endpoint)
   t.is(response.features.length, 0)
 })

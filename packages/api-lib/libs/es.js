@@ -308,10 +308,9 @@ function buildQuery(parameters) {
 
 
   if (intersects) {
-    const { geometry } = intersects
     must.push({
       geo_shape: {
-        geometry: { shape: geometry }
+        geometry: { shape: intersects }
       }
     })
   }

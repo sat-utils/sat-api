@@ -1,11 +1,12 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const { feature } = require('@turf/helpers')
 const logger = require('./logger')
 
 const extractIntersects = function (params) {
   let intersectsGeometry
-  const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+  const geojsonError = new Error('Invalid GeoJSON geometry')
+  const geojsonFeatureError =
+        new Error('Expected GeoJSON geometry, not Feature or FeatureCollection')
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -22,9 +23,9 @@ const extractIntersects = function (params) {
 
     if (gjv.valid(geojson)) {
       if (geojson.type === 'FeatureCollection') {
-        throw geojsonError
-      } else if (geojson.type !== 'Feature') {
-        geojson = feature(geojson)
+        throw geojsonFeatureError
+      } else if (geojson.type === 'Feature') {
+        throw geojsonFeatureError
       }
       intersectsGeometry = geojson
     } else {
@@ -45,8 +46,7 @@ const extractBbox = function (params) {
       bboxArray = bbox
     }
     const boundingBox = extent(bboxArray)
-    const geojson = feature(boundingBox.polygon())
-    intersectsGeometry = geojson
+    intersectsGeometry = boundingBox.polygon()
   }
   return intersectsGeometry
 }
