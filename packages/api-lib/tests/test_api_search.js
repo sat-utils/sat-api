@@ -180,7 +180,7 @@ test('search /stac/search time parameter', async (t) => {
   const queryParams = {
     page: 1,
     limit: 2,
-    time: range
+    datetime: range
   }
   await api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0], { datetime: range },

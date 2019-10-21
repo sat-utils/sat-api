@@ -312,7 +312,7 @@ const search = async function (
     const {
       limit,
       next,
-      time: datetime
+      datetime
     } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
