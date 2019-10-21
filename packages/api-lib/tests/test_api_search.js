@@ -121,18 +121,18 @@ test('search /stac/search intersects parameter', async (t) => {
   const search = sinon.stub().resolves({ results: [], meta: {} })
   const backend = { search }
   const queryParams = {
-    intersects: item,
+    intersects: item.geometry,
     page: 1,
     limit: 1
   }
   api.search('/stac/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item,
+  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
     'Uses valid GeoJSON as intersects search parameter')
 
   search.resetHistory()
-  queryParams.intersects = JSON.stringify(item)
+  queryParams.intersects = JSON.stringify(item.geometry)
   api.search('/stac/search', queryParams, backend, 'endpoint')
-  t.deepEqual(search.firstCall.args[0].intersects, item,
+  t.deepEqual(search.firstCall.args[0].intersects, item.geometry,
     'Handles stringified GeoJSON intersects parameter')
 })
 
@@ -150,18 +150,14 @@ test('search /stac/search bbox parameter', async (t) => {
     limit: 1
   }
   const expected = {
-    type: 'Feature',
-    properties: {},
-    geometry: {
-      type: 'Polygon',
-      coordinates: [[
-        [s, w],
-        [n, w],
-        [n, e],
-        [s, e],
-        [s, w]
-      ]]
-    }
+    type: 'Polygon',
+    coordinates: [[
+      [s, w],
+      [n, w],
+      [n, e],
+      [s, e],
+      [s, w]
+    ]]
   }
   await api.search('/stac/search', queryParams, backend, 'endpoint')
   t.deepEqual(search.firstCall.args[0].intersects, expected,
