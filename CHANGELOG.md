@@ -4,10 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [v0.3.0] - 2019-10-16
+
+### Added
+- /stac/search linked to from /stac
+- New `ids` parameter added for searching by IDs
+- New `collections` parameter added for searching list of specific collections
+- SATAPI_COLLECTION_LIMIT environment variable added for the number of collections to return at the /stac and /collections endpoints. Since pagination is not supported at these endpoints this should be set higher than the number of collections available. Defaults to 100.
+
+### Changed
+- Fields parameter changed to search on any fields rather than just fields under `properties`. Field under `properties` must now be referenced by `properties.<fieldname>`
+- `collection` now a top level field rather than a property
+
+
 ## [v0.2.6] - 2019-08-28
 
 ### Added
 - Support for `in` operator on property fields
+- SATAPI_COLLECTION_LIMIT environment variable added for the number of collections to return at the /stac and /collections endpoints. Since pagination is not supported at these endpoints this should be set higher than the number of collections available. Defaults to 100.
 
 ### Added
 - /stac/search linked to from /stac
@@ -118,6 +134,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Refactor and improve splitting
 
 [Unreleased]: https://github.com/sat-utils/sat-api/compare/master...develop
+[v0.3.0]: https://github.com/sat-utils/sat-api/compare/v0.2.6...v0.3.0
+[v0.2.6]: https://github.com/sat-utils/sat-api/compare/v0.2.5...v0.2.6
 [v0.2.5]: https://github.com/sat-utils/sat-api/compare/v0.2.4...v0.2.5
 [v0.2.4]: https://github.com/sat-utils/sat-api/compare/v0.2.3...v0.2.4
 [v0.2.3]: https://github.com/sat-utils/sat-api/compare/v0.2.2...v0.2.3
