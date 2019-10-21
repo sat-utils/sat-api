@@ -178,6 +178,8 @@ async function _stream() {
         if (itemCollection) {
           const flatProperties =
             Object.assign({}, itemCollection.properties, data.properties)
+          flatProperties.created = new Date().toISOString()
+          flatProperties.updated = new Date().toISOString()
           esDataObject = Object.assign({}, esDataObject, { properties: flatProperties })
         } else {
           logger.error(`${data.id} has no collection`)

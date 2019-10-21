@@ -257,6 +257,21 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features.length, 'Does not exclude required fields')
 })
 
+test('stac/search created and updated', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'eo:platform': {
+        eq: 'landsat-8'
+      }
+    },
+    fields: {
+      include: ['properties.created', 'properties.updated']
+    }
+  }, backend, endpoint)
+  t.truthy(response.features[0].properties.created)
+  t.truthy(response.features[0].properties.updated)
+})
+
 test('stac/search in query', async (t) => {
   const response = await search('/stac/search', {
     query: {
