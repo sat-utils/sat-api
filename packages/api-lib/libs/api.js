@@ -348,7 +348,7 @@ const search = async function (
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
-        await backend.search({}, 'collections', page, colLimit)
+        await backend.search({}, 'collections', next, colLimit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
     // STAC Search
