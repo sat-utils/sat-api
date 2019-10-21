@@ -175,6 +175,9 @@ test('stac/search flattened collection properties', async (t) => {
       'eo:platform': {
         eq: 'landsat-8'
       }
+    },
+    fields: {
+      include: ['properties.eo:platform']
     }
   }, backend, endpoint)
   const havePlatform =
@@ -187,6 +190,18 @@ test('stac/search flattened collection properties', async (t) => {
 test('stac/search fields filter', async (t) => {
   let response = await search('/stac/search', {
     fields: {
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].collection)
+  t.truthy(response.features[0].id)
+  t.truthy(response.features[0].type)
+  t.truthy(response.features[0].geometry)
+  t.truthy(response.features[0].bbox)
+  t.truthy(response.features[0].links)
+  t.truthy(response.features[0].assets)
+
+  response = await search('/stac/search', {
+    fields: {
       exclude: ['collection']
     }
   }, backend, endpoint)
@@ -198,6 +213,14 @@ test('stac/search fields filter', async (t) => {
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
+
+  response = await search('/stac/search', {
+    fields: {
+      include: ['properties'],
+      exclude: ['properties.datetime']
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].properties.datetime)
 
   response = await search('/stac/search', {
   }, backend, endpoint)

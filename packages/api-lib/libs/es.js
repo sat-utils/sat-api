@@ -375,28 +375,34 @@ function buildSort(parameters) {
 }
 
 function buildFieldsFilter(parameters) {
-  const id = 'id'
   const { fields } = parameters
-  const _sourceInclude = []
-  const _sourceExclude = []
+  let _sourceInclude = [
+    'id',
+    'type',
+    'geometry',
+    'bbox',
+    'links',
+    'assets',
+    'properties.datetime'
+  ]
+  let _sourceExclude = []
   if (fields) {
     const { include, exclude } = fields
-    if (include && include.length > 0) {
-      const propertiesIncludes = include.map(
-        (field) => (`${field}`)
-      ).concat(
-        [id]
-      )
-      _sourceInclude.push(...propertiesIncludes)
-    }
+    // Remove exclude fields from the default include list and add them to the source exclude list
     if (exclude && exclude.length > 0) {
-      const filteredExcludes = exclude.filter((field) =>
-        (![id].includes(field)))
-      const propertiesExclude = filteredExcludes.map((field) => (`${field}`))
-      _sourceExclude.push(...propertiesExclude)
+      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
+      _sourceExclude = exclude
+    }
+    // Add include fields to the source include list if they're not already in it
+    if (include && include.length > 0) {
+      include.forEach((field) => {
+        if (_sourceInclude.indexOf(field) < 0) {
+          _sourceInclude.push(field)
+        }
+      })
     }
   }
-  return { _sourceExclude, _sourceInclude }
+  return { _sourceInclude, _sourceExclude }
 }
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
@@ -421,7 +427,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
-  const { _sourceExclude, _sourceInclude } = buildFieldsFilter(parameters)
+  const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
   if (_sourceExclude.length > 0) {
     searchParams._sourceExclude = _sourceExclude
   }
