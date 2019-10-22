@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [v0.4.0] - 2019-10-21
+
+### Added
+- `created` and `updated` fields added to item properties
+
+### Changed
+- `time` field renamed to `datetime`
+- Error raised if both bbox and intersection are specified
+- Search metadata changed to match the `search` extension
+- Intersect parameter accepts only GeoJSON geometries
+- Include / exclude behavior changed to match the `fields` extension
+
+
 ## [v0.3.0] - 2019-10-16
 
 ### Added

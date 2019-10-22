@@ -5,7 +5,8 @@ process.env.AWS_SECRET_ACCESS_KEY = 'none'
 const backend = require('../../libs/es')
 const api = require('../../libs/api')
 const intersectsFeature = require('../fixtures/stac/intersectsFeature.json')
-const noIntersectsFeature = require('../fixtures/stac/noIntersectsFeature.json')
+const intersectsGeometry = require('../fixtures/stac/intersectsGeometry.json')
+const noIntersectsGeometry = require('../fixtures/stac/noIntersectsGeometry.json')
 
 const { search } = api
 const endpoint = 'endpoint'
@@ -13,7 +14,7 @@ const endpoint = 'endpoint'
 test('collections', async (t) => {
   const response = await search('/collections', {}, backend, endpoint)
   t.is(response.collections.length, 2)
-  t.is(response.meta.returned, 2)
+  t.is(response['search:metadata'].returned, 2)
 })
 
 test('collections/{collectionId}', async (t) => {
@@ -54,21 +55,29 @@ test('collections/{collectionId}/items with bbox', async (t) => {
   t.is(response.features.length, 0)
 })
 
+test('collections/{collectionId}/items with bbox and intersects', async (t) => {
+  const response = await search('/collections/landsat-8-l1/items', {
+    bbox: [-180, -90, 180, 90],
+    intersects: intersectsGeometry
+  }, backend, endpoint)
+  t.truthy(response.code)
+})
+
 test('collections/{collectionId}/items with time', async (t) => {
   let response = await search('/collections/landsat-8-l1/items', {
-    time: '2015-02-19T15:06:12.565047+00:00'
+    datetime: '2015-02-19T15:06:12.565047+00:00'
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 
   response = await search('/collections/landsat-8-l1/items', {
-    time: '2015-02-17/2015-02-20'
+    datetime: '2015-02-17/2015-02-20'
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015050LGN00')
 
   response = await search('/collections/landsat-8-l1/items', {
-    time: '2015-02-19/2015-02-20'
+    datetime: '2015-02-19/2015-02-20'
   }, backend, endpoint)
   t.is(response.features[0].id, 'LC80100102015050LGN00',
     'Handles date range without times inclusion issue')
@@ -84,14 +93,19 @@ test('collections/{collectionId}/items with limit', async (t) => {
 
 test('collections/{collectionId}/items with intersects', async (t) => {
   let response = await search('/collections/landsat-8-l1/items', {
-    intersects: intersectsFeature
+    intersects: intersectsGeometry
   }, backend, endpoint)
   t.is(response.type, 'FeatureCollection')
   t.is(response.features[0].id, 'LC80100102015082LGN00')
   t.is(response.features[1].id, 'LC80100102015050LGN00')
 
   response = await search('/collections/landsat-8-l1/items', {
-    intersects: noIntersectsFeature
+    intersects: intersectsFeature
+  }, backend, endpoint)
+  t.truthy(response.code)
+
+  response = await search('/collections/landsat-8-l1/items', {
+    intersects: noIntersectsGeometry
   }, backend, endpoint)
   t.is(response.features.length, 0)
 })
@@ -175,6 +189,9 @@ test('stac/search flattened collection properties', async (t) => {
       'eo:platform': {
         eq: 'landsat-8'
       }
+    },
+    fields: {
+      include: ['properties.eo:platform']
     }
   }, backend, endpoint)
   const havePlatform =
@@ -187,6 +204,18 @@ test('stac/search flattened collection properties', async (t) => {
 test('stac/search fields filter', async (t) => {
   let response = await search('/stac/search', {
     fields: {
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].collection)
+  t.truthy(response.features[0].id)
+  t.truthy(response.features[0].type)
+  t.truthy(response.features[0].geometry)
+  t.truthy(response.features[0].bbox)
+  t.truthy(response.features[0].links)
+  t.truthy(response.features[0].assets)
+
+  response = await search('/stac/search', {
+    fields: {
       exclude: ['collection']
     }
   }, backend, endpoint)
@@ -198,6 +227,14 @@ test('stac/search fields filter', async (t) => {
     }
   }, backend, endpoint)
   t.falsy(response.features[0].geometry)
+
+  response = await search('/stac/search', {
+    fields: {
+      include: ['properties'],
+      exclude: ['properties.datetime']
+    }
+  }, backend, endpoint)
+  t.falsy(response.features[0].properties.datetime)
 
   response = await search('/stac/search', {
   }, backend, endpoint)
@@ -220,6 +257,21 @@ test('stac/search fields filter', async (t) => {
   t.truthy(response.features.length, 'Does not exclude required fields')
 })
 
+test('stac/search created and updated', async (t) => {
+  const response = await search('/stac/search', {
+    query: {
+      'eo:platform': {
+        eq: 'landsat-8'
+      }
+    },
+    fields: {
+      include: ['properties.created', 'properties.updated']
+    }
+  }, backend, endpoint)
+  t.truthy(response.features[0].properties.created)
+  t.truthy(response.features[0].properties.updated)
+})
+
 test('stac/search in query', async (t) => {
   const response = await search('/stac/search', {
     query: {
@@ -229,6 +281,29 @@ test('stac/search in query', async (t) => {
     }
   }, backend, endpoint)
   t.is(response.features.length, 3)
+})
+
+test('stac/search limit next query', async (t) => {
+  let response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    },
+    limit: 2
+  }, backend, endpoint)
+  t.is(response.features.length, 2)
+
+  response = await search('/stac/search', {
+    query: {
+      'landsat:path': {
+        in: ['10']
+      }
+    },
+    limit: 2,
+    next: response['search:metadata'].next
+  }, backend, endpoint)
+  t.is(response.features.length, 1)
 })
 
 test('stac/search ids', async (t) => {

@@ -1,11 +1,12 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const { feature } = require('@turf/helpers')
 const logger = require('./logger')
 
 const extractIntersects = function (params) {
   let intersectsGeometry
-  const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+  const geojsonError = new Error('Invalid GeoJSON geometry')
+  const geojsonFeatureError =
+        new Error('Expected GeoJSON geometry, not Feature or FeatureCollection')
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -22,9 +23,9 @@ const extractIntersects = function (params) {
 
     if (gjv.valid(geojson)) {
       if (geojson.type === 'FeatureCollection') {
-        throw geojsonError
-      } else if (geojson.type !== 'Feature') {
-        geojson = feature(geojson)
+        throw geojsonFeatureError
+      } else if (geojson.type === 'Feature') {
+        throw geojsonFeatureError
       }
       intersectsGeometry = geojson
     } else {
@@ -45,8 +46,7 @@ const extractBbox = function (params) {
       bboxArray = bbox
     }
     const boundingBox = extent(bboxArray)
-    const geojson = feature(boundingBox.polygon())
-    intersectsGeometry = geojson
+    intersectsGeometry = boundingBox.polygon()
   }
   return intersectsGeometry
 }
@@ -247,7 +247,7 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    meta,
+    'search:metadata': meta,
     features,
     links
   }
@@ -261,8 +261,8 @@ const buildPageLinks = function (meta, parameters, endpoint) {
       (p) => `${encodeURIComponent(p)}=${encodeURIComponent(JSON.stringify(dict[p]))}`
     ).join('&')
   )
-  const { found, page, limit } = meta
-  if ((page * limit) < found) {
+  const { matched, page, limit } = meta
+  if ((page * limit) < matched) {
     const newParams = Object.assign({}, parameters, { page: page + 1, limit })
     const nextQueryParameters = dictToURI(newParams)
     pageLinks.push({
@@ -275,7 +275,7 @@ const buildPageLinks = function (meta, parameters, endpoint) {
 }
 
 const searchItems = async function (parameters, page, limit, backend, endpoint) {
-  const { results: itemsResults, meta: itemsMeta } =
+  const { results: itemsResults, 'search:metadata': itemsMeta } =
     await backend.search(parameters, 'items', page, limit)
   const pageLinks = buildPageLinks(itemsMeta, parameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
@@ -311,11 +311,14 @@ const search = async function (
 
     const {
       limit,
-      page,
-      time: datetime
+      next,
+      datetime
     } = queryParameters
     const bbox = extractBbox(queryParameters)
     const hasIntersects = extractIntersects(queryParameters)
+    if (bbox && hasIntersects) {
+      throw new Error('Expected bbox OR intersects, not both')
+    }
     const sort = extractSort(queryParameters)
     // Prefer intersects
     const intersects = hasIntersects || bbox
@@ -345,27 +348,27 @@ const search = async function (
     // Root catalog with collection links
     if (stac && !searchPath) {
       const { results } =
-        await backend.search({}, 'collections', page, colLimit)
+        await backend.search({}, 'collections', next, colLimit)
       apiResponse = collectionsToCatalogLinks(results, endpoint)
     }
     // STAC Search
     if (stac && searchPath) {
       apiResponse = await searchItems(
-        searchParameters, page, limit, backend, endpoint
+        searchParameters, next, limit, backend, endpoint
       )
     }
     // All collections
     if (collections && !collectionId) {
-      const { results, meta } =
-        await backend.search({}, 'collections', page, colLimit)
+      const { results, 'search:metadata': meta } =
+        await backend.search({}, 'collections', next, colLimit)
       const linkedCollections = addCollectionLinks(results, endpoint)
-      apiResponse = { meta, collections: linkedCollections }
+      apiResponse = { 'search:metadata': meta, collections: linkedCollections }
     }
     // Specific collection
     if (collections && collectionId && !items) {
       const collectionQuery = { id: collectionId }
       const { results } = await backend.search(
-        collectionQuery, 'collections', page, limit
+        collectionQuery, 'collections', next, limit
       )
       const collection = addCollectionLinks(results, endpoint)
       if (collection.length > 0) {
@@ -385,12 +388,12 @@ const search = async function (
         {}, searchParameters, { query: updatedQuery }
       )
       apiResponse = await searchItems(
-        itemIdParameters, page, limit, backend, endpoint
+        itemIdParameters, next, limit, backend, endpoint
       )
     }
     if (collections && collectionId && items && itemId) {
       const itemQuery = { id: itemId }
-      const { results } = await backend.search(itemQuery, 'items', page, limit)
+      const { results } = await backend.search(itemQuery, 'items', next, limit)
       const [item] = addItemLinks(results, endpoint)
       if (item) {
         apiResponse = item

@@ -7,5 +7,6 @@ cloudformation.yml
 ddd.js
 package-lock.json
 yarn.lock
+lerna-debug.log
 *.lerna_backup
 _book
