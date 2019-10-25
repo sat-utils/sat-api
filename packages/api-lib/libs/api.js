@@ -2,6 +2,11 @@ const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const logger = require('./logger')
 
+
+// max number of collections to retrieve
+const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
+
+
 const extractIntersects = function (params) {
   let intersectsGeometry
   const geojsonError = new Error('Invalid GeoJSON geometry')
@@ -105,6 +110,21 @@ const extractIds = function (params) {
   return idsRules
 }
 
+
+const extractCollectionIds = function (params) {
+  let idsRules
+  const { collections } = params
+  if (collections) {
+    if (typeof collections === 'string') {
+      idsRules = JSON.parse(collections)
+    } else {
+      idsRules = collections.slice()
+    }
+  }
+  return idsRules
+}
+
+
 const parsePath = function (path) {
   const searchFilters = {
     stac: false,
@@ -192,26 +212,6 @@ const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const buildRootObject = function (endpoint) {
-  const stac_docs_url = process.env.STAC_DOCS_URL
-  const root = {
-    links: [
-      {
-        href: endpoint,
-        rel: 'self'
-      },
-      {
-        href: `${endpoint}/collections`,
-        rel: 'data'
-      },
-      {
-        href: stac_docs_url,
-        rel: 'service'
-      }
-    ]
-  }
-  return root
-}
 
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stac_version = process.env.STAC_VERSION
@@ -238,6 +238,10 @@ const collectionsToCatalogLinks = function (results, endpoint) {
   catalog.links.push({
     rel: 'search',
     href: `${endpoint}/stac/search`
+  })
+  catalog.links.push({
+    rel: 'service',
+    href: process.env.STAC_DOCS_URL
   })
   return catalog
 }
@@ -274,21 +278,101 @@ const buildPageLinks = function (meta, parameters, endpoint) {
   return pageLinks
 }
 
-const searchItems = async function (parameters, page, limit, backend, endpoint) {
+const searchItems = async function (collectionId, queryParameters, backend, endpoint) {
+  const {
+    limit,
+    next,
+    datetime
+  } = queryParameters
+  const bbox = extractBbox(queryParameters)
+  const hasIntersects = extractIntersects(queryParameters)
+  if (bbox && hasIntersects) {
+    throw new Error('Expected bbox OR intersects, not both')
+  }
+  const sort = extractSort(queryParameters)
+  // Prefer intersects
+  const intersects = hasIntersects || bbox
+  const query = extractStacQuery(queryParameters)
+  const fields = extractFields(queryParameters)
+  const ids = extractIds(queryParameters)
+  const collections = extractCollectionIds(queryParameters)
+
+  const parameters = {
+    datetime,
+    intersects,
+    query,
+    sort,
+    fields,
+    ids,
+    collections
+  }
+
+  // Keep only existing parameters
+  const searchParameters = Object.keys(parameters)
+    .filter((key) => parameters[key])
+    .reduce((obj, key) => ({
+      ...obj,
+      [key]: parameters[key]
+    }), {})
+
+  if (collectionId) {
+    searchParameters.collections = [collectionId]
+  }
   const { results: itemsResults, 'search:metadata': itemsMeta } =
-    await backend.search(parameters, 'items', page, limit)
-  const pageLinks = buildPageLinks(itemsMeta, parameters, endpoint)
+    await backend.search(searchParameters, 'items', next, limit)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
+
   return response
 }
 
-const search = async function (
+
+const getCatalog = async function (backend, endpoint = '') {
+  const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  return collectionsToCatalogLinks(results, endpoint)
+}
+
+
+const getCollections = async function (backend, endpoint = '') {
+  const { results, 'search:metadata': meta } =
+  await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  const linkedCollections = addCollectionLinks(results, endpoint)
+  return { 'search:metadata': meta, collections: linkedCollections }
+}
+
+
+const getCollection = async function (collectionId, backend, endpoint = '') {
+  const collectionQuery = { id: collectionId }
+  const { results } = await backend.search(
+    collectionQuery, 'collections', 1, 1
+  )
+  const col = addCollectionLinks(results, endpoint)
+  if (col.length > 0) {
+    return col[0]
+  }
+  return { code: 404, message: 'Collection not found' }
+}
+
+
+const getItem = async function (itemId, backend, endpoint = '') {
+  const itemQuery = { id: itemId }
+  const { results } = await backend.search(itemQuery, 'items')
+  const [it] = addItemLinks(results, endpoint)
+  if (it) {
+    return it
+  }
+  return { code: 404, message: 'Item not found' }
+}
+
+
+const API = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   try {
     const pathElements = parsePath(path)
+
     const hasPathElement =
       Object.keys(pathElements).reduce((accumulator, key) => {
         let containsPathElement
@@ -309,111 +393,48 @@ const search = async function (
       itemId
     } = pathElements
 
-    const {
-      limit,
-      next,
-      datetime
-    } = queryParameters
-    const bbox = extractBbox(queryParameters)
-    const hasIntersects = extractIntersects(queryParameters)
-    if (bbox && hasIntersects) {
-      throw new Error('Expected bbox OR intersects, not both')
-    }
-    const sort = extractSort(queryParameters)
-    // Prefer intersects
-    const intersects = hasIntersects || bbox
-    const query = extractStacQuery(queryParameters)
-    const fields = extractFields(queryParameters)
-    const ids = extractIds(queryParameters)
-    const parameters = {
-      datetime,
-      intersects,
-      query,
-      sort,
-      fields,
-      ids
-    }
-    const colLimit = process.env.SATAPI_COLLECTION_LIMIT || 100
-    // Keep only existing parameters
-    const searchParameters = Object.keys(parameters)
-      .filter((key) => parameters[key])
-      .reduce((obj, key) => ({
-        ...obj,
-        [key]: parameters[key]
-      }), {})
-    // Landing page url
-    if (!hasPathElement) {
-      apiResponse = buildRootObject(endpoint)
-    }
+
     // Root catalog with collection links
-    if (stac && !searchPath) {
-      const { results } =
-        await backend.search({}, 'collections', next, colLimit)
-      apiResponse = collectionsToCatalogLinks(results, endpoint)
+    if ((stac && !searchPath) || !hasPathElement) {
+      apiResponse = await getCatalog(backend, endpoint)
     }
     // STAC Search
     if (stac && searchPath) {
       apiResponse = await searchItems(
-        searchParameters, next, limit, backend, endpoint
+        null, queryParameters, backend, endpoint
       )
     }
     // All collections
     if (collections && !collectionId) {
-      const { results, 'search:metadata': meta } =
-        await backend.search({}, 'collections', next, colLimit)
-      const linkedCollections = addCollectionLinks(results, endpoint)
-      apiResponse = { 'search:metadata': meta, collections: linkedCollections }
+      apiResponse = await getCollections(backend, endpoint)
     }
     // Specific collection
     if (collections && collectionId && !items) {
-      const collectionQuery = { id: collectionId }
-      const { results } = await backend.search(
-        collectionQuery, 'collections', next, limit
-      )
-      const collection = addCollectionLinks(results, endpoint)
-      if (collection.length > 0) {
-        apiResponse = collection[0]
-      } else {
-        apiResponse = new Error('Collection not found')
-      }
+      apiResponse = await getCollection(collectionId, backend, endpoint)
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      const updatedQuery = Object.assign({}, searchParameters.query, {
-        collections: [
-          collectionId
-        ]
-      })
-      const itemIdParameters = Object.assign(
-        {}, searchParameters, { query: updatedQuery }
-      )
-      apiResponse = await searchItems(
-        itemIdParameters, next, limit, backend, endpoint
-      )
+      apiResponse = await searchItems(collectionId, queryParameters,
+        backend, endpoint)
     }
     if (collections && collectionId && items && itemId) {
-      const itemQuery = { id: itemId }
-      const { results } = await backend.search(itemQuery, 'items', next, limit)
-      const [item] = addItemLinks(results, endpoint)
-      if (item) {
-        apiResponse = item
-      } else {
-        apiResponse = new Error('Item not found')
-      }
+      apiResponse = await getItem(itemId, backend, endpoint)
     }
   } catch (error) {
     logger.error(error)
-    apiResponse = {
-      code: 500,
-      description: error.message
-    }
+    console.log(error)
+    apiResponse = { code: 500, message: error.message }
   }
   return apiResponse
 }
 
 module.exports = {
-  search,
-  parsePath,
+  getCatalog,
+  getCollections,
+  getCollection,
+  getItem,
   searchItems,
+  API,
+  parsePath,
   extractIntersects
 }
