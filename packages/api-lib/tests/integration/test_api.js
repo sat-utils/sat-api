@@ -138,7 +138,7 @@ test('collections/{collectionId}/items with gt lt query', async (t) => {
 
 test('stac', async (t) => {
   const response = await API('/stac', {}, backend, endpoint)
-  t.is(response.links.length, 4)
+  t.is(response.links.length, 5)
 })
 
 test('stac/search bbox', async (t) => {
@@ -206,7 +206,7 @@ test('stac/search fields filter', async (t) => {
     fields: {
     }
   }, backend, endpoint)
-  t.falsy(response.features[0].collection)
+  t.truthy(response.features[0].collection)
   t.truthy(response.features[0].id)
   t.truthy(response.features[0].type)
   t.truthy(response.features[0].geometry)
@@ -318,7 +318,9 @@ test('stac/search ids', async (t) => {
 test('stac/search collections', async (t) => {
   let response = await API('/stac/search', {
     query: {
-      collections: ['collection2']
+      collection: {
+        in: ['collection2']
+      }
     }
   }, backend, endpoint)
   t.is(response.features.length, 1)
@@ -326,7 +328,9 @@ test('stac/search collections', async (t) => {
 
   response = await API('/stac/search', {
     query: {
-      collections: ['landsat-8-l1']
+      collection: {
+        in: ['landsat-8-l1']
+      }
     }
   }, backend, endpoint)
   t.is(response.features.length, 2)
@@ -335,7 +339,9 @@ test('stac/search collections', async (t) => {
 
   response = await API('/stac/search', {
     query: {
-      collections: ['collection2', 'landsat-8-l1']
+      collection: {
+        in: ['collection2', 'landsat-8-l1']
+      }
     }
   }, backend, endpoint)
   t.is(response.features.length, 3)
