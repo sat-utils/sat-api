@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "file:../api-lib"
+    "@sat-utils/api-lib": "^0.4.0"
   },
   "devDependencies": {
     "ava": "^0.25.0",
