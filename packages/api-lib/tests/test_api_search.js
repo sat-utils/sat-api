@@ -26,6 +26,21 @@ test('search es error', async (t) => {
   t.is(response.code, 500)
 })
 
+test('search /', async (t) => {
+  const actual = await api.API('/', undefined, undefined, 'endpoint')
+  t.is(actual.links.length, 4)
+})
+
+test('search /api', async (t) => {
+  const actual = await api.API('/api', undefined, undefined, 'endpoint')
+  t.truthy(actual.openapi)
+})
+
+test('search /conformance', async (t) => {
+  const actual = await api.API('/conformance', undefined, undefined, 'endpoint')
+  t.truthy(actual.conformsTo)
+  t.is(actual.conformsTo.length, 3)
+})
 
 test('search /stac', async (t) => {
   process.env.STAC_DOCS_URL = 'test'

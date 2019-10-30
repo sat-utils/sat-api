@@ -3,6 +3,51 @@ const api = require('../libs/api')
 
 test('parsePath', (t) => {
   let expected = {
+    root: true,
+    api: false,
+    conformance: false,
+    stac: false,
+    collections: false,
+    search: false,
+    collectionId: false,
+    items: false,
+    itemId: false
+  }
+  let actual = api.parsePath('/')
+  t.deepEqual(actual, expected)
+
+  expected = {
+    root: false,
+    api: true,
+    conformance: false,
+    stac: false,
+    collections: false,
+    search: false,
+    collectionId: false,
+    items: false,
+    itemId: false
+  }
+  actual = api.parsePath('/api')
+  t.deepEqual(actual, expected)
+
+  expected = {
+    root: false,
+    api: false,
+    conformance: true,
+    stac: false,
+    collections: false,
+    search: false,
+    collectionId: false,
+    items: false,
+    itemId: false
+  }
+  actual = api.parsePath('/conformance')
+  t.deepEqual(actual, expected)
+
+  expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: true,
     collections: false,
     search: false,
@@ -10,10 +55,13 @@ test('parsePath', (t) => {
     items: false,
     itemId: false
   }
-  let actual = api.parsePath('/stac')
+  actual = api.parsePath('/stac')
   t.deepEqual(actual, expected)
 
   expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: true,
     collections: false,
     search: true,
@@ -25,6 +73,9 @@ test('parsePath', (t) => {
   t.deepEqual(actual, expected)
 
   expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: true,
     search: false,
@@ -36,6 +87,9 @@ test('parsePath', (t) => {
   t.deepEqual(actual, expected)
 
   expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: true,
     search: false,
@@ -47,6 +101,9 @@ test('parsePath', (t) => {
   t.deepEqual(actual, expected)
 
   expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: true,
     search: false,
@@ -58,6 +115,9 @@ test('parsePath', (t) => {
   t.deepEqual(actual, expected)
 
   expected = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: true,
     search: false,

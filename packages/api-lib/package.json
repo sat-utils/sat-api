@@ -32,6 +32,7 @@
     "geojson-validation": "^0.1.6",
     "http-aws-es": "^4.0.0",
     "is-url": "^1.2.4",
+    "js-yaml": "^3.13.1",
     "memorystream": "^0.3.1",
     "pump": "^3.0.0",
     "request": "^2.88.0",
