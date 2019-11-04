@@ -1,6 +1,8 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
 const logger = require('./logger')
+const fs = require('fs')
+const yaml = require('js-yaml')
 
 
 // max number of collections to retrieve
@@ -127,6 +129,9 @@ const extractCollectionIds = function (params) {
 
 const parsePath = function (path) {
   const searchFilters = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: false,
     search: false,
@@ -134,6 +139,8 @@ const parsePath = function (path) {
     items: false,
     itemId: false
   }
+  const api = 'api'
+  const conformance = 'conformance'
   const stac = 'stac'
   const collections = 'collections'
   const search = 'search'
@@ -141,6 +148,9 @@ const parsePath = function (path) {
 
   const pathComponents = path.split('/').filter((x) => x)
   const { length } = pathComponents
+  searchFilters.root = length === 0
+  searchFilters.api = pathComponents[0] === api
+  searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.stac = pathComponents[0] === stac
   searchFilters.collections = pathComponents[0] === collections
   searchFilters.collectionId =
@@ -328,6 +338,59 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 }
 
 
+const getRoot = async function (endpoint = '') {
+  const stac_version = process.env.STAC_VERSION
+  const stac_id = process.env.STAC_ID
+  const stac_title = process.env.STAC_TITLE
+  const stac_description = process.env.STAC_DESCRIPTION
+  const catalog = {
+    stac_version: stac_version,
+    id: stac_id,
+    title: stac_title,
+    description: stac_description,
+    links: []
+  }
+  catalog.links.push({
+    rel: 'service-desc',
+    type: 'application/vnd.oai.openapi+json;version=3.0',
+    href: `${endpoint}/api`
+  })
+  catalog.links.push({
+    rel: 'conformance',
+    type: 'application/json',
+    href: `${endpoint}/conformance`
+  })
+  catalog.links.push({
+    rel: 'data',
+    type: 'application/json',
+    href: `${endpoint}/collections`
+  })
+  catalog.links.push({
+    rel: 'self',
+    type: 'application/json',
+    href: `${endpoint}/`
+  })
+  return catalog
+}
+
+
+const getAPI = async function () {
+  return yaml.safeLoad(fs.readFileSync('../api-definition.yaml', 'utf8'))
+}
+
+
+const getConformance = async function () {
+  const conformance = {
+    conformsTo: [
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html',
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+    ]
+  }
+  return conformance
+}
+
+
 const getCatalog = async function (backend, endpoint = '') {
   const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
   return collectionsToCatalogLinks(results, endpoint)
@@ -385,6 +448,9 @@ const API = async function (
       }, false)
 
     const {
+      root,
+      api,
+      conformance,
       stac,
       search: searchPath,
       collections,
@@ -393,7 +459,18 @@ const API = async function (
       itemId
     } = pathElements
 
-
+    // API Root
+    if (root) {
+      apiResponse = await getRoot(endpoint)
+    }
+    // API Definition
+    if (api) {
+      apiResponse = await getAPI()
+    }
+    // Conformance
+    if (conformance) {
+      apiResponse = await getConformance()
+    }
     // Root catalog with collection links
     if ((stac && !searchPath) || !hasPathElement) {
       apiResponse = await getCatalog(backend, endpoint)
@@ -422,13 +499,15 @@ const API = async function (
     }
   } catch (error) {
     logger.error(error)
-    console.log(error)
     apiResponse = { code: 500, message: error.message }
   }
   return apiResponse
 }
 
 module.exports = {
+  getRoot,
+  getAPI,
+  getConformance,
   getCatalog,
   getCollections,
   getCollection,

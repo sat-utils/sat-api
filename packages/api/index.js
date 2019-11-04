@@ -39,7 +39,6 @@ module.exports.handler = async (event) => {
   } else if (method === 'GET' && event.queryStringParameters) {
     query = event.queryStringParameters
   }
-
   const result = await satlib.api.search(event.path, query, satlib.es, endpoint)
   let returnResponse
   if (result instanceof Error) {

@@ -268,11 +268,9 @@ function buildDatetimeQuery(parameters) {
 function buildQuery(parameters) {
   const eq = 'eq'
   const inop = 'in'
-  const { query, intersects } = parameters
+  const { query, intersects, collections } = parameters
   let must = []
-  const should = []
   if (query) {
-    const { collections } = query
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
     must = Object.keys(query).reduce((accumulator, property) => {
@@ -300,14 +298,15 @@ function buildQuery(parameters) {
       }
       return accumulator
     }, must)
-
-    if (collections) {
-      collections.forEach((collection) => {
-        should.push({ term: { 'collection': collection } })
-      })
-    }
   }
 
+  if (collections) {
+    must.push({
+      terms: {
+        'properties.collection': collections
+      }
+    })
+  }
 
   if (intersects) {
     must.push({
@@ -322,7 +321,7 @@ function buildQuery(parameters) {
     must.push(datetimeQuery)
   }
 
-  const filter = { bool: { must, should } }
+  const filter = { bool: { must } }
   const queryBody = {
     constant_score: { filter }
   }
@@ -384,6 +383,7 @@ function buildFieldsFilter(parameters) {
     'bbox',
     'links',
     'assets',
+    'collection',
     'properties.datetime'
   ]
   let _sourceExclude = []
