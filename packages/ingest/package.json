@@ -1,6 +1,6 @@
 {
   "name": "@sat-utils/ingest",
-  "version": "0.4.0",
+  "version": "0.4.0-rc1",
   "description": "ingest lambda function of sat-api",
   "main": "index.js",
   "bin": {
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/sat-utils/sat-api#readme",
   "dependencies": {
-    "@sat-utils/api-lib": "^0.4.0"
+    "@sat-utils/api-lib": "^0.4.0-rc1"
   },
   "devDependencies": {
     "ava": "^0.25.0",
