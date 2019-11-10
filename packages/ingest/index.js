@@ -3,38 +3,6 @@
 const AWS = require('aws-sdk')
 const satlib = require('@sat-utils/api-lib')
 
-// Runs on Fargate
-const runIngestTask = async function (input, envvars) {
-  const ecs = new AWS.ECS()
-  const params = {
-    cluster: process.env.CLUSTER_ARN,
-    taskDefinition: process.env.TASK_ARN,
-    launchType: 'FARGATE',
-    networkConfiguration: {
-      awsvpcConfiguration: {
-        subnets: process.env.SUBNETS.split(' '),
-        assignPublicIp: 'ENABLED',
-        securityGroups: process.env.SECURITY_GROUPS.split(' ')
-      }
-    },
-    overrides: {
-      containerOverrides: [
-        {
-          command: [
-            'node',
-            'packages/ingest/bin/ingest.js',
-            JSON.stringify(input)
-          ],
-          environment: envvars,
-          name: 'SatApi'
-        }
-      ],
-      executionRoleArn: process.env.ECS_ROLE_ARN,
-      taskRoleArn: process.env.ECS_ROLE_ARN
-    }
-  }
-  return ecs.runTask(params).promise()
-}
 
 module.exports.handler = async function handler(event) {
   console.log(`Ingest Event: ${JSON.stringify(event)}`)
@@ -71,15 +39,6 @@ module.exports.handler = async function handler(event) {
       const recurse = recursive === undefined ? true : recursive
       const collections = collectionsOnly === undefined ? false : collectionsOnly
       await satlib.ingest.ingest(url, satlib.es, recurse, collections)
-    } else if (event.fargate) {
-      // event is URL to a catalog node - start a Fargate instance to process
-      console.log(`Starting Fargate ingesttask ${JSON.stringify(event.fargate)}`)
-      const envvars = [
-        { 'name': 'ES_HOST', 'value': process.env.ES_HOST },
-        { 'name': 'ES_BATCH_SIZE', 'value': process.env.ES_BATCH_SIZE },
-        { 'name': 'LOG_LEVEL', 'value': process.env.LOG_LEVEL || 'info' }
-      ]
-      await runIngestTask(event.fargate, envvars)
     }
   } catch (error) {
     console.log(error)
