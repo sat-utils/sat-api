@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Error raised if both bbox and intersection are specified
 - Search metadata changed to match the `search` extension
 - Intersect parameter accepts only GeoJSON geometries
-- Include / exclude behavior changed to match the `fields` extension
+
+### Removed
+- removed `fields` filter due to issues with default behavior. To be added back in for STAC 0.9.0 which reworks how fields filter works.
 
 
 ## [v0.3.0] - 2019-10-16

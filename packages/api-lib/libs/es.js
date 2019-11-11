@@ -428,6 +428,7 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
+  /* disable fields filter for now
   const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
   if (_sourceExclude.length > 0) {
     searchParams._sourceExclude = _sourceExclude
@@ -435,6 +436,8 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
   if (_sourceInclude.length > 0) {
     searchParams._sourceInclude = _sourceInclude
   }
+  */
+
   const client = await esClient()
   const resultBody = await client.search(searchParams)
   const results = resultBody.hits.hits.map((r) => (r._source))
