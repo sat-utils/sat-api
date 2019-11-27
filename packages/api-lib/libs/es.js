@@ -303,7 +303,7 @@ function buildQuery(parameters) {
   if (collections) {
     must.push({
       terms: {
-        'properties.collection': collections
+        'collection': collections
       }
     })
   }
