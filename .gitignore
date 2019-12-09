@@ -10,3 +10,4 @@ yarn.lock
 lerna-debug.log
 *.lerna_backup
 _book
+.idea/
