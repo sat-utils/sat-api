@@ -2,7 +2,7 @@
 # - ES_HOST: Elasticsearch https endpoint
 
 
-FROM node:8
+FROM node:12
 
 ENV \
     HOME=/home/sat-utils
