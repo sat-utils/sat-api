@@ -11,3 +11,5 @@ lerna-debug.log
 *.lerna_backup
 _book
 .idea/
+.DS_STORE
+.serverless/

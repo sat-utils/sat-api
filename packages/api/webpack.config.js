@@ -1,12 +1,12 @@
+const path = require('path')
+const ZipPlugin = require('zip-webpack-plugin')
 
-const path = require('path');
+let mode = 'development'
+let devtool = 'inline-source-map'
 
-let mode = 'development';
-let devtool = 'inline-source-map';
-
-if(process.env.PRODUCTION) {
-  mode = 'production',
-  devtool = false  
+if (process.env.PRODUCTION) {
+  mode = 'production'
+  devtool = false
 }
 
 module.exports = {
@@ -18,10 +18,16 @@ module.exports = {
     path: path.resolve(__dirname, 'dist')
   },
   externals: [
-    'aws-sdk',
-    'electron',
-    {'formidable': 'url'}
+    'aws-sdk'
   ],
   devtool,
-  target: 'node'
-};
+  optimization: {
+    usedExports: true
+  },
+  target: 'node',
+  plugins: [
+    new ZipPlugin({
+      filename: 'api.zip'
+    })
+  ]
+}
