@@ -1,11 +1,6 @@
-/* eslint-disable new-cap, no-lonely-if */
-
-'use strict'
-
 const satlib = require('@sat-utils/api-lib')
 
-module.exports.handler = async (event) => {
-  // determine endpoint
+function determineEndpoint(event) {
   let endpoint = process.env.SATAPI_URL
   if (typeof endpoint === 'undefined') {
     if ('X-Forwarded-Host' in event.headers) {
@@ -17,21 +12,10 @@ module.exports.handler = async (event) => {
       }
     }
   }
+  return endpoint
+}
 
-  const buildResponse = async (statusCode, result) => {
-    const response = {
-      statusCode,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*', // Required for CORS support to work
-        'Access-Control-Allow-Credentials': true
-      },
-      body: result
-    }
-    return response
-  }
-
-  // get payload
+function buildRequest(event) {
   const method = event.httpMethod
   let query = {}
   if (method === 'POST' && event.body) {
@@ -39,12 +23,26 @@ module.exports.handler = async (event) => {
   } else if (method === 'GET' && event.queryStringParameters) {
     query = event.queryStringParameters
   }
-  const result = await satlib.api.API(event.path, query, satlib.es, endpoint)
-  let returnResponse
-  if (result instanceof Error) {
-    returnResponse = buildResponse(404, result.message)
-  } else {
-    returnResponse = buildResponse(200, JSON.stringify(result))
+  return query
+}
+
+function buildResponse(statusCode, result) {
+  return {
+    statusCode,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*', // Required for CORS support to work
+      'Access-Control-Allow-Credentials': true
+    },
+    body: result
   }
-  return returnResponse
+}
+
+module.exports.handler = async (event) => {
+  const endpoint = determineEndpoint(event)
+  const query = buildRequest(event)
+  const result = await satlib.api.API(event.path, query, satlib.es, endpoint)
+  return result instanceof Error ?
+    buildResponse(404, result.message) :
+    buildResponse(200, JSON.stringify(result))
 }

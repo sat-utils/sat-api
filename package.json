@@ -23,5 +23,6 @@
     "lerna": "^2.11.0",
     "shins": "^2.3.2-3",
     "widdershins": "^3.6.6"
-  }
+  },
+  "name": "sat-api"
 }
