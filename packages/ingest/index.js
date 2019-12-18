@@ -1,11 +1,11 @@
 'use strict'
 
-const AWS = require('aws-sdk')
 const satlib = require('@sat-utils/api-lib')
+const logger = console
 
 
 module.exports.handler = async function handler(event) {
-  console.log(`Ingest Event: ${JSON.stringify(event)}`)
+  logger.info(`Ingest Event: ${JSON.stringify(event)}`)
   try {
     if (event.Records && (event.Records[0].EventSource === 'aws:sns')) {
       // event is SNS message of updated file on s3
@@ -24,7 +24,7 @@ module.exports.handler = async function handler(event) {
             }
           } = s3Record
           const url = `https://${bucketName}.s3.amazonaws.com/${key}`
-          console.log(`Ingesting catalog file ${url}`)
+          logger.log(`Ingesting catalog file ${url}`)
           const recursive = false
           return satlib.ingest.ingest(url, satlib.es, recursive)
         })

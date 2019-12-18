@@ -1,9 +1,8 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const logger = require('./logger')
 const fs = require('fs')
 const yaml = require('js-yaml')
-
+const logger = console //require('./logger')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100

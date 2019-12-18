@@ -5,7 +5,7 @@ const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
-const logger = require('./logger')
+const logger = console //require('./logger')
 
 let _esClient
 /*
@@ -17,7 +17,7 @@ variable which is the URL to the elasticsearch host
 // Connect to an Elasticsearch instance
 async function connect() {
   let esConfig
-  logger.info('connecting')
+
   // use local client
   if (!process.env.ES_HOST) {
     esConfig = {
@@ -48,13 +48,10 @@ async function connect() {
   logger.debug(`Elasticsearch config: ${JSON.stringify(esConfig)}`)
   const client = new elasticsearch.Client(esConfig)
 
-  logger.info(`Client`)
-
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
     (err) => {
-      logger.info(`err: ${err}`)
       if (err) {
-        reject('Unable to connect to elasticsearch')
+        reject(`Unable to connect to elasticsearch: ${err}`)
       } else {
         resolve()
       }

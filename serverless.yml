@@ -9,11 +9,10 @@ provider:
     LOG_LEVEL: DEBUG
     ES_HOST:
       Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Resource: "*"
-#      Action:
-#        - "sns:*"    
+  iamRoleStatements:
+    - Effect: "Allow"
+      Resource: "arn:aws:es:#{AWS::Region}:#{AWS::AccountId}:domain/*"
+      Action: "es:*"
 
 package:
   individually: true
@@ -27,6 +26,7 @@ functions:
       - http: ANY {proxy+}
   ingest:
     handler: index.handler
+    timeout: 15
     package:
       artifact: packages/ingest/dist/ingest.zip
     events:
@@ -36,7 +36,7 @@ functions:
     #events:
     #  - sns:
     #      topicName: ${self:service}-${self:provider.stage}-ingest-queue
-    #      displayName: STAC Item ingest queue
+    #      displayName: STAC Item ingest topic
 
 resources:
   Resources:
