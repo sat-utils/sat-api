@@ -11,6 +11,7 @@
     "test": "lerna run test",
     "update": "lerna publish --skip-git --skip-npm",
     "eslint": "eslint packages/* --ext .js",
+    "deploy": "sls deploy",
     "build-api-docs": "yarn widdershins --search false --language_tabs 'nodejs:NodeJS' 'python:Python' --summary ./packages/api-lib/api-spec.yaml -o ./docs/api.md & yarn shins --inline --logo ./docs/images/logo.png -o ./docs/index.html ./docs/api.md"
   },
   "devDependencies": {
@@ -22,7 +23,10 @@
     "eslint-plugin-react": "^7.7.0",
     "lerna": "^2.11.0",
     "shins": "^2.3.2-3",
-    "widdershins": "^3.6.6"
+    "widdershins": "^3.6.6",
+    "serverless": "^1.53.0",
+    "serverless-step-functions": "^2.11.0",
+    "serverless-pseudo-parameters": "^2.5.0"
   },
   "name": "sat-api"
 }

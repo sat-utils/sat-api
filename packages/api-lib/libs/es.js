@@ -14,14 +14,15 @@ searching records, and managing the indexes. It looks for the ES_HOST environmen
 variable which is the URL to the elasticsearch host
 */
 
-// Connect to an Elasticsearch cluster
+// Connect to an Elasticsearch instance
 async function connect() {
   let esConfig
-  let client
-
+  logger.info('connecting')
   // use local client
   if (!process.env.ES_HOST) {
-    client = new elasticsearch.Client({ host: 'localhost:9200' })
+    esConfig = {
+      host: 'localhost:9200'
+    }
   } else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
@@ -42,11 +43,16 @@ async function connect() {
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
-    client = new elasticsearch.Client(esConfig)
   }
+
+  logger.debug(`Elasticsearch config: ${JSON.stringify(esConfig)}`)
+  const client = new elasticsearch.Client(esConfig)
+
+  logger.info(`Client`)
 
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
     (err) => {
+      logger.info(`err: ${err}`)
       if (err) {
         reject('Unable to connect to elasticsearch')
       } else {

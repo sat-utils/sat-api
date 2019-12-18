@@ -1,0 +1,65 @@
+service: stac-api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: alpha
+  region: us-west-2
+  environment:
+    LOG_LEVEL: DEBUG
+    ES_HOST:
+      Fn::GetAtt: [ElasticSearchInstance, DomainEndpoint]
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Resource: "*"
+#      Action:
+#        - "sns:*"    
+
+package:
+  individually: true
+
+functions:
+  api:
+    handler: index.handler
+    package:
+      artifact: packages/api/dist/api.zip
+    events:
+      - http: ANY {proxy+}
+  ingest:
+    handler: index.handler
+    package:
+      artifact: packages/ingest/dist/ingest.zip
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [ingestQueue, Arn]
+    #events:
+    #  - sns:
+    #      topicName: ${self:service}-${self:provider.stage}-ingest-queue
+    #      displayName: STAC Item ingest queue
+
+resources:
+  Resources:
+#    IngestSNS:
+#      Type: AWS::SNS::Subscription
+    ingestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        DelaySeconds: 1
+        QueueName: ${self:service}-${self:provider.stage}-ingest-queue
+    ElasticSearchInstance:
+      Type: AWS::Elasticsearch::Domain
+      Properties:
+        EBSOptions:
+          EBSEnabled: true
+          VolumeType: gp2
+          VolumeSize: 35
+        ElasticsearchClusterConfig:
+          InstanceType: t2.small.elasticsearch
+          InstanceCount: 3
+          DedicatedMasterEnabled: false
+          ZoneAwarenessEnabled: false
+        ElasticsearchVersion: 6.8
+
+plugins:
+  - serverless-pseudo-parameters
