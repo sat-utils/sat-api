@@ -1,9 +1,8 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const logger = require('./logger')
-const fs = require('fs')
 const yaml = require('js-yaml')
-
+const fs = require('fs')
+const logger = console //require('./logger')
 
 // max number of collections to retrieve
 const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
@@ -241,18 +240,6 @@ const collectionsToCatalogLinks = function (results, endpoint) {
       href: `${endpoint}/collections/${id}`
     }
   })
-  catalog.links.push({
-    rel: 'self',
-    href: `${endpoint}/stac`
-  })
-  catalog.links.push({
-    rel: 'search',
-    href: `${endpoint}/stac/search`
-  })
-  catalog.links.push({
-    rel: 'service',
-    href: process.env.STAC_DOCS_URL
-  })
   return catalog
 }
 
@@ -338,44 +325,9 @@ const searchItems = async function (collectionId, queryParameters, backend, endp
 }
 
 
-const getRoot = async function (endpoint = '') {
-  const stac_version = process.env.STAC_VERSION
-  const stac_id = process.env.STAC_ID
-  const stac_title = process.env.STAC_TITLE
-  const stac_description = process.env.STAC_DESCRIPTION
-  const catalog = {
-    stac_version: stac_version,
-    id: stac_id,
-    title: stac_title,
-    description: stac_description,
-    links: []
-  }
-  catalog.links.push({
-    rel: 'service-desc',
-    type: 'application/vnd.oai.openapi+json;version=3.0',
-    href: `${endpoint}/api`
-  })
-  catalog.links.push({
-    rel: 'conformance',
-    type: 'application/json',
-    href: `${endpoint}/conformance`
-  })
-  catalog.links.push({
-    rel: 'data',
-    type: 'application/json',
-    href: `${endpoint}/collections`
-  })
-  catalog.links.push({
-    rel: 'self',
-    type: 'application/json',
-    href: `${endpoint}/`
-  })
-  return catalog
-}
-
-
 const getAPI = async function () {
-  return yaml.safeLoad(fs.readFileSync('../api-definition.yaml', 'utf8'))
+  const spec = yaml.safeLoad(fs.readFileSync('./api.yaml', 'utf8'))
+  return spec
 }
 
 
@@ -393,7 +345,39 @@ const getConformance = async function () {
 
 const getCatalog = async function (backend, endpoint = '') {
   const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
-  return collectionsToCatalogLinks(results, endpoint)
+  const catalog = collectionsToCatalogLinks(results, endpoint)
+  catalog.links.push({
+    rel: 'service-desc',
+    type: 'application/vnd.oai.openapi+json;version=3.0',
+    href: `${endpoint}/api`
+  })
+  catalog.links.push({
+    rel: 'conformance',
+    type: 'application/json',
+    href: `${endpoint}/conformance`
+  })
+  catalog.links.push({
+    rel: 'children',
+    type: 'application/json',
+    href: `${endpoint}/collections`
+  })
+  catalog.links.push({
+    rel: 'self',
+    type: 'application/json',
+    href: `${endpoint}/`
+  })
+  catalog.links.push({
+    rel: 'search',
+    type: 'application/json',
+    href: `${endpoint}/stac/search`
+  })
+  if (process.env.STAC_DOCS_URL) {
+    catalog.links.push({
+      rel: 'docs',
+      href: process.env.STAC_DOCS_URL
+    })
+  }
+  return catalog
 }
 
 
@@ -461,7 +445,7 @@ const API = async function (
 
     // API Root
     if (root) {
-      apiResponse = await getRoot(endpoint)
+      apiResponse = await getCatalog(backend, endpoint)
     }
     // API Definition
     if (api) {
@@ -505,7 +489,6 @@ const API = async function (
 }
 
 module.exports = {
-  getRoot,
   getAPI,
   getConformance,
   getCatalog,
