@@ -1,5 +1,6 @@
 const path = require('path')
 const ZipPlugin = require('zip-webpack-plugin')
+const CopyPlugin = require('copy-webpack-plugin')
 
 let mode = 'development'
 let devtool = 'inline-source-map'
@@ -26,6 +27,12 @@ module.exports = {
   },
   target: 'node',
   plugins: [
+    new CopyPlugin([
+      {
+        from: 'api.yaml',
+        to: 'api.yaml'
+      }
+    ]),
     new ZipPlugin({
       filename: 'api.zip'
     })

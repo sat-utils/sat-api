@@ -1,5 +1,4 @@
 const winston = require('winston')
-const WinstonCloudWatch = require('winston-cloudwatch')
 
 
 const logger = winston.createLogger({
@@ -10,21 +9,12 @@ const logger = winston.createLogger({
     winston.format.printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
   ),
   transports: [
-//    new winston.transports.Console({
-//      format: winston.format.simple(),
-//      level: process.env.LOG_LEVEL || 'debug'
-//    }),
-    new WinstonCloudWatch({
-      logGroupName: 'testing',
-      logStreamName: 'first'
+    new winston.transports.Console({
+      format: winston.format.simple(),
+      level: process.env.LOG_LEVEL || 'debug'
     })
   ]
 })
 
-logger.stream = {
-  write: (info) => {
-    logger.info(info)
-  }
-}
 
 module.exports = logger
