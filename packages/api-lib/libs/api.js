@@ -1,6 +1,7 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const yaml = require('require-yml')
+const yaml = require('js-yaml')
+const fs = require('fs')
 const logger = console //require('./logger')
 
 // max number of collections to retrieve
@@ -374,7 +375,6 @@ const getRoot = async function (endpoint = '') {
 
 const getAPI = async function () {
   const spec = yaml.safeLoad(fs.readFileSync('./api.yaml', 'utf8'))
-  console.log(spec)
   return spec
 }
 
