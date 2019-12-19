@@ -249,6 +249,8 @@ const wrapResponseInFeatureCollection = function (
   return {
     type: 'FeatureCollection',
     'search:metadata': meta,
+    'numberMatched': meta.matched,
+    'numberReturned': meta.returned,
     features,
     links
   }
