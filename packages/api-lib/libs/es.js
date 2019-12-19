@@ -377,6 +377,7 @@ function buildSort(parameters) {
   return sorting
 }
 
+/*
 function buildFieldsFilter(parameters) {
   const { fields } = parameters
   let _sourceInclude = [
@@ -408,6 +409,7 @@ function buildFieldsFilter(parameters) {
   }
   return { _sourceInclude, _sourceExclude }
 }
+*/
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body

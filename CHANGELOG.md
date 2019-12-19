@@ -6,10 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [v0.4.0] - 2019-10-21
+## [v0.4.0] - 2019-12-19
 
 ### Added
 - `created` and `updated` fields added to item properties
+- `serverless` deployment configuration file (serverless.yml)
 
 ### Changed
 - `time` field renamed to `datetime`
@@ -18,7 +19,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Intersect parameter accepts only GeoJSON geometries
 
 ### Removed
-- removed `fields` filter due to issues with default behavior. To be added back in for STAC 0.9.0 which reworks how fields filter works.
+- `fields` filter due to issues with default behavior. To be added back in for STAC 0.9.0 which reworks how fields filter works
+- Batch ingestion jobs with Fargate
 
 
 ## [v0.3.0] - 2019-10-16
