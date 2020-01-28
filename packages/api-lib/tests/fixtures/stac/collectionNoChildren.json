@@ -9,81 +9,81 @@
                 0
             ],
             "title": "Band 1 (coastal)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B10": {
             "eo:bands": [
                 9
             ],
             "title": "Band 10 (lwir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B11": {
             "eo:bands": [
                 10
             ],
             "title": "Band 11 (lwir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B2": {
             "eo:bands": [
                 1
             ],
             "title": "Band 2 (blue)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B3": {
             "eo:bands": [
                 2
             ],
             "title": "Band 3 (green)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B4": {
             "eo:bands": [
                 3
             ],
             "title": "Band 4 (red)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B5": {
             "eo:bands": [
                 4
             ],
             "title": "Band 5 (nir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B6": {
             "eo:bands": [
                 5
             ],
             "title": "Band 6 (swir16)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B7": {
             "eo:bands": [
                 6
             ],
             "title": "Band 7 (swir22)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B8": {
             "eo:bands": [
                 7
             ],
             "title": "Band 8 (pan)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B9": {
             "eo:bands": [
                 8
             ],
             "title": "Band 9 (cirrus)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "BQA": {
             "title": "Band quality data",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "MTL": {
             "title": "original metadata file",
@@ -248,7 +248,11 @@
             "url": "https://github.com/sat-utils/sat-api"
         }
     ],
-    "stac_version": "0.7.0",
+    "stac_version": "0.8.0",
+    "stac_extensions": [
+        "eo",
+        "landsat"
+    ],
     "title": "Landsat 8 L1",
     "version": "0.1.0"
 }

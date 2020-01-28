@@ -11,7 +11,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B1.TIF",
             "title": "Band 1 (coastal)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B10": {
             "eo:bands": [
@@ -19,7 +19,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B10.TIF",
             "title": "Band 10 (lwir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B11": {
             "eo:bands": [
@@ -27,7 +27,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B11.TIF",
             "title": "Band 11 (lwir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B2": {
             "eo:bands": [
@@ -35,7 +35,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B2.TIF",
             "title": "Band 2 (blue)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B3": {
             "eo:bands": [
@@ -43,7 +43,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B3.TIF",
             "title": "Band 3 (green)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B4": {
             "eo:bands": [
@@ -51,7 +51,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B4.TIF",
             "title": "Band 4 (red)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B5": {
             "eo:bands": [
@@ -59,7 +59,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B5.TIF",
             "title": "Band 5 (nir)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B6": {
             "eo:bands": [
@@ -67,7 +67,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B6.TIF",
             "title": "Band 6 (swir16)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B7": {
             "eo:bands": [
@@ -75,7 +75,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B7.TIF",
             "title": "Band 7 (swir22)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B8": {
             "eo:bands": [
@@ -83,7 +83,7 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B8.TIF",
             "title": "Band 8 (pan)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "B9": {
             "eo:bands": [
@@ -91,12 +91,12 @@
             ],
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_B9.TIF",
             "title": "Band 9 (cirrus)",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "BQA": {
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_BQA.TIF",
             "title": "Band quality data",
-            "type": "image/x.geotiff"
+            "type": "image/tiff; application=geotiff"
         },
         "MTL": {
             "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/L8/096/008/LC80960082014185LGN00/LC80960082014185LGN00_MTL.txt",
@@ -310,5 +310,10 @@
         "landsat:scene_id": "LC80960082014185LGN00",
         "landsat:tier": "pre-collection"
     },
-    "type": "Feature"
+    "type": "Feature",
+    "stac_extensions": [
+        "eo",
+        "landsat"
+    ],
+    "stac_version": "0.8.0"
 }

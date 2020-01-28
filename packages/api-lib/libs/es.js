@@ -5,7 +5,7 @@ const httpAwsEs = require('http-aws-es')
 const elasticsearch = require('elasticsearch')
 const through2 = require('through2')
 const ElasticsearchWritableStream = require('./ElasticSearchWriteableStream')
-const logger = require('./logger')
+const logger = console //require('./logger')
 
 let _esClient
 /*
@@ -14,14 +14,15 @@ searching records, and managing the indexes. It looks for the ES_HOST environmen
 variable which is the URL to the elasticsearch host
 */
 
-// Connect to an Elasticsearch cluster
+// Connect to an Elasticsearch instance
 async function connect() {
   let esConfig
-  let client
 
   // use local client
   if (!process.env.ES_HOST) {
-    client = new elasticsearch.Client({ host: 'localhost:9200' })
+    esConfig = {
+      host: 'localhost:9200'
+    }
   } else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
@@ -42,13 +43,15 @@ async function connect() {
       // Note that this doesn't abort the query.
       requestTimeout: 120000 // milliseconds
     }
-    client = new elasticsearch.Client(esConfig)
   }
+
+  logger.debug(`Elasticsearch config: ${JSON.stringify(esConfig)}`)
+  const client = new elasticsearch.Client(esConfig)
 
   await new Promise((resolve, reject) => client.ping({ requestTimeout: 1000 },
     (err) => {
       if (err) {
-        reject('Unable to connect to elasticsearch')
+        reject(`Unable to connect to elasticsearch: ${err}`)
       } else {
         resolve()
       }
@@ -80,6 +83,8 @@ async function prepare(index) {
     'type': 'object',
     properties: {
       'datetime': { type: 'date' },
+      'created': { type: 'date' },
+      'updated': { type: 'date' },
       'eo:cloud_cover': { type: 'float' },
       'eo:gsd': { type: 'float' },
       'eo:constellation': { type: 'keyword' },
@@ -176,6 +181,8 @@ async function _stream() {
         if (itemCollection) {
           const flatProperties =
             Object.assign({}, itemCollection.properties, data.properties)
+          flatProperties.created = new Date().toISOString()
+          flatProperties.updated = new Date().toISOString()
           esDataObject = Object.assign({}, esDataObject, { properties: flatProperties })
         } else {
           logger.error(`${data.id} has no collection`)
@@ -264,11 +271,9 @@ function buildDatetimeQuery(parameters) {
 function buildQuery(parameters) {
   const eq = 'eq'
   const inop = 'in'
-  const { query, intersects } = parameters
+  const { query, intersects, collections } = parameters
   let must = []
-  const should = []
   if (query) {
-    const { collections } = query
     // Using reduce rather than map as we don't currently support all
     // stac query operators.
     must = Object.keys(query).reduce((accumulator, property) => {
@@ -296,20 +301,20 @@ function buildQuery(parameters) {
       }
       return accumulator
     }, must)
-
-    if (collections) {
-      collections.forEach((collection) => {
-        should.push({ term: { 'collection': collection } })
-      })
-    }
   }
 
+  if (collections) {
+    must.push({
+      terms: {
+        'collection': collections
+      }
+    })
+  }
 
   if (intersects) {
-    const { geometry } = intersects
     must.push({
       geo_shape: {
-        geometry: { shape: geometry }
+        geometry: { shape: intersects }
       }
     })
   }
@@ -319,7 +324,7 @@ function buildQuery(parameters) {
     must.push(datetimeQuery)
   }
 
-  const filter = { bool: { must, should } }
+  const filter = { bool: { must } }
   const queryBody = {
     constant_score: { filter }
   }
@@ -372,30 +377,39 @@ function buildSort(parameters) {
   return sorting
 }
 
+/*
 function buildFieldsFilter(parameters) {
-  const id = 'id'
   const { fields } = parameters
-  const _sourceInclude = []
-  const _sourceExclude = []
+  let _sourceInclude = [
+    'id',
+    'type',
+    'geometry',
+    'bbox',
+    'links',
+    'assets',
+    'collection',
+    'properties.datetime'
+  ]
+  let _sourceExclude = []
   if (fields) {
     const { include, exclude } = fields
-    if (include && include.length > 0) {
-      const propertiesIncludes = include.map(
-        (field) => (`${field}`)
-      ).concat(
-        [id]
-      )
-      _sourceInclude.push(...propertiesIncludes)
-    }
+    // Remove exclude fields from the default include list and add them to the source exclude list
     if (exclude && exclude.length > 0) {
-      const filteredExcludes = exclude.filter((field) =>
-        (![id].includes(field)))
-      const propertiesExclude = filteredExcludes.map((field) => (`${field}`))
-      _sourceExclude.push(...propertiesExclude)
+      _sourceInclude = _sourceInclude.filter((field) => !exclude.includes(field))
+      _sourceExclude = exclude
+    }
+    // Add include fields to the source include list if they're not already in it
+    if (include && include.length > 0) {
+      include.forEach((field) => {
+        if (_sourceInclude.indexOf(field) < 0) {
+          _sourceInclude.push(field)
+        }
+      })
     }
   }
-  return { _sourceExclude, _sourceInclude }
+  return { _sourceInclude, _sourceExclude }
 }
+*/
 
 async function search(parameters, index = '*', page = 1, limit = 10) {
   let body
@@ -419,22 +433,25 @@ async function search(parameters, index = '*', page = 1, limit = 10) {
     from: (page - 1) * limit
   }
 
-  const { _sourceExclude, _sourceInclude } = buildFieldsFilter(parameters)
+  /* disable fields filter for now
+  const { _sourceInclude, _sourceExclude } = buildFieldsFilter(parameters)
   if (_sourceExclude.length > 0) {
     searchParams._sourceExclude = _sourceExclude
   }
   if (_sourceInclude.length > 0) {
     searchParams._sourceInclude = _sourceInclude
   }
+  */
+
   const client = await esClient()
   const resultBody = await client.search(searchParams)
   const results = resultBody.hits.hits.map((r) => (r._source))
   const response = {
     results,
-    meta: {
-      page,
+    'search:metadata': {
+      next: (((page * limit) < resultBody.hits.total) ? page + 1 : null),
       limit,
-      found: resultBody.hits.total,
+      matched: resultBody.hits.total,
       returned: results.length
     }
   }

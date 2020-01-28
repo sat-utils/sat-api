@@ -1,11 +1,18 @@
 const gjv = require('geojson-validation')
 const extent = require('@mapbox/extent')
-const { feature } = require('@turf/helpers')
-const logger = require('./logger')
+const yaml = require('js-yaml')
+const fs = require('fs')
+const logger = console //require('./logger')
+
+// max number of collections to retrieve
+const COLLECTION_LIMIT = process.env.SATAPI_COLLECTION_LIMIT || 100
+
 
 const extractIntersects = function (params) {
   let intersectsGeometry
-  const geojsonError = new Error('Invalid GeoJSON Feature or geometry')
+  const geojsonError = new Error('Invalid GeoJSON geometry')
+  const geojsonFeatureError =
+        new Error('Expected GeoJSON geometry, not Feature or FeatureCollection')
   const { intersects } = params
   if (intersects) {
     let geojson
@@ -22,9 +29,9 @@ const extractIntersects = function (params) {
 
     if (gjv.valid(geojson)) {
       if (geojson.type === 'FeatureCollection') {
-        throw geojsonError
-      } else if (geojson.type !== 'Feature') {
-        geojson = feature(geojson)
+        throw geojsonFeatureError
+      } else if (geojson.type === 'Feature') {
+        throw geojsonFeatureError
       }
       intersectsGeometry = geojson
     } else {
@@ -45,8 +52,7 @@ const extractBbox = function (params) {
       bboxArray = bbox
     }
     const boundingBox = extent(bboxArray)
-    const geojson = feature(boundingBox.polygon())
-    intersectsGeometry = geojson
+    intersectsGeometry = boundingBox.polygon()
   }
   return intersectsGeometry
 }
@@ -105,8 +111,26 @@ const extractIds = function (params) {
   return idsRules
 }
 
+
+const extractCollectionIds = function (params) {
+  let idsRules
+  const { collections } = params
+  if (collections) {
+    if (typeof collections === 'string') {
+      idsRules = JSON.parse(collections)
+    } else {
+      idsRules = collections.slice()
+    }
+  }
+  return idsRules
+}
+
+
 const parsePath = function (path) {
   const searchFilters = {
+    root: false,
+    api: false,
+    conformance: false,
     stac: false,
     collections: false,
     search: false,
@@ -114,6 +138,8 @@ const parsePath = function (path) {
     items: false,
     itemId: false
   }
+  const api = 'api'
+  const conformance = 'conformance'
   const stac = 'stac'
   const collections = 'collections'
   const search = 'search'
@@ -121,6 +147,9 @@ const parsePath = function (path) {
 
   const pathComponents = path.split('/').filter((x) => x)
   const { length } = pathComponents
+  searchFilters.root = length === 0
+  searchFilters.api = pathComponents[0] === api
+  searchFilters.conformance = pathComponents[0] === conformance
   searchFilters.stac = pathComponents[0] === stac
   searchFilters.collections = pathComponents[0] === collections
   searchFilters.collectionId =
@@ -192,26 +221,6 @@ const addItemLinks = function (results, endpoint) {
   return results
 }
 
-const buildRootObject = function (endpoint) {
-  const stac_docs_url = process.env.STAC_DOCS_URL
-  const root = {
-    links: [
-      {
-        href: endpoint,
-        rel: 'self'
-      },
-      {
-        href: `${endpoint}/collections`,
-        rel: 'data'
-      },
-      {
-        href: stac_docs_url,
-        rel: 'service'
-      }
-    ]
-  }
-  return root
-}
 
 const collectionsToCatalogLinks = function (results, endpoint) {
   const stac_version = process.env.STAC_VERSION
@@ -231,14 +240,6 @@ const collectionsToCatalogLinks = function (results, endpoint) {
       href: `${endpoint}/collections/${id}`
     }
   })
-  catalog.links.push({
-    rel: 'self',
-    href: `${endpoint}/stac`
-  })
-  catalog.links.push({
-    rel: 'search',
-    href: `${endpoint}/stac/search`
-  })
   return catalog
 }
 
@@ -247,7 +248,9 @@ const wrapResponseInFeatureCollection = function (
 ) {
   return {
     type: 'FeatureCollection',
-    meta,
+    'search:metadata': meta,
+    'numberMatched': meta.matched,
+    'numberReturned': meta.returned,
     features,
     links
   }
@@ -261,8 +264,8 @@ const buildPageLinks = function (meta, parameters, endpoint) {
       (p) => `${encodeURIComponent(p)}=${encodeURIComponent(JSON.stringify(dict[p]))}`
     ).join('&')
   )
-  const { found, page, limit } = meta
-  if ((page * limit) < found) {
+  const { matched, page, limit } = meta
+  if ((page * limit) < matched) {
     const newParams = Object.assign({}, parameters, { page: page + 1, limit })
     const nextQueryParameters = dictToURI(newParams)
     pageLinks.push({
@@ -274,21 +277,151 @@ const buildPageLinks = function (meta, parameters, endpoint) {
   return pageLinks
 }
 
-const searchItems = async function (parameters, page, limit, backend, endpoint) {
-  const { results: itemsResults, meta: itemsMeta } =
-    await backend.search(parameters, 'items', page, limit)
-  const pageLinks = buildPageLinks(itemsMeta, parameters, endpoint)
+const searchItems = async function (collectionId, queryParameters, backend, endpoint) {
+  const {
+    limit,
+    next,
+    datetime
+  } = queryParameters
+  const bbox = extractBbox(queryParameters)
+  const hasIntersects = extractIntersects(queryParameters)
+  if (bbox && hasIntersects) {
+    throw new Error('Expected bbox OR intersects, not both')
+  }
+  const sort = extractSort(queryParameters)
+  // Prefer intersects
+  const intersects = hasIntersects || bbox
+  const query = extractStacQuery(queryParameters)
+  const fields = extractFields(queryParameters)
+  const ids = extractIds(queryParameters)
+  const collections = extractCollectionIds(queryParameters)
+
+  const parameters = {
+    datetime,
+    intersects,
+    query,
+    sort,
+    fields,
+    ids,
+    collections
+  }
+
+  // Keep only existing parameters
+  const searchParameters = Object.keys(parameters)
+    .filter((key) => parameters[key])
+    .reduce((obj, key) => ({
+      ...obj,
+      [key]: parameters[key]
+    }), {})
+
+  if (collectionId) {
+    searchParameters.collections = [collectionId]
+  }
+  const { results: itemsResults, 'search:metadata': itemsMeta } =
+    await backend.search(searchParameters, 'items', next, limit)
+  const pageLinks = buildPageLinks(itemsMeta, searchParameters, endpoint)
   const items = addItemLinks(itemsResults, endpoint)
   const response = wrapResponseInFeatureCollection(itemsMeta, items, pageLinks)
+
   return response
 }
 
-const search = async function (
+
+const getAPI = async function () {
+  const spec = yaml.safeLoad(fs.readFileSync('./api.yaml', 'utf8'))
+  return spec
+}
+
+
+const getConformance = async function () {
+  const conformance = {
+    conformsTo: [
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/html',
+      'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson'
+    ]
+  }
+  return conformance
+}
+
+
+const getCatalog = async function (backend, endpoint = '') {
+  const { results } = await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  const catalog = collectionsToCatalogLinks(results, endpoint)
+  catalog.links.push({
+    rel: 'service-desc',
+    type: 'application/vnd.oai.openapi+json;version=3.0',
+    href: `${endpoint}/api`
+  })
+  catalog.links.push({
+    rel: 'conformance',
+    type: 'application/json',
+    href: `${endpoint}/conformance`
+  })
+  catalog.links.push({
+    rel: 'children',
+    type: 'application/json',
+    href: `${endpoint}/collections`
+  })
+  catalog.links.push({
+    rel: 'self',
+    type: 'application/json',
+    href: `${endpoint}/`
+  })
+  catalog.links.push({
+    rel: 'search',
+    type: 'application/json',
+    href: `${endpoint}/stac/search`
+  })
+  if (process.env.STAC_DOCS_URL) {
+    catalog.links.push({
+      rel: 'docs',
+      href: process.env.STAC_DOCS_URL
+    })
+  }
+  return catalog
+}
+
+
+const getCollections = async function (backend, endpoint = '') {
+  const { results, 'search:metadata': meta } =
+  await backend.search({}, 'collections', 1, COLLECTION_LIMIT)
+  const linkedCollections = addCollectionLinks(results, endpoint)
+  return { 'search:metadata': meta, collections: linkedCollections }
+}
+
+
+const getCollection = async function (collectionId, backend, endpoint = '') {
+  const collectionQuery = { id: collectionId }
+  const { results } = await backend.search(
+    collectionQuery, 'collections', 1, 1
+  )
+  const col = addCollectionLinks(results, endpoint)
+  if (col.length > 0) {
+    return col[0]
+  }
+  return { code: 404, message: 'Collection not found' }
+}
+
+
+const getItem = async function (itemId, backend, endpoint = '') {
+  const itemQuery = { id: itemId }
+  const { results } = await backend.search(itemQuery, 'items')
+  const [it] = addItemLinks(results, endpoint)
+  if (it) {
+    return it
+  }
+  return { code: 404, message: 'Item not found' }
+}
+
+
+const API = async function (
   path = '', queryParameters = {}, backend, endpoint = ''
 ) {
   let apiResponse
   try {
     const pathElements = parsePath(path)
+
     const hasPathElement =
       Object.keys(pathElements).reduce((accumulator, key) => {
         let containsPathElement
@@ -301,6 +434,9 @@ const search = async function (
       }, false)
 
     const {
+      root,
+      api,
+      conformance,
       stac,
       search: searchPath,
       collections,
@@ -309,108 +445,60 @@ const search = async function (
       itemId
     } = pathElements
 
-    const {
-      limit,
-      page,
-      time: datetime
-    } = queryParameters
-    const bbox = extractBbox(queryParameters)
-    const hasIntersects = extractIntersects(queryParameters)
-    const sort = extractSort(queryParameters)
-    // Prefer intersects
-    const intersects = hasIntersects || bbox
-    const query = extractStacQuery(queryParameters)
-    const fields = extractFields(queryParameters)
-    const ids = extractIds(queryParameters)
-    const parameters = {
-      datetime,
-      intersects,
-      query,
-      sort,
-      fields,
-      ids
+    // API Root
+    if (root) {
+      apiResponse = await getCatalog(backend, endpoint)
     }
-    const colLimit = process.env.SATAPI_COLLECTION_LIMIT || 100
-    // Keep only existing parameters
-    const searchParameters = Object.keys(parameters)
-      .filter((key) => parameters[key])
-      .reduce((obj, key) => ({
-        ...obj,
-        [key]: parameters[key]
-      }), {})
-    // Landing page url
-    if (!hasPathElement) {
-      apiResponse = buildRootObject(endpoint)
+    // API Definition
+    if (api) {
+      apiResponse = await getAPI()
+    }
+    // Conformance
+    if (conformance) {
+      apiResponse = await getConformance()
     }
     // Root catalog with collection links
-    if (stac && !searchPath) {
-      const { results } =
-        await backend.search({}, 'collections', page, colLimit)
-      apiResponse = collectionsToCatalogLinks(results, endpoint)
+    if ((stac && !searchPath) || !hasPathElement) {
+      apiResponse = await getCatalog(backend, endpoint)
     }
     // STAC Search
     if (stac && searchPath) {
       apiResponse = await searchItems(
-        searchParameters, page, limit, backend, endpoint
+        null, queryParameters, backend, endpoint
       )
     }
     // All collections
     if (collections && !collectionId) {
-      const { results, meta } =
-        await backend.search({}, 'collections', page, colLimit)
-      const linkedCollections = addCollectionLinks(results, endpoint)
-      apiResponse = { meta, collections: linkedCollections }
+      apiResponse = await getCollections(backend, endpoint)
     }
     // Specific collection
     if (collections && collectionId && !items) {
-      const collectionQuery = { id: collectionId }
-      const { results } = await backend.search(
-        collectionQuery, 'collections', page, limit
-      )
-      const collection = addCollectionLinks(results, endpoint)
-      if (collection.length > 0) {
-        apiResponse = collection[0]
-      } else {
-        apiResponse = new Error('Collection not found')
-      }
+      apiResponse = await getCollection(collectionId, backend, endpoint)
     }
     // Items in a collection
     if (collections && collectionId && items && !itemId) {
-      const updatedQuery = Object.assign({}, searchParameters.query, {
-        collections: [
-          collectionId
-        ]
-      })
-      const itemIdParameters = Object.assign(
-        {}, searchParameters, { query: updatedQuery }
-      )
-      apiResponse = await searchItems(
-        itemIdParameters, page, limit, backend, endpoint
-      )
+      apiResponse = await searchItems(collectionId, queryParameters,
+        backend, endpoint)
     }
     if (collections && collectionId && items && itemId) {
-      const itemQuery = { id: itemId }
-      const { results } = await backend.search(itemQuery, 'items', page, limit)
-      const [item] = addItemLinks(results, endpoint)
-      if (item) {
-        apiResponse = item
-      } else {
-        apiResponse = new Error('Item not found')
-      }
+      apiResponse = await getItem(itemId, backend, endpoint)
     }
   } catch (error) {
     logger.error(error)
-    apiResponse = {
-      code: 500,
-      description: error.message
-    }
+    apiResponse = { code: 500, message: error.message }
   }
   return apiResponse
 }
 
 module.exports = {
-  search,
-  parsePath,
+  getAPI,
+  getConformance,
+  getCatalog,
+  getCollections,
+  getCollection,
+  getItem,
   searchItems,
+  API,
+  parsePath,
   extractIntersects
 }

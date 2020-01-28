@@ -1,5 +1,5 @@
 const stream = require('stream')
-const logger = require('./logger')
+const logger = console //require('./logger')
 
 class ElasticSearchWritableStream extends stream.Writable {
   constructor(config, options) {
