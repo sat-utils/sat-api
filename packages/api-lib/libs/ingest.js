@@ -40,7 +40,7 @@ async function fetchChildren(node, links, basePath) {
     if (!selfHref || !link.href) {
       return Promise.reject(new Error(`${node.id} has invalid links`))
     }
-    if (path.isAbsolute(link.href)) {
+    if (isUrl(link.href) || path.isAbsolute(link.href)) {
       urlPath = link.href
     } else {
       // eslint-disable-next-line
