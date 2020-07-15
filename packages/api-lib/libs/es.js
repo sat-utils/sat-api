@@ -147,7 +147,7 @@ async function prepare(index) {
     }
   }
   else {
-      logger.debug(`Index '${index}' exists: ${error}`)
+      logger.debug(`Index '${index}' exists`)
   }
 }
 
