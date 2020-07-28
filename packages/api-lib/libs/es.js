@@ -19,10 +19,20 @@ async function connect() {
   let esConfig
   let client
 
-  // use local client
-  if (!process.env.ES_HOST) {
-    client = new elasticsearch.Client({ host: 'localhost:9200' })
-  } else {
+  // non-AWS ES 
+  if(!process.env.AWS_ACCESS_KEY_ID || process.env.AWS_SECRET_ACCESS_KEY) {
+  	// https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/16.x/configuration.html
+    esConfig = {
+      hosts: process.env.ES_HOST || 'localhost:9200',
+      apiVersion: process.env.ES_API_VERSION || '6.8',
+      httpAuth: process.env.ES_HTTP_AUTH || null,
+      // add further params here as needed. alternatively move to a kwargs/splat type arrangement
+      requestTimeout: 120000, // milliseconds
+    }
+    client = new elasticsearch.Client(esConfig)
+  } 
+  // AWS managed ES
+  else {
     await new Promise((resolve, reject) => AWS.config.getCredentials((err) => {
       if (err) return reject(err)
       return resolve()
@@ -109,6 +119,7 @@ async function prepare(index) {
       index,
       body: {
         mappings: {
+          // TODO: this structure different for ElasticSearch 7+,  
           doc: {
             /*'_all': {
                 enabled: true
@@ -132,9 +143,11 @@ async function prepare(index) {
       await client.indices.create(payload)
       logger.info(`Created index: ${JSON.stringify(payload)}`)
     } catch (error) {
-      const debugMessage = `Error creating index, already created: ${error}`
-      logger.debug(debugMessage)
+      logger.debug(`Error creating index '${index}': ${error}`)
     }
+  }
+  else {
+      logger.debug(`Index '${index}' exists`)
   }
 }
 
